@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>P.I.D.R. - Правила</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/game-setup.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        .rules-container {
+            padding: 16px;
+            color: var(--tg-theme-text-color);
+        }
+
+        .rules-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .rules-section-title {
+            color: #FFD700;
+            font-size: 18px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .rule-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        .rule-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #FFD700;
+            color: #1E2329;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .rule-content {
+            flex: 1;
+        }
+
+        .rule-title {
+            font-weight: 500;
+            margin-bottom: 4px;
+            color: #FFD700;
+        }
+
+        .rule-description {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .stage-number {
+            width: 24px;
+            height: 24px;
+            background: #FFD700;
+            color: #1E2329;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+            margin-right: 8px;
+        }
+
+        .stage-rules {
+            list-style: none;
+            padding: 0;
+            margin: 8px 0 0 32px;
+        }
+
+        .stage-rules li {
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 4px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stage-rules li::before {
+            content: "•";
+            color: #FFD700;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px;
+            background: var(--tg-theme-bg-color);
+            border-bottom: 1px solid var(--divider-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header .btn-circle {
+            width: 32px;
+            height: 32px;
+            font-size: 16px;
+            background: transparent;
+            color: var(--tg-theme-button-color);
+        }
+
+        .header .section-title {
+            margin: 0;
+            flex-grow: 1;
+            text-align: center;
+            font-size: 17px;
+        }
+
+        .bottom-nav {
+            background: var(--tg-theme-bg-color);
+            border-top: 1px solid var(--divider-color);
+        }
+
+        @media (max-width: 360px) {
+            .header {
+                padding: 8px 12px;
+            }
+
+            .rule-item h3 {
+                font-size: 15px;
+            }
+
+            .rule-item p {
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body class="telegram-app" style="background: #1E2329;">
+    <!-- Шапка -->
+    <header class="header">
+        <button class="btn-circle" onclick="history.back()">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h1 class="section-title">Правила игры</h1>
+        <div style="width: 32px;"></div>
+    </header>
+
+    <div class="rules-container">
+        <!-- Заголовок -->
+        <div class="rules-section">
+            <div class="rules-section-title">
+                <i class="fas fa-book" style="color: #FFD700;"></i>
+                Правила игры
+            </div>
+        </div>
+
+        <!-- Основные правила -->
+        <div class="rules-section">
+            <div class="rules-section-title">
+                <i class="fas fa-chess"></i>
+                Основные правила
+            </div>
+            <div class="rule-item">
+                <div class="rule-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="rule-content">
+                    <div class="rule-title">Количество игроков</div>
+                    <div class="rule-description">От 4 до 9 игроков</div>
+                </div>
+            </div>
+            <div class="rule-item">
+                <div class="rule-icon">
+                    <i class="fas fa-cards-blank"></i>
+                </div>
+                <div class="rule-content">
+                    <div class="rule-title">Карты игрока</div>
+                    <div class="rule-description">У каждого игрока: 2 закрытые карты и 1 открытая</div>
+                </div>
+            </div>
+            <div class="rule-item">
+                <div class="rule-icon">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="rule-content">
+                    <div class="rule-title">Цель игры</div>
+                    <div class="rule-description">Избавиться от всех карт на руках</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Стадии игры -->
+        <div class="rules-section">
+            <div class="rules-section-title">
+                <i class="fas fa-list-ol"></i>
+                Стадии игры
+            </div>
+            <div class="rule-item">
+                <div class="stage-number">1</div>
+                <div class="rule-content">
+                    <div class="rule-title">Базовые правила</div>
+                    <ul class="stage-rules">
+                        <li>Ход только верхней картой</li>
+                        <li>Карта должна быть на 1 ранг выше предыдущей</li>
+                        <li>Масти не важны</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="rule-item">
+                <div class="stage-number">2</div>
+                <div class="rule-content">
+                    <div class="rule-title">Расширенные правила</div>
+                    <ul class="stage-rules">
+                        <li>Добавляются правила мастей</li>
+                        <li>Активируется механика "Последняя!"</li>
+                        <li>Доступна механика "Сколько карт?"</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Особые правила -->
+        <div class="rules-section">
+            <div class="rules-section-title">
+                <i class="fas fa-exclamation-circle"></i>
+                Особые правила
+            </div>
+            <div class="rule-item">
+                <div class="rule-icon">
+                    <i class="fas fa-crown"></i>
+                </div>
+                <div class="rule-content">
+                    <div class="rule-title">Правило двойки</div>
+                    <div class="rule-description">Карта "2" может побить только туз (A)</div>
+                </div>
+            </div>
+            <div class="rule-item">
+                <div class="rule-icon">
+                    <i class="fas fa-exclamation"></i>
+                </div>
+                <div class="rule-content">
+                    <div class="rule-title">Последняя!</div>
+                    <div class="rule-description">Игрок должен объявить, когда у него остается одна карта</div>
+                </div>
+            </div>
+            <div class="rule-item">
+                <div class="rule-icon">
+                    <i class="fas fa-question"></i>
+                </div>
+                <div class="rule-content">
+                    <div class="rule-title">Сколько карт?</div>
+                    <div class="rule-description">Игроки могут спрашивать количество карт у других участников</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Нижняя навигация -->
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item">
+            <i class="fas fa-home"></i>
+            <span>Главная</span>
+        </a>
+        <a href="rating.html" class="nav-item">
+            <i class="fas fa-trophy"></i>
+            <span>Рейтинг</span>
+        </a>
+        <a href="profile.html" class="nav-item">
+            <i class="fas fa-user"></i>
+            <span>Профиль</span>
+        </a>
+        <a href="#" class="nav-item">
+            <i class="fas fa-cog"></i>
+            <span>Настройки</span>
+        </a>
+    </nav>
+</body>
+</html> 
