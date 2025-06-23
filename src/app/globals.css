@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Удалены директивы @tailwind, остались только кастомные стили */
 
 :root {
   /* Цвета по умолчанию */

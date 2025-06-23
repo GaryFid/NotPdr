@@ -36,9 +36,9 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className={`${inter.className} bg-telegram-bg text-telegram-text`}>
+      <body className={inter.className}>
         <Providers>
-          <div className="min-h-screen">
+          <div style={{ minHeight: '100vh' }}>
             {children}
           </div>
         </Providers>

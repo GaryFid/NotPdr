@@ -1,8 +1,9 @@
 'use client'
-import BottomNav from '../../components/BottomNav';
+import { Box, Flex, Text, Button, Grid, VStack, Checkbox } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
 import { FaArrowLeft, FaChess, FaBolt, FaCog, FaCheck, FaPlus } from 'react-icons/fa';
 import { useState } from 'react';
+import BottomNav from '../../components/BottomNav';
 
 const tables = [4,5,6,7,8,9];
 const modes = [
@@ -18,61 +19,69 @@ export default function GameSetupPage() {
   const [testMode, setTestMode] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#181f2a] to-[#232b3e] pb-20">
-      <header className="flex items-center justify-between px-4 py-3 border-b border-[#232b3e] bg-[#181f2a] sticky top-0 z-20">
-        <button className="flex items-center gap-2 text-white hover:text-[#ffd700]" onClick={() => history.back()}>
-          <FaArrowLeft />
-        </button>
-        <h1 className="text-lg font-bold text-[#ffd700]">Настройка игры</h1>
-        <div style={{width: 32}}></div>
-      </header>
-      <main className="max-w-lg mx-auto px-2">
+    <Box minH="100vh" bgGradient="linear(to-br, #181f2a, #232b3e)" pb={20}>
+      <Flex as="header" align="center" justify="space-between" px={4} py={3} borderBottomWidth={1} borderColor="#232b3e" bg="#181f2a" position="sticky" top={0} zIndex={20}>
+        <Button variant="ghost" color="white" _hover={{ color: '#ffd700' }} onClick={() => history.back()}><FaArrowLeft /></Button>
+        <Text fontSize="lg" fontWeight="bold" color="#ffd700">Настройка игры</Text>
+        <Box w={8} />
+      </Flex>
+      <Box as="main" maxW="lg" mx="auto" px={2}>
         {/* Выбор стола */}
-        <motion.section initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{delay:0.1}} className="mt-6 mb-4">
-          <h2 className="text-[#ffd700] font-semibold text-base mb-2">Выберите стол</h2>
-          <div className="grid grid-cols-3 gap-4">
-            {tables.map(n => (
-              <button key={n} onClick={()=>setSelectedTable(n)} className={`relative flex flex-col items-center justify-center aspect-square rounded-xl transition-all duration-200 ${selectedTable===n?'bg-[#ffd700] text-[#232b3e] scale-105 shadow-xl':'bg-[#232b3e] text-white hover:bg-[#ffd700]/30'}`}>
-                <span className="text-3xl font-bold">{n}</span>
-                <span className="text-xs mt-1">{n} игроков</span>
-                {selectedTable===n && <span className="absolute top-2 right-2 bg-white text-[#ffd700] rounded-full p-1"><FaCheck /></span>}
-              </button>
-            ))}
-          </div>
+        <motion.section initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{duration:0.3}}>
+          <Box mt={6} mb={4}>
+            <Text color="#ffd700" fontWeight={600} fontSize="md" mb={2}>Выберите стол</Text>
+            <Grid templateColumns="repeat(3, 1fr)" gap={4}>
+              {tables.map(n => (
+                <Button key={n} onClick={()=>setSelectedTable(n)} position="relative" flexDir="column" alignItems="center" justifyContent="center" aspectRatio={1} borderRadius="xl" transition="all 0.2s" fontSize="3xl" fontWeight="bold" bg={selectedTable===n?'#ffd700':'#232b3e'} color={selectedTable===n?'#232b3e':'white'} boxShadow={selectedTable===n?'xl':'none'} style={selectedTable===n?{transform:'scale(1.05)'}:{}}>
+                  {n}
+                  <Text fontSize="xs" mt={1}>{n} игроков</Text>
+                  {selectedTable===n && <Box position="absolute" top={2} right={2} bg="white" color="#ffd700" borderRadius="full" p={1}><FaCheck /></Box>}
+                </Button>
+              ))}
+            </Grid>
+          </Box>
         </motion.section>
         {/* Режимы игры */}
-        <motion.section initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{delay:0.2}} className="mb-4">
-          <h2 className="text-[#ffd700] font-semibold text-base mb-2">Режим игры</h2>
-          <div className="flex gap-4">
-            {modes.map(mode => (
-              <button key={mode.key} onClick={()=>setSelectedMode(mode.key)} className={`flex flex-col items-center justify-center flex-1 rounded-xl p-4 transition-all duration-200 ${selectedMode===mode.key?'bg-[#ffd700] text-[#232b3e] scale-105 shadow-xl':'bg-[#232b3e] text-white hover:bg-[#ffd700]/30'}`}>
-                <span className="text-2xl mb-1">{mode.icon}</span>
-                <span className="text-xs font-bold">{mode.label}</span>
-              </button>
-            ))}
-          </div>
+        <motion.section initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{duration:0.3}}>
+          <Box mb={4}>
+            <Text color="#ffd700" fontWeight={600} fontSize="md" mb={2}>Режим игры</Text>
+            <Flex gap={4}>
+              {modes.map(mode => (
+                <Button key={mode.key} onClick={()=>setSelectedMode(mode.key)} flexDir="column" alignItems="center" justifyContent="center" flex={1} borderRadius="xl" p={4} transition="all 0.2s" fontSize="2xl" fontWeight="bold" bg={selectedMode===mode.key?'#ffd700':'#232b3e'} color={selectedMode===mode.key?'#232b3e':'white'} boxShadow={selectedMode===mode.key?'xl':'none'} style={selectedMode===mode.key?{transform:'scale(1.05)'}:{}}>
+                  <Box mb={1}>{mode.icon}</Box>
+                  <Text fontSize="xs" fontWeight="bold">{mode.label}</Text>
+                </Button>
+              ))}
+            </Flex>
+          </Box>
         </motion.section>
         {/* Дополнительные настройки */}
-        <motion.section initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{delay:0.3}} className="mb-4">
-          <h2 className="text-[#ffd700] font-semibold text-base mb-2">Дополнительные настройки</h2>
-          <div className="space-y-4">
-            <label className="flex items-center gap-3">
-              <input type="checkbox" checked={addBots} onChange={e=>setAddBots(e.target.checked)} className="accent-[#ffd700] w-5 h-5" />
-              <span className="text-white">Добавить ботов</span>
-            </label>
-            <label className="flex items-center gap-3">
-              <input type="checkbox" checked={testMode} onChange={e=>setTestMode(e.target.checked)} className="accent-[#ffd700] w-5 h-5" />
-              <span className="text-white">Режим тестирования с ИИ</span>
-            </label>
-          </div>
+        <motion.section initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{duration:0.3}}>
+          <Box mb={4}>
+            <Text color="#ffd700" fontWeight={600} fontSize="md" mb={2}>Дополнительные настройки</Text>
+            <VStack gap={4} align="stretch">
+              <Checkbox colorScheme="yellow" isChecked={addBots} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setAddBots(e.target.checked)}>
+                <Text color="white">Добавить ботов</Text>
+              </Checkbox>
+              <Checkbox colorScheme="yellow" isChecked={testMode} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setTestMode(e.target.checked)}>
+                <Text color="white">Режим тестирования с ИИ</Text>
+              </Checkbox>
+            </VStack>
+          </Box>
         </motion.section>
         {/* Кнопки */}
-        <motion.section initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{delay:0.4}} className="flex gap-4 mb-8">
-          <button className="flex-1 px-4 py-3 rounded-xl bg-[#ffd700] text-[#232b3e] font-bold hover:bg-yellow-400 transition flex items-center justify-center gap-2"><FaPlus />Создать стол</button>
-          <button className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-[#232b3e] to-[#ffd700] text-white font-bold hover:from-yellow-400 hover:to-yellow-300 transition flex items-center justify-center gap-2"><FaArrowLeft />Присоединиться</button>
+        <motion.section initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{duration:0.3}}>
+          <Box display="flex" gap={4} mb={8}>
+            <Button flex={1} px={4} py={3} borderRadius="xl" bg="#ffd700" color="#232b3e" fontWeight="bold" _hover={{ bg: 'yellow.400' }}>
+              <FaPlus style={{marginRight: 8}} />Создать стол
+            </Button>
+            <Button flex={1} px={4} py={3} borderRadius="xl" bgGradient="linear(to-r, #232b3e, #ffd700)" color="white" fontWeight="bold" _hover={{ bgGradient: 'linear(to-r, yellow.400, yellow.300)' }}>
+              <FaArrowLeft style={{marginRight: 8}} />Присоединиться
+            </Button>
+          </Box>
         </motion.section>
-      </main>
+      </Box>
       <BottomNav />
-    </div>
+    </Box>
   );
 } 

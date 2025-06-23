@@ -1,102 +1,103 @@
 'use client'
-import BottomNav from '../../components/BottomNav';
+import { Box, Flex, Text, Button, VStack, Switch, Select } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
-import { FaMoon, FaPalette, FaVolumeUp, FaBell, FaUser, FaTrash, FaStore, FaGamepad, FaCog } from 'react-icons/fa';
+import { FaMoon, FaPalette, FaVolumeUp, FaBell, FaUser, FaTrash } from 'react-icons/fa';
+import BottomNav from '../../components/BottomNav';
 
 export default function SettingsPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#181f2a] to-[#232b3e] pb-20">
-      <header className="flex items-center justify-between px-4 py-3 border-b border-[#232b3e] bg-[#181f2a] sticky top-0 z-20">
-        <div></div>
-        <h1 className="text-lg font-bold text-[#ffd700]">Настройки</h1>
-        <div></div>
-      </header>
-      <main className="max-w-lg mx-auto px-2">
+    <Box minH="100vh" bgGradient="linear(to-br, #181f2a, #232b3e)" pb={20}>
+      <Flex as="header" align="center" justify="space-between" px={4} py={3} borderBottomWidth={1} borderColor="#232b3e" bg="#181f2a" position="sticky" top={0} zIndex={20}>
+        <Box />
+        <Text fontSize="lg" fontWeight="bold" color="#ffd700">Настройки</Text>
+        <Box />
+      </Flex>
+      <Box as="main" maxW="lg" mx="auto" px={2}>
         {/* Внешний вид */}
-        <motion.section initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{delay:0.1}} className="bg-[#232b3e] rounded-xl p-4 mt-6 mb-4">
-          <h2 className="text-[#ffd700] font-semibold text-base mb-2">Внешний вид</h2>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <FaMoon className="text-xl text-[#ffd700]" />
-                <div>
-                  <div className="font-semibold text-white">Тёмная тема</div>
-                  <div className="text-xs text-gray-400">Изменить цветовую схему приложения</div>
-                </div>
-              </div>
-              <input type="checkbox" className="toggle toggle-accent" />
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <FaPalette className="text-xl text-[#ffd700]" />
-                <div>
-                  <div className="font-semibold text-white">Цветовая схема</div>
-                  <div className="text-xs text-gray-400">Выберите основной цвет интерфейса</div>
-                </div>
-              </div>
-              <select className="rounded-lg bg-[#181f2a] text-white px-2 py-1">
+        <Box as={motion.section} initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{delay:0.1}} bg="#232b3e" borderRadius="xl" p={4} mt={6} mb={4}>
+          <Text color="#ffd700" fontWeight={600} fontSize="md" mb={2}>Внешний вид</Text>
+          <VStack spacing={4} align="stretch">
+            <Flex align="center" justify="space-between">
+              <Flex align="center" gap={3}>
+                <FaMoon size={20} color="#ffd700" />
+                <Box>
+                  <Text fontWeight={600} color="white">Тёмная тема</Text>
+                  <Text fontSize="xs" color="gray.400">Изменить цветовую схему приложения</Text>
+                </Box>
+              </Flex>
+              <Switch colorScheme="yellow" />
+            </Flex>
+            <Flex align="center" justify="space-between">
+              <Flex align="center" gap={3}>
+                <FaPalette size={20} color="#ffd700" />
+                <Box>
+                  <Text fontWeight={600} color="white">Цветовая схема</Text>
+                  <Text fontSize="xs" color="gray.400">Выберите основной цвет интерфейса</Text>
+                </Box>
+              </Flex>
+              <Select bg="#181f2a" color="white" borderRadius="lg" w={32}>
                 <option>Синий</option>
                 <option>Зелёный</option>
                 <option>Фиолетовый</option>
                 <option>Оранжевый</option>
-              </select>
-            </div>
-          </div>
-        </motion.section>
+              </Select>
+            </Flex>
+          </VStack>
+        </Box>
         {/* Игровой процесс */}
-        <motion.section initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{delay:0.2}} className="bg-[#232b3e] rounded-xl p-4 mb-4">
-          <h2 className="text-[#ffd700] font-semibold text-base mb-2">Игровой процесс</h2>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <FaVolumeUp className="text-xl text-[#ffd700]" />
-                <div>
-                  <div className="font-semibold text-white">Звуковые эффекты</div>
-                  <div className="text-xs text-gray-400">Включить звуки в игре</div>
-                </div>
-              </div>
-              <input type="checkbox" className="toggle toggle-accent" defaultChecked />
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <FaBell className="text-xl text-[#ffd700]" />
-                <div>
-                  <div className="font-semibold text-white">Уведомления</div>
-                  <div className="text-xs text-gray-400">Получать уведомления о ходе игры</div>
-                </div>
-              </div>
-              <input type="checkbox" className="toggle toggle-accent" defaultChecked />
-            </div>
-          </div>
-        </motion.section>
+        <Box as={motion.section} initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{delay:0.2}} bg="#232b3e" borderRadius="xl" p={4} mb={4}>
+          <Text color="#ffd700" fontWeight={600} fontSize="md" mb={2}>Игровой процесс</Text>
+          <VStack spacing={4} align="stretch">
+            <Flex align="center" justify="space-between">
+              <Flex align="center" gap={3}>
+                <FaVolumeUp size={20} color="#ffd700" />
+                <Box>
+                  <Text fontWeight={600} color="white">Звуковые эффекты</Text>
+                  <Text fontSize="xs" color="gray.400">Включить звуки в игре</Text>
+                </Box>
+              </Flex>
+              <Switch colorScheme="yellow" defaultChecked />
+            </Flex>
+            <Flex align="center" justify="space-between">
+              <Flex align="center" gap={3}>
+                <FaBell size={20} color="#ffd700" />
+                <Box>
+                  <Text fontWeight={600} color="white">Уведомления</Text>
+                  <Text fontSize="xs" color="gray.400">Получать уведомления о ходе игры</Text>
+                </Box>
+              </Flex>
+              <Switch colorScheme="yellow" defaultChecked />
+            </Flex>
+          </VStack>
+        </Box>
         {/* Аккаунт */}
-        <motion.section initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{delay:0.3}} className="bg-[#232b3e] rounded-xl p-4 mb-4">
-          <h2 className="text-[#ffd700] font-semibold text-base mb-2">Аккаунт</h2>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <FaUser className="text-xl text-[#ffd700]" />
-                <div>
-                  <div className="font-semibold text-white">Изменить никнейм</div>
-                  <div className="text-xs text-gray-400">Текущий никнейм: Игрок #1</div>
-                </div>
-              </div>
-              <button className="px-4 py-2 rounded-lg bg-[#ffd700] text-[#232b3e] font-bold hover:bg-yellow-400 transition">Изменить</button>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <FaTrash className="text-xl text-[#ffd700]" />
-                <div>
-                  <div className="font-semibold text-white">Удалить аккаунт</div>
-                  <div className="text-xs text-gray-400">Это действие нельзя отменить</div>
-                </div>
-              </div>
-              <button className="px-4 py-2 rounded-lg bg-red-500 text-white font-bold hover:bg-red-600 transition">Удалить</button>
-            </div>
-          </div>
-        </motion.section>
-      </main>
+        <Box as={motion.section} initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{delay:0.3}} bg="#232b3e" borderRadius="xl" p={4} mb={4}>
+          <Text color="#ffd700" fontWeight={600} fontSize="md" mb={2}>Аккаунт</Text>
+          <VStack spacing={4} align="stretch">
+            <Flex align="center" justify="space-between">
+              <Flex align="center" gap={3}>
+                <FaUser size={20} color="#ffd700" />
+                <Box>
+                  <Text fontWeight={600} color="white">Изменить никнейм</Text>
+                  <Text fontSize="xs" color="gray.400">Текущий никнейм: Игрок #1</Text>
+                </Box>
+              </Flex>
+              <Button px={4} py={2} borderRadius="lg" bg="#ffd700" color="#232b3e" fontWeight="bold" _hover={{ bg: 'yellow.400' }}>Изменить</Button>
+            </Flex>
+            <Flex align="center" justify="space-between">
+              <Flex align="center" gap={3}>
+                <FaTrash size={20} color="#ffd700" />
+                <Box>
+                  <Text fontWeight={600} color="white">Удалить аккаунт</Text>
+                  <Text fontSize="xs" color="gray.400">Это действие нельзя отменить</Text>
+                </Box>
+              </Flex>
+              <Button px={4} py={2} borderRadius="lg" bg="red.500" color="white" fontWeight="bold" _hover={{ bg: 'red.600' }}>Удалить</Button>
+            </Flex>
+          </VStack>
+        </Box>
+      </Box>
       <BottomNav />
-    </div>
+    </Box>
   );
 } 

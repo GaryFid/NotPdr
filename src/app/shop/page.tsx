@@ -1,75 +1,76 @@
 'use client'
-import BottomNav from '../../components/BottomNav';
+import { Box, Flex, Text, Button, Grid, VStack } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
 import { FaArrowLeft, FaPalette, FaMagic, FaBolt, FaGift, FaCoins } from 'react-icons/fa';
+import BottomNav from '../../components/BottomNav';
 
 export default function ShopPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#181f2a] to-[#232b3e] pb-20">
+    <Box minH="100vh" bgGradient="linear(to-br, #181f2a, #232b3e)" pb={20}>
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 border-b border-[#232b3e] bg-[#181f2a] sticky top-0 z-20">
-        <button className="flex items-center gap-2 text-white hover:text-[#ffd700]" onClick={() => history.back()}>
-          <FaArrowLeft /> <span className="hidden sm:inline">Назад</span>
-        </button>
-        <h1 className="text-lg font-bold text-[#ffd700]">Магазин</h1>
-        <div className="flex items-center gap-2 text-[#ffd700] font-bold"><FaCoins /> 1000</div>
-      </header>
-      <main className="max-w-lg mx-auto px-2">
+      <Flex as="header" align="center" justify="space-between" px={4} py={3} borderBottomWidth={1} borderColor="#232b3e" bg="#181f2a" position="sticky" top={0} zIndex={20}>
+        <Button variant="ghost" color="white" _hover={{ color: '#ffd700' }} onClick={() => history.back()}><FaArrowLeft /> <Text display={{ base: 'none', sm: 'inline' }} ml={2}>Назад</Text></Button>
+        <Text fontSize="lg" fontWeight="bold" color="#ffd700">Магазин</Text>
+        <Flex align="center" gap={2} color="#ffd700" fontWeight="bold"><FaCoins /> 1000</Flex>
+      </Flex>
+      <Box as="main" maxW="lg" mx="auto" px={2}>
         {/* Категории */}
-        <motion.div initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{delay:0.1}} className="flex gap-2 overflow-x-auto py-4">
-          <button className="px-4 py-2 rounded-lg bg-[#232b3e] text-white font-bold hover:bg-[#ffd700] hover:text-[#232b3e] transition">Все</button>
-          <button className="px-4 py-2 rounded-lg bg-[#232b3e] text-white font-bold hover:bg-[#ffd700] hover:text-[#232b3e] transition">Скины</button>
-          <button className="px-4 py-2 rounded-lg bg-[#232b3e] text-white font-bold hover:bg-[#ffd700] hover:text-[#232b3e] transition">Эффекты</button>
-          <button className="px-4 py-2 rounded-lg bg-[#232b3e] text-white font-bold hover:bg-[#ffd700] hover:text-[#232b3e] transition">Бустеры</button>
-        </motion.div>
+        <Box as={motion.div} initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{delay:0.1}} display="flex" gap={2} overflowX="auto" py={4}>
+          <Button px={4} py={2} borderRadius="lg" bg="#232b3e" color="white" fontWeight="bold" _hover={{ bg: '#ffd700', color: '#232b3e' }}>Все</Button>
+          <Button px={4} py={2} borderRadius="lg" bg="#232b3e" color="white" fontWeight="bold" _hover={{ bg: '#ffd700', color: '#232b3e' }}>Скины</Button>
+          <Button px={4} py={2} borderRadius="lg" bg="#232b3e" color="white" fontWeight="bold" _hover={{ bg: '#ffd700', color: '#232b3e' }}>Эффекты</Button>
+          <Button px={4} py={2} borderRadius="lg" bg="#232b3e" color="white" fontWeight="bold" _hover={{ bg: '#ffd700', color: '#232b3e' }}>Бустеры</Button>
+        </Box>
         {/* Товары */}
-        <motion.section initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{delay:0.2}} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          {/* Скин */}
-          <div className="bg-[#232b3e] rounded-xl p-4 flex flex-col items-center">
-            <div className="h-24 w-full flex items-center justify-center rounded-t-xl bg-gradient-to-r from-[#ffd700] to-[#ffb900] mb-2"><FaPalette className="text-3xl text-white" /></div>
-            <div className="w-full">
-              <h3 className="text-white font-semibold mb-1">Золотой скин</h3>
-              <p className="text-xs text-gray-400 mb-2">Эксклюзивный золотой скин для вашего профиля</p>
-              <div className="flex items-center gap-2 font-bold mb-2"><FaCoins className="text-[#ffd700]" /> 500</div>
-              <button className="w-full px-4 py-2 rounded-lg bg-[#ffd700] text-[#232b3e] font-bold hover:bg-yellow-400 transition mt-2">Купить</button>
-            </div>
-          </div>
-          {/* Эффект */}
-          <div className="bg-[#232b3e] rounded-xl p-4 flex flex-col items-center">
-            <div className="h-24 w-full flex items-center justify-center rounded-t-xl bg-gradient-to-r from-[#ff4d4f] to-[#ffd700] mb-2"><FaMagic className="text-3xl text-white" /></div>
-            <div className="w-full">
-              <h3 className="text-white font-semibold mb-1">Огненный след</h3>
-              <p className="text-xs text-gray-400 mb-2">Оставляйте огненный след при движении</p>
-              <div className="flex items-center gap-2 font-bold mb-2"><FaCoins className="text-[#ffd700]" /> 300</div>
-              <button className="w-full px-4 py-2 rounded-lg bg-[#ffd700] text-[#232b3e] font-bold hover:bg-yellow-400 transition mt-2">Купить</button>
-            </div>
-          </div>
-          {/* Бустер */}
-          <div className="bg-[#232b3e] rounded-xl p-4 flex flex-col items-center">
-            <div className="h-24 w-full flex items-center justify-center rounded-t-xl bg-gradient-to-r from-[#232b3e] to-[#ffd700] mb-2"><FaBolt className="text-3xl text-white" /></div>
-            <div className="w-full">
-              <h3 className="text-white font-semibold mb-1">Ускоритель опыта</h3>
-              <p className="text-xs text-gray-400 mb-2">x2 опыта на следующие 5 игр</p>
-              <div className="flex items-center gap-2 font-bold mb-2"><FaCoins className="text-[#ffd700]" /> 200</div>
-              <button className="w-full px-4 py-2 rounded-lg bg-[#ffd700] text-[#232b3e] font-bold hover:bg-yellow-400 transition mt-2">Купить</button>
-            </div>
-          </div>
-        </motion.section>
+        <Box as={motion.section} initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{delay:0.2}}>
+          <Grid templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={4} mb={8}>
+            {/* Скин */}
+            <VStack bg="#232b3e" borderRadius="xl" p={4} align="center">
+              <Flex h={24} w="full" align="center" justify="center" borderTopRadius="xl" bgGradient="linear(to-r, #ffd700, #ffb900)" mb={2}><FaPalette size={28} color="white" /></Flex>
+              <Box w="full">
+                <Text color="white" fontWeight={600} mb={1}>Золотой скин</Text>
+                <Text fontSize="xs" color="gray.400" mb={2}>Эксклюзивный золотой скин для вашего профиля</Text>
+                <Flex align="center" gap={2} fontWeight="bold" mb={2}><FaCoins color="#ffd700" /> 500</Flex>
+                <Button w="full" px={4} py={2} borderRadius="lg" bg="#ffd700" color="#232b3e" fontWeight="bold" _hover={{ bg: 'yellow.400' }} mt={2}>Купить</Button>
+              </Box>
+            </VStack>
+            {/* Эффект */}
+            <VStack bg="#232b3e" borderRadius="xl" p={4} align="center">
+              <Flex h={24} w="full" align="center" justify="center" borderTopRadius="xl" bgGradient="linear(to-r, #ff4d4f, #ffd700)" mb={2}><FaMagic size={28} color="white" /></Flex>
+              <Box w="full">
+                <Text color="white" fontWeight={600} mb={1}>Огненный след</Text>
+                <Text fontSize="xs" color="gray.400" mb={2}>Оставляйте огненный след при движении</Text>
+                <Flex align="center" gap={2} fontWeight="bold" mb={2}><FaCoins color="#ffd700" /> 300</Flex>
+                <Button w="full" px={4} py={2} borderRadius="lg" bg="#ffd700" color="#232b3e" fontWeight="bold" _hover={{ bg: 'yellow.400' }} mt={2}>Купить</Button>
+              </Box>
+            </VStack>
+            {/* Бустер */}
+            <VStack bg="#232b3e" borderRadius="xl" p={4} align="center">
+              <Flex h={24} w="full" align="center" justify="center" borderTopRadius="xl" bgGradient="linear(to-r, #232b3e, #ffd700)" mb={2}><FaBolt size={28} color="white" /></Flex>
+              <Box w="full">
+                <Text color="white" fontWeight={600} mb={1}>Ускоритель опыта</Text>
+                <Text fontSize="xs" color="gray.400" mb={2}>x2 опыта на следующие 5 игр</Text>
+                <Flex align="center" gap={2} fontWeight="bold" mb={2}><FaCoins color="#ffd700" /> 200</Flex>
+                <Button w="full" px={4} py={2} borderRadius="lg" bg="#ffd700" color="#232b3e" fontWeight="bold" _hover={{ bg: 'yellow.400' }} mt={2}>Купить</Button>
+              </Box>
+            </VStack>
+          </Grid>
+        </Box>
         {/* Специальные предложения */}
-        <motion.section initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{delay:0.3}} className="mb-8">
-          <h2 className="text-[#ffd700] font-semibold text-base mt-8 mb-2">Специальные предложения</h2>
-          <div className="bg-[#232b3e] rounded-xl p-4 flex items-center gap-4">
-            <div className="h-20 w-20 flex items-center justify-center rounded-xl bg-gradient-to-r from-[#ffd700] to-[#ffb900]"><FaGift className="text-3xl text-white" /></div>
-            <div className="flex-1">
-              <h3 className="text-white font-semibold mb-1">Набор новичка</h3>
-              <p className="text-xs text-gray-400 mb-2">Получите стартовый набор со скидкой 50%</p>
-              <div className="flex items-center gap-2 font-bold mb-2"><span className="line-through text-gray-400">1000</span><FaCoins className="text-[#ffd700]" /> 500</div>
-              <button className="w-full px-4 py-2 rounded-lg bg-[#ffd700] text-[#232b3e] font-bold hover:bg-yellow-400 transition mt-2">Купить</button>
-            </div>
-          </div>
-        </motion.section>
-      </main>
+        <Box as={motion.section} initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{delay:0.3}} mb={8}>
+          <Text color="#ffd700" fontWeight={600} fontSize="md" mt={8} mb={2}>Специальные предложения</Text>
+          <Flex bg="#232b3e" borderRadius="xl" p={4} align="center" gap={4}>
+            <Flex h={20} w={20} align="center" justify="center" borderRadius="xl" bgGradient="linear(to-r, #ffd700, #ffb900)"><FaGift size={28} color="white" /></Flex>
+            <Box flex={1}>
+              <Text color="white" fontWeight={600} mb={1}>Набор новичка</Text>
+              <Text fontSize="xs" color="gray.400" mb={2}>Получите стартовый набор со скидкой 50%</Text>
+              <Flex align="center" gap={2} fontWeight="bold" mb={2}><Text as="span" textDecoration="line-through" color="gray.400">1000</Text><FaCoins color="#ffd700" /> 500</Flex>
+              <Button w="full" px={4} py={2} borderRadius="lg" bg="#ffd700" color="#232b3e" fontWeight="bold" _hover={{ bg: 'yellow.400' }} mt={2}>Купить</Button>
+            </Box>
+          </Flex>
+        </Box>
+      </Box>
       <BottomNav />
-    </div>
+    </Box>
   );
 } 
