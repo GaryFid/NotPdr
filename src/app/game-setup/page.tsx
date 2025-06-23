@@ -1,5 +1,5 @@
 'use client'
-import { Box, Flex, Text, Button, Grid, VStack, Checkbox } from '@chakra-ui/react';
+import { Box, Flex, Text, Button, Grid, VStack } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
 import { FaArrowLeft, FaChess, FaBolt, FaCog, FaCheck, FaPlus } from 'react-icons/fa';
 import { useState } from 'react';
@@ -60,12 +60,14 @@ export default function GameSetupPage() {
           <Box mb={4}>
             <Text color="#ffd700" fontWeight={600} fontSize="md" mb={2}>Дополнительные настройки</Text>
             <VStack gap={4} align="stretch">
-              <Checkbox colorScheme="yellow" isChecked={addBots} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setAddBots(e.target.checked)}>
+              <label style={{display:'flex',alignItems:'center',gap:8}}>
+                <input type="checkbox" checked={addBots} onChange={(e)=>setAddBots(e.target.checked)} style={{ accentColor: '#ffd700', width: 20, height: 20, borderRadius: 6, marginRight: 8 }} />
                 <Text color="white">Добавить ботов</Text>
-              </Checkbox>
-              <Checkbox colorScheme="yellow" isChecked={testMode} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setTestMode(e.target.checked)}>
-                <Text color="white">Режим тестирования с ИИ</Text>
-              </Checkbox>
+              </label>
+              <label style={{display:'flex',alignItems:'center',gap:8}}>
+                <input type="checkbox" checked={testMode} onChange={(e)=>setTestMode(e.target.checked)} style={{ accentColor: '#ffd700', width: 20, height: 20, borderRadius: 6, marginRight: 8 }} />
+                <Text color="white">Тестовый режим</Text>
+              </label>
             </VStack>
           </Box>
         </motion.section>
