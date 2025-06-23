@@ -51,7 +51,7 @@ const Settings = () => {
     }
   }, []);
 
-  const applyTheme = (currentSettings) => {
+  const applyTheme = (currentSettings: any) => {
     const root = document.documentElement;
     
     // Применение темы
@@ -68,7 +68,7 @@ const Settings = () => {
     }
   };
 
-  const updateSetting = (key, value) => {
+  const updateSetting = (key: string, value: any) => {
     const newSettings = { ...settings, [key]: value };
     setSettings(newSettings);
     localStorage.setItem('pidr-settings', JSON.stringify(newSettings));
@@ -107,7 +107,7 @@ const Settings = () => {
     showNotification('Настройки экспортированы!', 'success');
   };
 
-  const showNotification = (message, type) => {
+  const showNotification = (message: string, type: string) => {
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
     notification.textContent = message;
