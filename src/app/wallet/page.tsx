@@ -6,27 +6,30 @@ import BottomNav from '../../components/BottomNav';
 
 export default function WalletPage() {
   return (
-    <Box minH="100vh" bgGradient="linear(to-br, #181f2a, #232b3e)" pb={20}>
-      {/* Header */}
-      <Flex as="header" align="center" justify="space-between" px={4} py={3} borderBottomWidth={1} borderColor="#232b3e" bg="#181f2a" position="sticky" top={0} zIndex={20}>
-        <Button variant="ghost" color="white" _hover={{ color: '#ffd700' }} leftIcon={<FaArrowLeft />} onClick={() => history.back()}>
-          <Text display={{ base: 'none', sm: 'inline' }}>Назад</Text>
-        </Button>
-        <Text fontSize="lg" fontWeight="bold" color="#ffd700">Кошелёк</Text>
-        <Box w={6} />
-      </Flex>
-      <Box as="main" maxW="lg" mx="auto" px={2}>
+    <Box minH="100vh" bgGradient="linear(to-br, #0f2027, #2c5364)" pb={20}>
+      <Flex direction="column" align="center" maxW="420px" mx="auto" w="100%" px={4}>
+        {/* Header */}
+        <Flex as="header" align="center" justify="space-between" w="100%" px={0} py={3} borderBottomWidth={1} borderColor="#232b3e" bg="transparent" position="sticky" top={0} zIndex={20} mb={2}>
+          <Button variant="ghost" color="white" _hover={{ color: '#ffd700' }} onClick={() => history.back()}>
+            <FaArrowLeft style={{marginRight: 8}} />
+            <Text display={{ base: 'none', sm: 'inline' }}>Назад</Text>
+          </Button>
+          <Text fontSize="2xl" fontWeight="bold" color="#ffd700">Кошелёк</Text>
+          <Box w={6} />
+        </Flex>
         {/* Баланс */}
-        <Box as={motion.div} initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{delay:0.1}} bg="#232b3e" borderRadius="xl" p={8} display="flex" flexDir="column" alignItems="center" textAlign="center" mt={6}>
-          <Text fontSize="sm" color="gray.400" mb={2}>Текущий баланс</Text>
-          <Flex fontSize="4xl" fontWeight="bold" color="#ffd700" align="center" gap={2} mb={2}><FaCoins /> 1000</Flex>
-          <Button px={4} py={2} borderRadius="lg" bg="#ffd700" color="#232b3e" fontWeight="bold" _hover={{ bg: 'yellow.400' }} leftIcon={<FaPlus />} mt={2}>Пополнить</Button>
+        <Box bg="#ffd700" color="#222" borderRadius="xl" boxShadow="lg" p={8} fontSize="4xl" fontWeight="bold" textAlign="center" mb={4} w="100%">
+          <Flex fontSize="4xl" fontWeight="bold" color="#222" align="center" gap={2} justify="center"><FaCoins color="#222" /> 1000</Flex>
+          <Text fontSize="lg" fontWeight="normal" mt={2}>монет</Text>
+          <Button px={4} py={2} borderRadius="lg" bg="#232b3e" color="#ffd700" fontWeight="bold" _hover={{ bg: 'gray.700', color: '#ffd700' }} mt={4}>
+            <FaPlus style={{marginRight: 8}} />Пополнить
+          </Button>
         </Box>
         {/* История транзакций */}
-        <Box as={motion.section} initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{delay:0.2}}>
-          <Text color="#ffd700" fontWeight={600} fontSize="md" mt={8} mb={2}>История транзакций</Text>
-          <VStack bg="#232b3e" borderRadius="xl" p={2} divider={<Box h="1px" bg="#232b3e" opacity={0.6} />} align="stretch" spacing={0}>
-            <Flex align="center" gap={3} py={3}>
+        <Box bg="#232b3e" borderRadius="xl" boxShadow="lg" p={6} w="100%" mb={4}>
+          <Text color="#ffd700" fontWeight={600} fontSize="md" mb={4}>История транзакций</Text>
+          <VStack align="stretch" gap={3}>
+            <Flex align="center" gap={3}>
               <Flex w={10} h={10} borderRadius="lg" align="center" justify="center" bgGradient="linear(to-r, #ff4d4f, #ffd700)" color="white"><FaShoppingCart /></Flex>
               <Box flex={1}>
                 <Text fontWeight={600} color="white">Покупка скина</Text>
@@ -34,7 +37,7 @@ export default function WalletPage() {
               </Box>
               <Flex color="red.400" fontWeight="bold" align="center" gap={1}>-500 <FaCoins color="#ffd700" /></Flex>
             </Flex>
-            <Flex align="center" gap={3} py={3}>
+            <Flex align="center" gap={3}>
               <Flex w={10} h={10} borderRadius="lg" align="center" justify="center" bgGradient="linear(to-r, #ffd700, #ffb900)" color="white"><FaGift /></Flex>
               <Box flex={1}>
                 <Text fontWeight={600} color="white">Бонус за победу</Text>
@@ -42,7 +45,7 @@ export default function WalletPage() {
               </Box>
               <Flex color="green.400" fontWeight="bold" align="center" gap={1}>+100 <FaCoins color="#ffd700" /></Flex>
             </Flex>
-            <Flex align="center" gap={3} py={3}>
+            <Flex align="center" gap={3}>
               <Flex w={10} h={10} borderRadius="lg" align="center" justify="center" bgGradient="linear(to-r, #232b3e, #ffd700)" color="white"><FaStar /></Flex>
               <Box flex={1}>
                 <Text fontWeight={600} color="white">Достижение разблокировано</Text>
@@ -53,23 +56,23 @@ export default function WalletPage() {
           </VStack>
         </Box>
         {/* Способы пополнения */}
-        <Box as={motion.section} initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{delay:0.3}}>
-          <Text color="#ffd700" fontWeight={600} fontSize="md" mt={8} mb={2}>Способы пополнения</Text>
+        <Box bg="#232b3e" borderRadius="xl" boxShadow="lg" p={6} w="100%" mb={4}>
+          <Text color="#ffd700" fontWeight={600} fontSize="md" mb={4}>Способы пополнения</Text>
           <Grid templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={4}>
-            <VStack bg="#232b3e" borderRadius="xl" p={4} align="center" textAlign="center">
+            <VStack bg="#181f2a" borderRadius="xl" p={4} align="center" textAlign="center" w="100%">
               <FaTelegram size={28} color="#4299e1" style={{ marginBottom: 8 }} />
               <Text color="white" fontWeight={600} mb={1}>Telegram Premium</Text>
               <Text fontSize="xs" color="gray.400" mb={2}>Получите +500 монет</Text>
               <Button w="full" px={4} py={2} borderRadius="lg" bg="#ffd700" color="#232b3e" fontWeight="bold" _hover={{ bg: 'yellow.400' }}>Активировать</Button>
             </VStack>
-            <VStack bg="#232b3e" borderRadius="xl" p={4} align="center" textAlign="center">
+            <VStack bg="#181f2a" borderRadius="xl" p={4} align="center" textAlign="center" w="100%">
               <FaGift size={28} color="#ffd700" style={{ marginBottom: 8 }} />
               <Text color="white" fontWeight={600} mb={1}>Промокод</Text>
               <Text fontSize="xs" color="gray.400" mb={2}>Введите промокод</Text>
-              <Input w="full" px={3} py={2} borderRadius="lg" bg="#181f2a" color="white" focusBorderColor="#ffd700" mb={2} placeholder="PIDR2024" />
+              <Input w="full" px={3} py={2} borderRadius="lg" bg="#232b3e" color="white" _focus={{ borderColor: '#ffd700' }} mb={2} placeholder="PIDR2024" />
               <Button w="full" px={4} py={2} borderRadius="lg" bg="#ffd700" color="#232b3e" fontWeight="bold" _hover={{ bg: 'yellow.400' }}>Применить</Button>
             </VStack>
-            <VStack bg="#232b3e" borderRadius="xl" p={4} align="center" textAlign="center">
+            <VStack bg="#181f2a" borderRadius="xl" p={4} align="center" textAlign="center" w="100%">
               <FaShareAlt size={28} color="#38a169" style={{ marginBottom: 8 }} />
               <Text color="white" fontWeight={600} mb={1}>Поделиться</Text>
               <Text fontSize="xs" color="gray.400" mb={2}>+100 монет за приглашение</Text>
@@ -77,8 +80,8 @@ export default function WalletPage() {
             </VStack>
           </Grid>
         </Box>
-      </Box>
-      <BottomNav />
+        <BottomNav />
+      </Flex>
     </Box>
   );
 } 
