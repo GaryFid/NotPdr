@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import type { TelegramWebApp } from '@/hooks/useTelegram'
 
 type Theme = 'light' | 'dark' | 'auto'
 type ColorScheme = 'blue' | 'purple' | 'green' | 'orange' | 'red'
