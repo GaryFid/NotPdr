@@ -1,117 +1,40 @@
 import React, { useState, useEffect } from 'react';
 
-const Shop = () => {
-  const [coins, setCoins] = useState(100);
-  const [purchasedItems, setPurchasedItems] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('themes');
+interface ShopItem {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  icon: string;
+  type: string;
+  duration?: string;
+}
 
-  const shopItems = {
+const Shop = () => {
+  const [coins, setCoins] = useState<number>(100);
+  const [purchasedItems, setPurchasedItems] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<'themes' | 'cards' | 'avatars' | 'boosters'>('themes');
+
+  const shopItems: Record<'themes' | 'cards' | 'avatars' | 'boosters', ShopItem[]> = {
     themes: [
-      {
-        id: 'dark-theme',
-        name: 'Темная тема',
-        description: 'Стильная темная тема для комфортной игры',
-        price: 50,
-        icon: '🌙',
-        type: 'theme'
-      },
-      {
-        id: 'neon-theme',
-        name: 'Неоновая тема',
-        description: 'Яркая неоновая тема с эффектами',
-        price: 75,
-        icon: '🌈',
-        type: 'theme'
-      },
-      {
-        id: 'retro-theme',
-        name: 'Ретро тема',
-        description: 'Винтажная тема в стиле 80-х',
-        price: 60,
-        icon: '📼',
-        type: 'theme'
-      }
+      { id: 'dark-theme', name: 'Темная тема', description: 'Стильная темная тема для комфортной игры', price: 50, icon: '🌙', type: 'theme' },
+      { id: 'neon-theme', name: 'Неоновая тема', description: 'Яркая неоновая тема с эффектами', price: 75, icon: '🌈', type: 'theme' },
+      { id: 'retro-theme', name: 'Ретро тема', description: 'Винтажная тема в стиле 80-х', price: 60, icon: '📼', type: 'theme' }
     ],
     cards: [
-      {
-        id: 'golden-card',
-        name: 'Золотая карта',
-        description: 'Эксклюзивная золотая карта',
-        price: 100,
-        icon: '🏆',
-        type: 'card'
-      },
-      {
-        id: 'rainbow-card',
-        name: 'Радужная карта',
-        description: 'Переливающаяся всеми цветами карта',
-        price: 150,
-        icon: '🌟',
-        type: 'card'
-      },
-      {
-        id: 'crystal-card',
-        name: 'Кристальная карта',
-        description: 'Прозрачная карта с кристаллическим эффектом',
-        price: 120,
-        icon: '💎',
-        type: 'card'
-      }
+      { id: 'golden-card', name: 'Золотая карта', description: 'Эксклюзивная золотая карта', price: 100, icon: '🏆', type: 'card' },
+      { id: 'rainbow-card', name: 'Радужная карта', description: 'Переливающаяся всеми цветами карта', price: 150, icon: '🌟', type: 'card' },
+      { id: 'crystal-card', name: 'Кристальная карта', description: 'Прозрачная карта с кристаллическим эффектом', price: 120, icon: '💎', type: 'card' }
     ],
     avatars: [
-      {
-        id: 'crown-avatar',
-        name: 'Аватар с короной',
-        description: 'Королевский аватар',
-        price: 80,
-        icon: '👑',
-        type: 'avatar'
-      },
-      {
-        id: 'fire-avatar',
-        name: 'Огненный аватар',
-        description: 'Пылающий аватар',
-        price: 90,
-        icon: '🔥',
-        type: 'avatar'
-      },
-      {
-        id: 'star-avatar',
-        name: 'Звездный аватар',
-        description: 'Сияющий звездный аватар',
-        price: 70,
-        icon: '⭐',
-        type: 'avatar'
-      }
+      { id: 'crown-avatar', name: 'Аватар с короной', description: 'Королевский аватар', price: 80, icon: '👑', type: 'avatar' },
+      { id: 'fire-avatar', name: 'Огненный аватар', description: 'Пылающий аватар', price: 90, icon: '🔥', type: 'avatar' },
+      { id: 'star-avatar', name: 'Звездный аватар', description: 'Сияющий звездный аватар', price: 70, icon: '⭐', type: 'avatar' }
     ],
     boosters: [
-      {
-        id: 'coin-booster',
-        name: 'Удвоитель монет',
-        description: 'Удваивает получаемые монеты на 1 час',
-        price: 30,
-        icon: '💰',
-        type: 'booster',
-        duration: '1 час'
-      },
-      {
-        id: 'exp-booster',
-        name: 'Ускоритель опыта',
-        description: 'Удваивает получаемый опыт на 1 час',
-        price: 25,
-        icon: '⚡',
-        type: 'booster',
-        duration: '1 час'
-      },
-      {
-        id: 'lucky-booster',
-        name: 'Талисман удачи',
-        description: 'Увеличивает шанс выигрыша на 30 минут',
-        price: 40,
-        icon: '🍀',
-        type: 'booster',
-        duration: '30 мин'
-      }
+      { id: 'coin-booster', name: 'Удвоитель монет', description: 'Удваивает получаемые монеты на 1 час', price: 30, icon: '💰', type: 'booster', duration: '1 час' },
+      { id: 'exp-booster', name: 'Ускоритель опыта', description: 'Удваивает получаемый опыт на 1 час', price: 25, icon: '⚡', type: 'booster', duration: '1 час' },
+      { id: 'lucky-booster', name: 'Талисман удачи', description: 'Увеличивает шанс выигрыша на 30 минут', price: 40, icon: '🍀', type: 'booster', duration: '30 мин' }
     ]
   };
 
@@ -130,7 +53,7 @@ const Shop = () => {
     if (savedPurchases) setPurchasedItems(JSON.parse(savedPurchases));
   }, []);
 
-  const handlePurchase = (item) => {
+  const handlePurchase = (item: ShopItem) => {
     if (coins >= item.price && !purchasedItems.includes(item.id)) {
       const newCoins = coins - item.price;
       const newPurchases = [...purchasedItems, item.id];
@@ -150,7 +73,7 @@ const Shop = () => {
     }
   };
 
-  const showNotification = (message, type) => {
+  const showNotification = (message: string, type: string) => {
     // Простая реализация уведомлений
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
@@ -190,7 +113,7 @@ const Shop = () => {
           <button
             key={category.id}
             className={`category-tab ${selectedCategory === category.id ? 'active' : ''}`}
-            onClick={() => setSelectedCategory(category.id)}
+            onClick={() => setSelectedCategory(category.id as 'themes' | 'cards' | 'avatars' | 'boosters')}
           >
             <span className="category-icon">{category.icon}</span>
             <span className="category-name">{category.name}</span>
