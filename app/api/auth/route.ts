@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '../../../lib/prisma';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkey';
+const BOT_TOKEN = process.env.BOT_TOKEN || '';
+const BOT_USERNAME = process.env.BOT_USERNAME || '';
+const APP_URL = process.env.APP_URL || '';
+const BASE_URL = process.env.BASE_URL || '';
+const SESSION_SECRET = process.env.SESSION_SECRET || '';
 
 export async function POST(req: NextRequest) {
   const body = await req.json();

@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '../../../lib/prisma';
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkey';
+const BOT_TOKEN = process.env.BOT_TOKEN || '';
+const BOT_USERNAME = process.env.BOT_USERNAME || '';
+const APP_URL = process.env.APP_URL || '';
+const BASE_URL = process.env.BASE_URL || '';
+const SESSION_SECRET = process.env.SESSION_SECRET || '';
 
 function getUserIdFromRequest(req: NextRequest): number | null {
   const auth = req.headers.get('authorization');

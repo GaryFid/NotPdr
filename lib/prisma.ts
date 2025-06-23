@@ -8,4 +8,7 @@ export const prisma =
     log: ['query'],
   });
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma; 
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+
+export const APP_URL = process.env.APP_URL || '';
+export const BASE_URL = process.env.BASE_URL || ''; 
