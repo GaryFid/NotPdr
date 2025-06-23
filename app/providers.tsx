@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect } from 'react'
-import { TelegramProvider } from '../hooks/use_telegram_hook'
+import { TelegramProvider } from '../hooks/useTelegram'
 import { ThemeProvider } from '../context/theme_context'
-import type { TelegramWebApp } from '../hooks/use_telegram_hook'
+import type { TelegramWebApp } from '../hooks/useTelegram'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
