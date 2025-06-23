@@ -1,14 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '../../../../lib/prisma';
+import { supabase } from '../../../lib/supabase';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkey';
-const BOT_TOKEN = process.env.BOT_TOKEN || '';
-const BOT_USERNAME = process.env.BOT_USERNAME || '';
-const APP_URL = process.env.APP_URL || '';
-const BASE_URL = process.env.BASE_URL || '';
-const SESSION_SECRET = process.env.SESSION_SECRET || '';
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -16,7 +11,12 @@ export async function POST(req: NextRequest) {
   // 1. Локальная авторизация
   if (body.type === 'local') {
     const { username, password } = body;
-    const user = await prisma.user.findUnique({ where: { username } });
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('username', username)
+      .limit(1);
+    const user = users && users[0];
     if (!user || !user.password) {
       return NextResponse.json({ success: false, message: 'Пользователь не найден' }, { status: 401 });
     }
@@ -33,41 +33,55 @@ export async function POST(req: NextRequest) {
     const { id, username, first_name, last_name, photo_url } = body;
     if (!id) return NextResponse.json({ success: false, message: 'No telegram id' }, { status: 400 });
 
-    let user = await prisma.user.findUnique({ where: { telegramId: id.toString() } });
+    let { data: users } = await supabase
+      .from('users')
+      .select('*')
+      .eq('telegramId', id.toString())
+      .limit(1);
+    let user = users && users[0];
     if (!user) {
       // Генерация уникального referralCode
-      let referralCode: string | null = null;
+      let referralCode = null;
       let exists = true;
       while (exists) {
         referralCode = generateReferralCode();
-        exists = !!(await prisma.user.findUnique({ where: { referralCode } }));
+        const { data: refUsers } = await supabase
+          .from('users')
+          .select('id')
+          .eq('referralCode', referralCode)
+          .limit(1);
+        exists = !!(refUsers && refUsers[0]);
       }
-      user = await prisma.user.create({
-        data: {
-          telegramId: id.toString(),
-          username: username || first_name || 'Игрок',
-          firstName: first_name,
-          lastName: last_name,
-          avatar: photo_url,
-          authType: 'telegram',
-          registrationDate: new Date(),
-          rating: 1000,
-          gamesPlayed: 0,
-          gamesWon: 0,
-          referralCode,
-        }
-      });
+      const { data: newUsers } = await supabase
+        .from('users')
+        .insert([
+          {
+            telegramId: id.toString(),
+            username: username || first_name || 'Игрок',
+            firstName: first_name,
+            lastName: last_name,
+            avatar: photo_url,
+            authType: 'telegram',
+            registrationDate: new Date().toISOString(),
+            rating: 1000,
+            gamesPlayed: 0,
+            gamesWon: 0,
+            referralCode,
+          }
+        ])
+        .select('*');
+      user = newUsers && newUsers[0];
     } else {
       // Обновим данные если изменились
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
+      await supabase
+        .from('users')
+        .update({
           username: username || first_name || 'Игрок',
           firstName: first_name,
           lastName: last_name,
           avatar: photo_url,
-        }
-      });
+        })
+        .eq('id', user.id);
     }
     const token = jwt.sign({ userId: user.id, telegramId: user.telegramId }, JWT_SECRET, { expiresIn: '30d' });
     return NextResponse.json({ success: true, token, user });
@@ -76,7 +90,6 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ success: false, message: 'Unknown auth type' }, { status: 400 });
 }
 
-// Генерация реферального кода
 function generateReferralCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let code = '';

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '../../../../lib/prisma';
+import { redis } from '../../../../lib/redis';
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkey';
@@ -21,6 +21,10 @@ function getUserIdFromRequest(req: NextRequest): number | null {
   }
 }
 
+function generateGameId() {
+  return Math.random().toString(36).substr(2, 9);
+}
+
 export async function POST(req: NextRequest) {
   const userId = getUserIdFromRequest(req);
   if (!userId) {
@@ -29,19 +33,20 @@ export async function POST(req: NextRequest) {
 
   const { withAI = false } = await req.json();
 
-  const game = await prisma.game.create({
-    data: {
-      status: 'waiting',
-      players: JSON.stringify([{ userId, isBot: false }]),
-      deck: JSON.stringify([]),
-      discardPile: JSON.stringify([]),
-      withAI,
-      gameStage: 'init',
-      currentPlayerId: userId,
-      startTime: new Date(),
-      gameData: JSON.stringify({}),
-    }
-  });
+  const gameId = generateGameId();
+  const game = {
+    id: gameId,
+    status: 'waiting',
+    players: [{ userId, isBot: false }],
+    deck: [],
+    discardPile: [],
+    withAI,
+    gameStage: 'init',
+    currentPlayerId: userId,
+    startTime: new Date().toISOString(),
+    gameData: {},
+  };
+  await redis.set(`game:${gameId}`, JSON.stringify(game));
 
   return NextResponse.json({ success: true, game });
 } 
