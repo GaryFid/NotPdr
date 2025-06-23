@@ -11,7 +11,7 @@ interface TelegramUser {
   is_premium?: boolean
 }
 
-interface TelegramWebApp {
+export interface TelegramWebApp {
   initData: string
   initDataUnsafe: {
     query_id?: string

@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect } from 'react'
-import { TelegramProvider } from '@/hooks/useTelegram'
-import { ThemeProvider } from '@/contexts/ThemeContext'
+import { TelegramProvider } from '../hooks/use_telegram_hook'
+import { ThemeProvider } from '../context/theme_context'
+import type { TelegramWebApp } from '../hooks/use_telegram_hook'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -10,7 +11,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     const root = document.documentElement
     
     if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
-      const tg = window.Telegram.WebApp
+      const tg = window.Telegram.WebApp as TelegramWebApp
       
       // Применяем цвета темы Telegram
       if (tg.themeParams) {
