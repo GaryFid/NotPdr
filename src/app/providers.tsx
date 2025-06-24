@@ -5,6 +5,7 @@ import { TelegramProvider } from '../hooks/useTelegram'
 import { ThemeProvider } from '../context/theme_context'
 import type { TelegramWebApp } from '../hooks/useTelegram'
 import { ChakraProvider } from '@chakra-ui/react'
+import { defaultSystem } from '@chakra-ui/react/preset'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -33,7 +34,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, [])
 
   return (
-    <ChakraProvider value={{}}>
+    <ChakraProvider value={defaultSystem}>
       <TelegramProvider>
         <ThemeProvider>
           {children}
