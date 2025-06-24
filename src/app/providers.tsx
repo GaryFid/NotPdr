@@ -33,7 +33,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, [])
 
   return (
-    <ChakraProvider>
+    <ChakraProvider value={{}}>
       <TelegramProvider>
         <ThemeProvider>
           {children}
