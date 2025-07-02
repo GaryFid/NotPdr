@@ -3,7 +3,7 @@ import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import BottomNav from '../../components/BottomNav';
 import styles from './GameTable.module.css';
-import { useDragAndDrop } from '../../hooks/useDragAndDrop';
+import { useDragAndDrop } from '@/hooks/useDragAndDrop';
 import type { Player, Card } from '../../types/game';
 import { motion, AnimatePresence } from 'framer-motion';
 import React from 'react';
