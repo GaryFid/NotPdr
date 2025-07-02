@@ -66,7 +66,15 @@ function Card({ image, draggable, onDragStart, onTouchStart, style }: {
       onTouchStart={onTouchStart}
       style={style}
     >
-      <Image src={`/img/cards/${image}`} alt="card" width={42} height={64} priority />
+      <Image
+        src={`/img/cards/${image}`}
+        alt="card"
+        width={42}
+        height={64}
+        style={{ width: '100%', height: '100%' }}
+        objectFit="contain"
+        priority
+      />
     </div>
   );
 }
