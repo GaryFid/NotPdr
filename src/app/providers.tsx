@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { TelegramProvider } from '../hooks/useTelegram'
 import { ThemeProvider } from '../context/theme_context'
-import type { TelegramWebApp } from '../hooks/useTelegram'
+import type { TelegramWebApp } from '../types/telegram-webapp'
 import { ChakraProvider } from '@chakra-ui/react'
 import { defaultSystem } from '@chakra-ui/react/preset'
 
