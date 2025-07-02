@@ -7,6 +7,15 @@ import type { TelegramWebApp } from '../types/telegram-webapp'
 import { ChakraProvider } from '@chakra-ui/react'
 import { defaultSystem } from '@chakra-ui/react/preset'
 
+// Add global augmentation for Window to include Telegram
+declare global {
+  interface Window {
+    Telegram?: {
+      WebApp: TelegramWebApp;
+    };
+  }
+}
+
 export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Инициализация CSS переменных для Telegram
