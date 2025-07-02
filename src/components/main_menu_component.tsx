@@ -1,12 +1,12 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Play, Users, Zap, Crown } from 'lucide-react'
+import { Play, User, Star, Book, Wallet } from 'lucide-react'
 import { useGameStore } from '../store/gameStore'
 import { useTelegram } from '../hooks/useTelegram'
 
 interface MainMenuProps {
-  onNavigate: (page: 'game' | 'profile' | 'shop' | 'settings') => void
+  onNavigate: (page: 'game' | 'profile' | 'rating' | 'rules' | 'wallet') => void
 }
 
 export function MainMenu({ onNavigate }: MainMenuProps) {
@@ -24,146 +24,106 @@ export function MainMenu({ onNavigate }: MainMenuProps) {
   }
 
   return (
-    <div className="min-h-screen p-4">
-      <div className="max-w-md mx-auto">
-        {/* Логотип и заголовок */}
+    <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[#0f2027] via-[#232b3e] to-[#1e3c72] animate-gradient-move">
+      {/* Wallet button top right */}
+      <motion.button
+        onClick={() => onNavigate('wallet')}
+        initial={{ y: -40, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
+        className="fixed top-6 right-6 z-20 bg-gradient-to-tr from-yellow-400 to-yellow-600 shadow-2xl rounded-full p-4 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform border-4 border-white/30"
+        style={{ boxShadow: '0 4px 32px 0 #ffd70080' }}
+        aria-label="Кошелек"
+      >
+        <Wallet size={32} className="text-white drop-shadow-lg" />
+      </motion.button>
+
+      {/* Animated background particles (optional) */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        {/* Можно добавить animated SVG или canvas particles */}
+      </div>
+
+      {/* Main content */}
+      <div className="relative z-10 flex flex-col items-center w-full max-w-md px-4">
+        {/* Logo and heading */}
         <motion.div
-          initial={{ y: -50, opacity: 0 }}
+          initial={{ y: -60, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="text-center mb-8 pt-8"
+          className="text-center mb-10 mt-16"
         >
           <motion.div
             animate={{ rotate: [0, 5, -5, 0] }}
             transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
             className="mb-4"
           >
-            <div className="w-24 h-24 mx-auto bg-gradient-to-br from-primary-500 via-purple-600 to-pink-500 rounded-2xl flex items-center justify-center shadow-2xl">
-              <span className="text-3xl font-bold text-white">P</span>
+            <div className="w-24 h-24 mx-auto bg-gradient-to-br from-blue-700 via-blue-500 to-cyan-400 rounded-2xl flex items-center justify-center shadow-2xl animate-pulse">
+              <span className="text-4xl font-extrabold text-white drop-shadow-lg">P</span>
             </div>
           </motion.div>
-          
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary-600 to-purple-600 bg-clip-text text-transparent mb-2">
+          <h1 className="text-5xl font-extrabold bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-700 bg-clip-text text-transparent mb-2 animate-gradient-text">
             P.I.D.R.
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 text-lg">
-            Карточная игра
-          </p>
+          <p className="text-blue-100 text-lg tracking-wide drop-shadow">Карточная игра нового поколения</p>
         </motion.div>
 
-        {/* Статистика */}
-        <motion.div
-          initial={{ y: 30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="grid grid-cols-3 gap-4 mb-8"
-        >
-          <div className="card text-center p-4">
-            <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-              {stats.gamesPlayed}
-            </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              Игр сыграно
-            </div>
-          </div>
-          
-          <div className="card text-center p-4">
-            <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-              {stats.gamesWon}
-            </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              Побед
-            </div>
-          </div>
-          
-          <div className="card text-center p-4">
-            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-              {stats.bestScore}
-            </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              Рекорд
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Кнопки игры */}
-        <motion.div
-          initial={{ y: 30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="space-y-4 mb-8"
-        >
+        {/* Main 4 buttons */}
+        <div className="grid grid-cols-2 gap-6 w-full mb-10">
           <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleStartSinglePlayer}
-            className="w-full btn btn-primary py-4 px-6 rounded-xl shadow-lg flex items-center justify-center space-x-3 text-lg font-semibold"
+            whileHover={{ scale: 1.07, boxShadow: '0 0 32px #0ea5e9' }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => onNavigate('game')}
+            className="flex flex-col items-center justify-center py-8 rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-400 to-blue-700 shadow-xl text-white font-bold text-xl transition-all duration-200 border-2 border-white/10 hover:shadow-blue-400/40 animate-glow"
           >
-            <Play size={24} />
-            <span>Одиночная игра</span>
+            <Play size={40} className="mb-2 drop-shadow" />
+            Играть
           </motion.button>
-
           <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleStartMultiplayer}
-            className="w-full btn btn-secondary py-4 px-6 rounded-xl shadow-lg flex items-center justify-center space-x-3 text-lg font-semibold bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600"
-          >
-            <Users size={24} />
-            <span>Мультиплеер</span>
-          </motion.button>
-        </motion.div>
-
-        {/* Быстрые действия */}
-        <motion.div
-          initial={{ y: 30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          className="grid grid-cols-2 gap-4"
-        >
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => onNavigate('shop')}
-            className="card p-6 text-center hover:shadow-lg transition-all duration-200"
-          >
-            <Crown className="w-8 h-8 mx-auto mb-2 text-yellow-500" />
-            <div className="font-semibold text-gray-900 dark:text-white">
-              Магазин
-            </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              Карты и бусты
-            </div>
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.07, boxShadow: '0 0 32px #f59e42' }}
+            whileTap={{ scale: 0.97 }}
             onClick={() => onNavigate('profile')}
-            className="card p-6 text-center hover:shadow-lg transition-all duration-200"
+            className="flex flex-col items-center justify-center py-8 rounded-2xl bg-gradient-to-br from-yellow-400 via-orange-400 to-pink-500 shadow-xl text-white font-bold text-xl transition-all duration-200 border-2 border-white/10 hover:shadow-yellow-400/40 animate-glow"
           >
-            <Zap className="w-8 h-8 mx-auto mb-2 text-blue-500" />
-            <div className="font-semibold text-gray-900 dark:text-white">
-              Достижения
-            </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              {stats.achievements.length} получено
-            </div>
+            <User size={40} className="mb-2 drop-shadow" />
+            Профиль
           </motion.button>
-        </motion.div>
+          <motion.button
+            whileHover={{ scale: 1.07, boxShadow: '0 0 32px #fbbf24' }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => onNavigate('rating')}
+            className="flex flex-col items-center justify-center py-8 rounded-2xl bg-gradient-to-br from-pink-500 via-yellow-400 to-orange-400 shadow-xl text-white font-bold text-xl transition-all duration-200 border-2 border-white/10 hover:shadow-pink-400/40 animate-glow"
+          >
+            <Star size={40} className="mb-2 drop-shadow" />
+            Рейтинг
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.07, boxShadow: '0 0 32px #38bdf8' }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => onNavigate('rules')}
+            className="flex flex-col items-center justify-center py-8 rounded-2xl bg-gradient-to-br from-cyan-400 via-blue-400 to-blue-700 shadow-xl text-white font-bold text-xl transition-all duration-200 border-2 border-white/10 hover:shadow-cyan-400/40 animate-glow"
+          >
+            <Book size={40} className="mb-2 drop-shadow" />
+            Правила
+          </motion.button>
+        </div>
 
-        {/* Подсказка */}
+        {/* Footer or tip */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1 }}
           className="mt-8 text-center"
         >
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Соберите все карты P.I.D.R. и станьте легендой!
-          </p>
+          <p className="text-sm text-blue-200 drop-shadow">Погрузись в мир карточных баталий и стань легендой!</p>
         </motion.div>
       </div>
     </div>
   )
 }
+
+// Tailwind custom animations (add to your global CSS or tailwind.config.js):
+// .animate-gradient-move { background-size: 200% 200%; animation: gradientMove 8s ease-in-out infinite; }
+// @keyframes gradientMove { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+// .animate-gradient-text { background-size: 200% 200%; animation: gradientText 4s ease-in-out infinite; }
+// @keyframes gradientText { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+// .animate-glow { box-shadow: 0 0 32px 0 #0ea5e9cc, 0 0 8px 0 #fff2; }

@@ -6,7 +6,7 @@ import BottomNav from '../../components/BottomNav';
 
 export default function WalletPage() {
   return (
-    <Box minH="100vh" bgGradient="linear(to-br, #0f2027, #2c5364)" pb={20}>
+    <Box minH="100vh" className="bg-gradient-to-br from-[#0f2027] via-[#232b3e] to-[#1e3c72] animate-gradient-move" pb={20}>
       <Flex direction="column" align="center" maxW="420px" mx="auto" w="100%" px={4}>
         {/* Header */}
         <Flex as="header" align="center" justify="space-between" w="100%" px={0} py={3} borderBottomWidth={1} borderColor="#232b3e" bg="transparent" position="sticky" top={0} zIndex={20} mb={2}>

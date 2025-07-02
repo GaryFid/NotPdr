@@ -33,23 +33,6 @@ export default function BottomNav() {
       >
         <div className="backdrop-blur-xl bg-gradient-to-t from-[#181c2a]/95 via-[#232b3e]/90 to-[#0f2027]/80 border-t border-white/10 shadow-2xl">
           <div className="relative flex justify-center items-center px-4 py-3 max-w-md mx-auto gap-4">
-            {/* Кошелек-бургер */}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleWalletClick}
-              className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-[#232b3e] hover:bg-[#232b3e]/80 border-2 border-[#ffd700] shadow-xl transition-all duration-200 focus:outline-none"
-              aria-label="Открыть кошелек"
-              style={{ minWidth: 120 }}
-            >
-              {/* SVG иконка кошелька */}
-              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="4" y="8" width="24" height="16" rx="6" fill="#ffd700" stroke="#fff" strokeWidth="2"/>
-                <rect x="8" y="12" width="16" height="8" rx="4" fill="#232b3e" />
-                <circle cx="24" cy="16" r="2" fill="#ffd700" />
-              </svg>
-              <span className="text-lg font-bold text-[#ffd700]">Кошелек</span>
-            </motion.button>
             {/* Баланс монеты */}
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}

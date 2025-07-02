@@ -712,4 +712,26 @@ input, textarea, select {
     100% {
         transform: translateX(100%);
     }
+}
+
+.animate-gradient-move {
+  background-size: 200% 200%;
+  animation: gradientMove 8s ease-in-out infinite;
+}
+@keyframes gradientMove {
+  0%,100%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+}
+
+.animate-gradient-text {
+  background-size: 200% 200%;
+  animation: gradientText 4s ease-in-out infinite;
+}
+@keyframes gradientText {
+  0%,100%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+}
+
+.animate-glow {
+  box-shadow: 0 0 32px 0 #0ea5e9cc, 0 0 8px 0 #fff2;
 } 
