@@ -25,47 +25,43 @@ export function MainMenu({ onNavigate, balance = 1000 }: MainMenuProps) {
   }
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-start bg-gradient-to-br from-[#0a1833] via-[#0e223f] to-[#1e3c72]">
-      {/* Верхний бар */}
-      <div className="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-b from-[#0a1833] to-[#13294b] border-b border-[#222b3e]" style={{minHeight: 56}}>
-        <button onClick={() => window.history.back()} className="px-3 py-1 rounded-lg border border-red-400 text-red-200 font-semibold text-base hover:bg-red-400/10 transition-all">Назад</button>
-        <span className="text-2xl font-extrabold text-[#ffd700] tracking-widest text-center flex-1" style={{letterSpacing: 2}}>P.I.D.R.</span>
-        <button onClick={() => onNavigate('menu')} className="flex items-center gap-2 px-3 py-1 rounded-lg border border-blue-400 text-blue-200 font-semibold text-base hover:bg-blue-400/10 transition-all">
-          <Menu size={24} />
-          <img src="/img/ton-icon.svg" alt="TON" className="w-6 h-6" />
-        </button>
-      </div>
-      {/* Баланс */}
-      <div className="w-full flex justify-center mt-6 mb-4">
-        <div className="bg-[#ffd700] text-[#222] rounded-xl shadow-lg px-8 py-6 flex flex-col items-center" style={{minWidth: 260}}>
-          <span className="text-4xl font-extrabold">{balance}</span>
-          <span className="text-lg font-semibold mt-1">монет</span>
-        </div>
-      </div>
-      {/* Быстрые действия */}
-      <div className="w-full max-w-md px-4">
-        <div className="text-gray-400 font-bold text-lg mb-3 mt-2 tracking-wide">БЫСТРЫЕ ДЕЙСТВИЯ</div>
-        <div className="grid grid-cols-2 gap-4">
-          <button onClick={() => onNavigate('game')} className="action-card">
-            <Play size={32} className="text-red-400 mb-2" />
-            <span className="font-bold text-lg text-white">ИГРАТЬ</span>
-          </button>
-          <button onClick={() => onNavigate('invite')} className="action-card">
-            <UserPlus size={32} className="text-red-400 mb-2" />
-            <span className="font-bold text-lg text-white">ПРИГЛАСИТЬ</span>
-          </button>
-          <button onClick={() => onNavigate('shop')} className="action-card">
-            <Store size={32} className="text-red-400 mb-2" />
-            <span className="font-bold text-lg text-white">МАГАЗИН</span>
-          </button>
-          <button onClick={() => onNavigate('profile')} className="action-card">
-            <User size={32} className="text-red-400 mb-2" />
-            <span className="font-bold text-lg text-white">ПРОФИЛЬ</span>
+    <div className="main-menu-container">
+      <div className="main-menu-inner">
+        {/* Верхний бар */}
+        <div className="menu-header">
+          <button onClick={() => window.history.back()} className="px-3 py-1 rounded-lg border border-red-400 text-red-200 font-semibold text-base hover:bg-red-400/10 transition-all">Назад</button>
+          <span className="menu-title">P.I.D.R.</span>
+          <button onClick={() => onNavigate('menu')} className="flex items-center gap-2 px-3 py-1 rounded-lg border border-blue-400 text-blue-200 font-semibold text-base hover:bg-blue-400/10 transition-all">
+            <Menu size={24} />
+            <img src="/img/ton-icon.svg" alt="TON" className="w-6 h-6" />
           </button>
         </div>
+        {/* Баланс */}
+        <div className="menu-balance-card">
+          <div className="menu-balance-amount">{balance}</div>
+          <div className="menu-balance-label">монет</div>
+        </div>
+        {/* Быстрые действия */}
+        <div className="menu-actions-title">БЫСТРЫЕ ДЕЙСТВИЯ</div>
+        <div className="menu-actions-grid">
+          <button onClick={() => onNavigate('game')} className="menu-action-card">
+            <Play className="menu-action-icon" />
+            <span className="menu-action-label">ИГРАТЬ</span>
+          </button>
+          <button onClick={() => onNavigate('invite')} className="menu-action-card">
+            <UserPlus className="menu-action-icon" />
+            <span className="menu-action-label">ПРИГЛАСИТЬ</span>
+          </button>
+          <button onClick={() => onNavigate('shop')} className="menu-action-card">
+            <Store className="menu-action-icon" />
+            <span className="menu-action-label">МАГАЗИН</span>
+          </button>
+          <button onClick={() => onNavigate('profile')} className="menu-action-card">
+            <User className="menu-action-icon" />
+            <span className="menu-action-label">ПРОФИЛЬ</span>
+          </button>
+        </div>
       </div>
-      {/* Нижний отступ */}
-      <div className="flex-1" />
     </div>
   )
 }

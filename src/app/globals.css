@@ -2,7 +2,7 @@
 
 :root {
   /* Цвета по умолчанию */
-  --game-bg: #f8fafc;
+  --game-bg: #0c0c0c;
   --card-bg: #ffffff;
   --text-color: #1e293b;
   --accent-color: #0ea5e9;
@@ -871,4 +871,113 @@ input:focus, textarea:focus, select:focus {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
   }
+}
+
+.main-menu-container {
+  min-height: 100vh;
+  background: radial-gradient(ellipse at 60% 0%, #1e3c72 0%, #0a1833 80%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.main-menu-inner {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 0 16px 32px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.menu-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(10,24,51,0.95);
+  box-shadow: 0 2px 12px #0006;
+  border-bottom: 2px solid #222b3e;
+  padding: 16px 0 12px 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.menu-title {
+  color: #ffd700;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  flex: 1;
+  text-align: center;
+}
+
+.menu-balance-card {
+  background: linear-gradient(135deg, #ffd700 80%, #fffbe6 100%);
+  color: #222;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px #ffd70044;
+  padding: 28px 0 18px 0;
+  margin: 32px 0 18px 0;
+  width: 100%;
+  text-align: center;
+}
+
+.menu-balance-amount {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.menu-balance-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.menu-actions-title {
+  color: #b0b0b0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 18px 0 10px 0;
+  letter-spacing: 1px;
+}
+
+.menu-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  width: 100%;
+}
+
+.menu-action-card {
+  background: #101c33;
+  border: 2px solid #ff3b3b;
+  border-radius: 18px;
+  box-shadow: 0 2px 12px #0004;
+  padding: 28px 0 18px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: box-shadow .18s, border-color .18s, background .18s;
+  cursor: pointer;
+}
+.menu-action-card:hover {
+  border-color: #ffd700;
+  background: #182a4d;
+  box-shadow: 0 4px 24px #ffd70044;
+}
+.menu-action-icon {
+  font-size: 2rem;
+  color: #ff3b3b;
+  margin-bottom: 8px;
+}
+.menu-action-label {
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 1px;
 }
