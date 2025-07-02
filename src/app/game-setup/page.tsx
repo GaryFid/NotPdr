@@ -1,7 +1,7 @@
 'use client'
 import { Box, Flex, Text, Button, Grid, VStack } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
-import { FaArrowLeft, FaChess, FaBolt, FaCog, FaCheck, FaPlus } from 'react-icons/fa';
+import { FaArrowLeft, FaChess, FaBolt, FaCog, FaCheck, FaPlus, FaRobot } from 'react-icons/fa';
 import { useState } from 'react';
 import BottomNav from '../../components/BottomNav';
 
@@ -73,13 +73,28 @@ export default function GameSetupPage() {
         </motion.section>
         {/* Кнопки */}
         <motion.section initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{duration:0.3}}>
-          <Box display="flex" gap={4} mb={8}>
-            <Button flex={1} px={4} py={3} borderRadius="xl" bg="#ffd700" color="#232b3e" fontWeight="bold" _hover={{ bg: 'yellow.400' }}>
-              <FaPlus style={{marginRight: 8}} />Создать стол
+          <Box display="flex" flexDirection="column" gap={4} mb={8}>
+            <Button
+              flex={1}
+              px={4}
+              py={3}
+              borderRadius="xl"
+              bg="#ffd700"
+              color="#232b3e"
+              fontWeight="bold"
+              _hover={{ bg: 'yellow.400' }}
+              onClick={() => window.location.href = `/game?ai=1&table=${selectedTable}&mode=${selectedMode}`}
+            >
+              <FaRobot style={{marginRight: 8}} />Играть с ботами
             </Button>
-            <Button flex={1} px={4} py={3} borderRadius="xl" bgGradient="linear(to-r, #232b3e, #ffd700)" color="white" fontWeight="bold" _hover={{ bgGradient: 'linear(to-r, yellow.400, yellow.300)' }}>
-              <FaArrowLeft style={{marginRight: 8}} />Присоединиться
-            </Button>
+            <Box display="flex" gap={4}>
+              <Button flex={1} px={4} py={3} borderRadius="xl" bg="#ffd700" color="#232b3e" fontWeight="bold" _hover={{ bg: 'yellow.400' }}>
+                <FaPlus style={{marginRight: 8}} />Создать стол
+              </Button>
+              <Button flex={1} px={4} py={3} borderRadius="xl" bgGradient="linear(to-r, #232b3e, #ffd700)" color="white" fontWeight="bold" _hover={{ bgGradient: 'linear(to-r, yellow.400, yellow.300)' }}>
+                <FaArrowLeft style={{marginRight: 8}} />Присоединиться
+              </Button>
+            </Box>
           </Box>
         </motion.section>
       </Box>

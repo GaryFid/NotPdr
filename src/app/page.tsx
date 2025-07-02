@@ -5,7 +5,6 @@ import { MainMenu } from '../components/main_menu_component'
 
 export default function Home() {
   const handleNavigate = (page: string) => {
-    // Здесь можно реализовать роутинг или стейт
     if (page === 'wallet') {
       window.location.href = '/wallet';
     } else if (page === 'profile') {
@@ -15,7 +14,13 @@ export default function Home() {
     } else if (page === 'rules') {
       window.location.href = '/rules';
     } else if (page === 'game') {
-      window.location.href = '/game';
+      window.location.href = '/game-setup';
+    } else if (page === 'invite') {
+      window.location.href = '/invite';
+    } else if (page === 'shop') {
+      window.location.href = '/shop';
+    } else if (page === 'menu') {
+      // открыть бургер-меню, если нужно
     }
   };
   return <MainMenu onNavigate={handleNavigate} />;
