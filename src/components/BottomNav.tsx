@@ -1,29 +1,13 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
+import SideMenu from './SideMenu';
 
-const coins = [
-  {
-    name: 'TON',
-    icon: '/img/ton-icon.svg',
-    value: 12345.6789,
-  },
-  {
-    name: 'Trump',
-    icon: '/img/trump-icon.svg',
-    value: 9876.5432,
-  },
-  {
-    name: 'Solana',
-    icon: '/img/solana-icon.svg',
-    value: 23456.7890,
-  },
-  {
-    name: 'Jetton',
-    icon: '/img/jetton-icon.svg',
-    value: 10000.0001,
-  },
-];
+const mainCoin = {
+  name: 'TON',
+  icon: '/img/ton-icon.svg',
+  value: 12345.6789,
+};
 
 function formatCrypto(val: number) {
   return val.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
@@ -32,48 +16,56 @@ function formatCrypto(val: number) {
 export default function BottomNav() {
   const [open, setOpen] = useState(false);
 
-  const handleBurgerClick = () => {
-    setOpen(!open);
-    // Здесь можно открыть боковое меню или модалку
-    console.log('Открыть бургер-меню');
+  const handleWalletClick = () => {
+    setOpen(true);
+  };
+  const handleCloseMenu = () => {
+    setOpen(false);
   };
 
   return (
-    <motion.nav 
-      initial={{ y: 100 }}
-      animate={{ y: 0 }}
-      transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      className="fixed bottom-0 left-0 right-0 z-50"
-    >
-      <div className="backdrop-blur-xl bg-gradient-to-t from-[#0f2027]/95 via-[#232b3e]/90 to-[#2c5364]/80 border-t border-white/10 shadow-2xl">
-        <div className="relative flex justify-between items-center px-4 py-3 max-w-md mx-auto">
-          {/* Бургер-меню */}
-          <button
-            onClick={handleBurgerClick}
-            className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-white/10 hover:bg-white/20 transition-all duration-200 focus:outline-none"
-            aria-label="Открыть меню"
-          >
-            {/* SVG бургер-иконка */}
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect y="6" width="28" height="3" rx="1.5" fill="#ffd700"/>
-              <rect y="13" width="28" height="3" rx="1.5" fill="#ffd700"/>
-              <rect y="20" width="28" height="3" rx="1.5" fill="#ffd700"/>
-            </svg>
-            <span className="text-base font-bold text-[#ffd700]">Меню</span>
-          </button>
-          {/* Баланс криптомонет с иконками */}
-          <div className="flex items-center gap-4 px-2 py-2 rounded-2xl bg-[#232b3e]/80 border border-[#ffd700] shadow-lg overflow-x-auto">
-            {coins.map((coin) => (
-              <div key={coin.name} className="flex items-center gap-1 min-w-[90px]">
-                <Image src={coin.icon} alt={coin.name} width={24} height={24} />
-                <span className="text-sm font-bold text-[#ffd700] tabular-nums">{formatCrypto(coin.value)}</span>
-              </div>
-            ))}
+    <>
+      <motion.nav 
+        initial={{ y: 100 }}
+        animate={{ y: 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        className="fixed bottom-0 left-0 right-0 z-50"
+      >
+        <div className="backdrop-blur-xl bg-gradient-to-t from-[#181c2a]/95 via-[#232b3e]/90 to-[#0f2027]/80 border-t border-white/10 shadow-2xl">
+          <div className="relative flex justify-center items-center px-4 py-3 max-w-md mx-auto gap-4">
+            {/* Кошелек-бургер */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleWalletClick}
+              className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-[#232b3e] hover:bg-[#232b3e]/80 border-2 border-[#ffd700] shadow-xl transition-all duration-200 focus:outline-none"
+              aria-label="Открыть кошелек"
+              style={{ minWidth: 120 }}
+            >
+              {/* SVG иконка кошелька */}
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="4" y="8" width="24" height="16" rx="6" fill="#ffd700" stroke="#fff" strokeWidth="2"/>
+                <rect x="8" y="12" width="16" height="8" rx="4" fill="#232b3e" />
+                <circle cx="24" cy="16" r="2" fill="#ffd700" />
+              </svg>
+              <span className="text-lg font-bold text-[#ffd700]">Кошелек</span>
+            </motion.button>
+            {/* Баланс монеты */}
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.2 }}
+              className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-[#232b3e]/80 border border-[#ffd700] shadow-lg"
+            >
+              <Image src={mainCoin.icon} alt={mainCoin.name} width={28} height={28} />
+              <span className="text-xl font-bold text-[#ffd700] tabular-nums">{formatCrypto(mainCoin.value)}</span>
+            </motion.div>
           </div>
+          {/* Bottom safe area for iOS */}
+          <div className="h-safe-area-inset-bottom bg-gradient-to-t from-[#181c2a]/60 to-transparent" />
         </div>
-        {/* Bottom safe area for iOS */}
-        <div className="h-safe-area-inset-bottom bg-gradient-to-t from-[#0f2027]/60 to-transparent" />
-      </div>
-    </motion.nav>
+      </motion.nav>
+      <SideMenu isOpen={open} onClose={handleCloseMenu} />
+    </>
   );
 }
