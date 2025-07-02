@@ -53,7 +53,7 @@
 }
 .cardsRow {
   display: flex;
-  gap: 6px;
+  gap: 5px;
   margin-bottom: 2px;
 }
 .card {
@@ -78,17 +78,19 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 48px;
-  height: 72px;
+  width: 46px;
+  height: 70px;
   transform: translate(-50%, -50%);
   z-index: 0;
-  filter: drop-shadow(0 2px 8px #000a);
+  opacity: 0.7;
+  filter: blur(1px) drop-shadow(0 2px 8px #ffd70088);
   pointer-events: none;
   user-select: none;
 }
 .card img {
   position: relative;
   z-index: 1;
+  border-radius: 6px;
 }
 .dropZone {
   position: absolute;
