@@ -1022,20 +1022,30 @@ input:focus, textarea:focus, select:focus {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
+  font-size: 1.05rem;
 }
 .wallet-coin:last-child {
   margin-bottom: 0;
 }
-.wallet-coin-name {
-  color: #ffd700;
-  font-weight: 700;
-  flex: 1;
+.wallet-coin-icon {
+  width: 28px;
+  height: 28px;
 }
 .wallet-coin-value {
   color: #fff;
   font-weight: 700;
-  font-size: 1.1rem;
+  min-width: 70px;
+  text-align: left;
+  font-size: 1.08rem;
+  margin-left: 6px;
+}
+.wallet-coin-name {
+  color: #ffd700;
+  font-weight: 700;
+  margin-left: 8px;
+  font-size: 1.08rem;
+  letter-spacing: 1px;
 }
 .wallet-action-btn {
   flex: 1;

@@ -52,9 +52,9 @@ export function MainMenu({ onNavigate, balance = 1000 }: MainMenuProps) {
             <div className="wallet-dropdown fade-in">
               {coins.map((coin) => (
                 <div className="wallet-coin" key={coin.name}>
-                  <img src={coin.icon} alt={coin.name} className="w-7 h-7" />
-                  <span className="wallet-coin-name">{coin.name}</span>
+                  <img src={coin.icon} alt={coin.name} className="wallet-coin-icon" />
                   <span className="wallet-coin-value">{coin.value}</span>
+                  <span className="wallet-coin-name">{coin.name}</span>
                 </div>
               ))}
               <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
