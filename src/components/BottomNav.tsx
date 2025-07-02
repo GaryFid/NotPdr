@@ -1,25 +1,41 @@
-import { usePathname, useRouter } from 'next/navigation';
-import { FaGamepad, FaUsers, FaUser, FaWallet, FaBook } from 'react-icons/fa';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 
-const NAV = [
-  { label: 'Меню', icon: <FaGamepad />, href: '/', color: '#ff6b6b' },
-  { label: 'Друзья', icon: <FaUsers />, href: '/friends', color: '#4ecdc4' },
-  { label: 'Профиль', icon: <FaUser />, href: '/profile', color: '#45b7d1' },
-  { label: 'Кошелёк', icon: <FaWallet />, href: '/wallet', color: '#ffd93d' },
-  { label: 'Правила', icon: <FaBook />, href: '/rules', color: '#6c5ce7' },
+const coins = [
+  {
+    name: 'TON',
+    icon: '/img/ton-icon.svg',
+    value: 12345.6789,
+  },
+  {
+    name: 'Trump',
+    icon: '/img/trump-icon.svg',
+    value: 9876.5432,
+  },
+  {
+    name: 'Solana',
+    icon: '/img/solana-icon.svg',
+    value: 23456.7890,
+  },
+  {
+    name: 'Jetton',
+    icon: '/img/jetton-icon.svg',
+    value: 10000.0001,
+  },
 ];
 
-export default function BottomNav() {
-  const pathname = usePathname();
-  const router = useRouter();
+function formatCrypto(val: number) {
+  return val.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+}
 
-  const handleNavClick = (href: string) => {
-    // Добавляем вибрацию для Telegram Web App
-    if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
-      window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
-    }
-    router.push(href);
+export default function BottomNav() {
+  const [open, setOpen] = useState(false);
+
+  const handleBurgerClick = () => {
+    setOpen(!open);
+    // Здесь можно открыть боковое меню или модалку
+    console.log('Открыть бургер-меню');
   };
 
   return (
@@ -29,116 +45,35 @@ export default function BottomNav() {
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className="fixed bottom-0 left-0 right-0 z-50"
     >
-      {/* Glassmorphism background */}
       <div className="backdrop-blur-xl bg-gradient-to-t from-[#0f2027]/95 via-[#232b3e]/90 to-[#2c5364]/80 border-t border-white/10 shadow-2xl">
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#232b3e]/60 via-transparent to-transparent pointer-events-none" />
-        
-        {/* Navigation content */}
-        <div className="relative flex justify-around items-center px-2 py-3 max-w-md mx-auto">
-          {NAV.map((item, index) => {
-            const isActive = pathname === item.href;
-            
-            return (
-              <motion.button
-                key={item.href}
-                onClick={() => handleNavClick(item.href)}
-                className={`relative flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-300 group min-w-[60px] focus:outline-none ${isActive ? 'shadow-xl scale-105' : 'hover:scale-105'}`}
-                whileTap={{ scale: 0.9 }}
-                whileHover={{ scale: 1.08 }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                style={{ zIndex: isActive ? 2 : 1 }}
-              >
-                {/* Active background indicator */}
-                {isActive && (
-                  <motion.div
-                    layoutId="activeBackground"
-                    className="absolute inset-0 rounded-2xl shadow-2xl border-2"
-                    style={{ 
-                      background: `linear-gradient(135deg, ${item.color}cc, #232b3e 80%)`,
-                      borderColor: `${item.color}`
-                    }}
-                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                  />
-                )}
-                {/* Hover background */}
-                <div className="absolute inset-0 rounded-2xl bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                {/* Icon container */}
-                <div className="relative z-10">
-                  <motion.div
-                    className="text-xl mb-1 transition-all duration-300"
-                    style={{ 
-                      color: isActive ? item.color : '#b0c4de',
-                      filter: isActive ? 'drop-shadow(0 0 12px currentColor)' : 'none'
-                    }}
-                    animate={{ 
-                      scale: isActive ? 1.15 : 1,
-                      rotateY: isActive ? [0, 360] : 0
-                    }}
-                    transition={{ 
-                      scale: { duration: 0.3 },
-                      rotateY: { duration: 0.6, ease: "easeInOut" }
-                    }}
-                  >
-                    {item.icon}
-                  </motion.div>
-                  {/* Label */}
-                  <motion.span
-                    className="text-xs font-bold transition-all duration-300 tracking-wide"
-                    style={{ 
-                      color: isActive ? item.color : '#b0c4de',
-                      textShadow: isActive ? `0 0 12px ${item.color}80` : 'none'
-                    }}
-                    animate={{ 
-                      fontWeight: isActive ? 700 : 400,
-                      letterSpacing: isActive ? '0.5px' : '0px'
-                    }}
-                  >
-                    {item.label}
-                  </motion.span>
-                </div>
-                {/* Active dot indicator */}
-                {isActive && (
-                  <motion.div
-                    className="absolute -top-1 w-1 h-1 rounded-full"
-                    style={{ backgroundColor: item.color }}
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.2 }}
-                  />
-                )}
-                {/* Ripple effect on tap */}
-                <motion.div
-                  className="absolute inset-0 rounded-2xl"
-                  style={{ backgroundColor: item.color, opacity: 0.08 }}
-                  initial={{ scale: 0, opacity: 0 }}
-                  whileTap={{ 
-                    scale: 1.5, 
-                    opacity: [0, 0.3, 0],
-                    transition: { duration: 0.4 }
-                  }}
-                />
-              </motion.button>
-            );
-          })}
+        <div className="relative flex justify-between items-center px-4 py-3 max-w-md mx-auto">
+          {/* Бургер-меню */}
+          <button
+            onClick={handleBurgerClick}
+            className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-white/10 hover:bg-white/20 transition-all duration-200 focus:outline-none"
+            aria-label="Открыть меню"
+          >
+            {/* SVG бургер-иконка */}
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect y="6" width="28" height="3" rx="1.5" fill="#ffd700"/>
+              <rect y="13" width="28" height="3" rx="1.5" fill="#ffd700"/>
+              <rect y="20" width="28" height="3" rx="1.5" fill="#ffd700"/>
+            </svg>
+            <span className="text-base font-bold text-[#ffd700]">Меню</span>
+          </button>
+          {/* Баланс криптомонет с иконками */}
+          <div className="flex items-center gap-4 px-2 py-2 rounded-2xl bg-[#232b3e]/80 border border-[#ffd700] shadow-lg overflow-x-auto">
+            {coins.map((coin) => (
+              <div key={coin.name} className="flex items-center gap-1 min-w-[90px]">
+                <Image src={coin.icon} alt={coin.name} width={24} height={24} />
+                <span className="text-sm font-bold text-[#ffd700] tabular-nums">{formatCrypto(coin.value)}</span>
+              </div>
+            ))}
+          </div>
         </div>
         {/* Bottom safe area for iOS */}
         <div className="h-safe-area-inset-bottom bg-gradient-to-t from-[#0f2027]/60 to-transparent" />
       </div>
-
-      {/* Floating active indicator line */}
-      <motion.div
-        className="absolute top-0 left-0 h-0.5 rounded-full"
-        style={{
-          background: `linear-gradient(90deg, transparent, ${NAV.find(item => item.href === pathname)?.color || '#fff'}, transparent)`,
-          width: `${100 / NAV.length}%`,
-          left: `${(NAV.findIndex(item => item.href === pathname) * 100) / NAV.length}%`
-        }}
-        layoutId="activeIndicator"
-        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-      />
     </motion.nav>
   );
 }
