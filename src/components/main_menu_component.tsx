@@ -2,8 +2,8 @@
 
 import { motion } from 'framer-motion'
 import { Play, Users, Zap, Crown } from 'lucide-react'
-import { useGameStore } from '@/store/gameStore'
-import { useTelegram } from '@/hooks/useTelegram'
+import { useGameStore } from '../store/gameStore'
+import { useTelegram } from '../hooks/useTelegram'
 
 interface MainMenuProps {
   onNavigate: (page: 'game' | 'profile' | 'shop' | 'settings') => void
