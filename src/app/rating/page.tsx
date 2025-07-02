@@ -6,8 +6,8 @@ import BottomNav from '../../components/BottomNav';
 
 export default function RatingPage() {
   return (
-    <Box minH="100vh" bgGradient="linear(to-br, #181f2a, #232b3e)" pb={20}>
-      <Flex as="header" align="center" justify="space-between" px={4} py={3} borderBottomWidth={1} borderColor="#232b3e" bg="#181f2a" position="sticky" top={0} zIndex={20}>
+    <Box minH="100vh" bgGradient="linear(to-br, #0f2027, #2c5364)" pb={20}>
+      <Flex as="header" align="center" justify="space-between" px={4} py={3} borderBottomWidth={1} borderColor="#232b3e" bg="transparent" position="sticky" top={0} zIndex={20}>
         <Button variant="ghost" color="white" _hover={{ color: '#ffd700' }} onClick={() => history.back()}>
           <FaArrowLeft style={{marginRight: 8}} />
           <Text display={{ base: 'none', sm: 'inline' }}>Назад</Text>
@@ -18,7 +18,7 @@ export default function RatingPage() {
       <Box as="main" maxW="lg" mx="auto" px={2}>
         {/* Рейтинг */}
         <motion.section initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{duration:0.3}}>
-          <Box bg="#232b3e" borderRadius="xl" p={6} mt={6} mb={4}>
+          <Box bg="#232b3e" borderRadius="xl" boxShadow="lg" p={6} mt={6} mb={4}>
             <Flex align="center" gap={4} mb={4}>
               <Text fontSize="5xl" fontWeight="bold" color="#ffd700">2350</Text>
               <Box flex={1}>
@@ -36,7 +36,7 @@ export default function RatingPage() {
         </motion.section>
         {/* История игр */}
         <motion.section initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{duration:0.3}}>
-          <Box>
+          <Box bg="#232b3e" borderRadius="xl" boxShadow="lg" p={6} mb={4}>
             <Text color="#ffd700" fontWeight={600} fontSize="md" mt={8} mb={2}>История игр</Text>
             <VStack gap={3} align="stretch">
               <Flex bg="#232b3e" borderRadius="xl" p={4} align="center" justify="space-between">

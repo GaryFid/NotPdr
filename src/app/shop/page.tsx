@@ -67,7 +67,7 @@ export default function ShopPage() {
           <Flex bg="#181f2a" borderRadius="xl" p={4} align="center" gap={4}>
             <Flex h={20} w={20} align="center" justify="center" borderRadius="xl" bgGradient="linear(to-r, #ffd700, #ffb900)"><FaGift size={28} color="white" /></Flex>
             <Box flex={1}>
-              <Text color="white" fontWeight={600} mb={1}>Набор новичка</Text>
+              <Text fontWeight={600} color="white">Набор новичка</Text>
               <Text fontSize="xs" color="gray.400" mb={2}>Получите стартовый набор со скидкой 50%</Text>
               <Flex align="center" gap={2} fontWeight="bold" mb={2}><Text as="span" textDecoration="line-through" color="gray.400">1000</Text><FaCoins color="#ffd700" /> 500</Flex>
               <Button w="full" px={4} py={2} borderRadius="lg" bg="#ffd700" color="#232b3e" fontWeight="bold" _hover={{ bg: 'yellow.400' }} mt={2}>Купить</Button>
