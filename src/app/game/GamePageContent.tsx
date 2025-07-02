@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import BottomNav from '../../components/BottomNav';
 import styles from './GameTable.module.css';
@@ -192,8 +192,21 @@ export default function GamePageContent() {
     }
   }, [dealt, players.length]);
 
+  // --- Анимационная надпись для первого хода ---
+  const [showFirstMove, setShowFirstMove] = useState(true);
+  useEffect(() => {
+    setShowFirstMove(true);
+    const t = setTimeout(() => setShowFirstMove(false), 3000);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
     <div className={styles.tableWrapper}>
+      {showFirstMove && (
+        <div className={styles.firstMoveBanner}>
+          Ходит первый: <b>{players[currentPlayer]?.name}</b>
+        </div>
+      )}
       <div className={styles.tableBg}>
         <div className={styles.tableCenter} />
         {/* Колода в центре */}
@@ -234,7 +247,9 @@ export default function GamePageContent() {
                       style={{
                         zIndex: ci,
                         boxShadow: p.isUser ? '0 0 12px #ffd700' : undefined,
-                        transform: p.isUser ? `translateY(-${ci*8}px)` : `rotate(${(ci-1)*8}deg)`
+                        transform: p.isUser ? `translateY(-${ci*8}px)` : `rotate(${(ci-1)*8}deg)`,
+                        background: card.open ? '#fff' : 'transparent', // Белый фон под открытой картой
+                        border: card.open ? '2px solid #ffd700' : 'none',
                       }}
                     />
                   </motion.div>
@@ -262,7 +277,12 @@ export default function GamePageContent() {
                 key={card.id}
                 image={card.open ? (card.image.split('/').pop() as string) : CARD_BACK}
                 draggable={false}
-                style={{zIndex:ci,transform:`translateY(-${ci*4}px) scale(1.15)`}}
+                style={{
+                  zIndex:ci,
+                  transform:`translateY(-${ci*4}px) scale(1.15)`,
+                  background: card.open ? '#fff' : 'transparent',
+                  border: card.open ? '2px solid #ffd700' : 'none',
+                }}
               />
             ))}
           </div>

@@ -134,4 +134,28 @@
 .drawButton:hover {
   background: linear-gradient(90deg, #ffe066 60%, #fffbe6 100%);
   box-shadow: 0 6px 32px #ffd70066;
+}
+.firstMoveBanner {
+  position: fixed;
+  left: 50%;
+  top: 18%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.95);
+  color: #ffd700;
+  font-size: 2.2rem;
+  font-weight: bold;
+  padding: 22px 48px;
+  border-radius: 24px;
+  box-shadow: 0 0 32px #ffd70088, 0 2px 16px #0002;
+  z-index: 1000;
+  text-align: center;
+  animation: fade-move-in 0.7s cubic-bezier(.22,1,.36,1), fade-move-out 0.7s 2.3s cubic-bezier(.22,1,.36,1) forwards;
+}
+@keyframes fade-move-in {
+  0% { opacity: 0; transform: translate(-50%, -80%) scale(0.95); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes fade-move-out {
+  0% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -30%) scale(1.05); }
 } 
