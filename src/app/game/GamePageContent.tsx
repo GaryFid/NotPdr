@@ -5,6 +5,8 @@ import BottomNav from '../../components/BottomNav';
 import styles from './GameTable.module.css';
 import { useDragAndDrop } from '../../hooks/useDragAndDrop';
 import type { Player, Card } from '../../types/game';
+import { motion, AnimatePresence } from 'framer-motion';
+import React from 'react';
 
 const CARD_IMAGES = [
   '2_of_clubs.png','2_of_diamonds.png','2_of_hearts.png','2_of_spades.png',
@@ -68,13 +70,66 @@ function Card({ image, draggable, onDragStart, onTouchStart, style }: {
   );
 }
 
+// Вспомогательная функция для получения ранга карты
+function getCardRank(image: string): number {
+  const name = image.replace('.png', '').replace('/img/cards/', '');
+  if (name.startsWith('ace')) return 14;
+  if (name.startsWith('king')) return 13;
+  if (name.startsWith('queen')) return 12;
+  if (name.startsWith('jack')) return 11;
+  const match = name.match(/(\d+)_of/);
+  return match ? parseInt(match[1], 10) : 0;
+}
+
+// Вспомогательная функция для генерации колоды и раздачи
+function generateDeckAndDeal(playersCount: number, cardsPerPlayer: number) {
+  const deck = [...CARD_IMAGES];
+  // Перемешать
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  const hands: string[][] = Array.from({ length: playersCount }, () => []);
+  let deckIdx = 0;
+  for (let c = 0; c < cardsPerPlayer; c++) {
+    for (let p = 0; p < playersCount; p++) {
+      hands[p].push(deck[deckIdx++]);
+    }
+  }
+  return { hands, deck: deck.slice(deckIdx) };
+}
+
 export default function GamePageContent() {
-  const [stage, setStage] = useState<1 | 2>(1); // 1: draw, 2: play
-  const [players, setPlayers] = useState<Player[]>(() => getPlayers(6));
+  const playersCount = 6;
+  const cardsPerPlayer = 3;
+  const [{ hands, deck }] = useState(() => generateDeckAndDeal(playersCount, cardsPerPlayer));
+  const [players, setPlayers] = useState<Player[]>(() => getPlayers(playersCount).map((p, i) => ({
+    ...p,
+    cards: [
+      { id: `c${i}a`, image: CARD_BACK, open: false },
+      { id: `c${i}b`, image: CARD_BACK, open: false },
+      { id: `c${i}c`, image: `/img/cards/${hands[i][2]}`, open: true },
+    ],
+  })));
+  const [stage, setStage] = useState<1 | 2>(1); // 1: раздача, 2: игра
+  const [dealt, setDealt] = useState(false);
+  const [currentPlayer, setCurrentPlayer] = useState(0);
+  const [lastPlayedRank, setLastPlayedRank] = useState<number | null>(null);
   const [draggedCard, setDraggedCard] = useState<{card: Card; playerIdx: number} | null>(null);
   const [dropZoneActive, setDropZoneActive] = useState(false);
   const { dragProps, dropProps } = useDragAndDrop({
     onDrop: (card: Card, playerIdx: number) => {
+      // Логика хода: можно положить только карту на 1 ранг выше
+      const rank = getCardRank(card.image);
+      if (playerIdx === currentPlayer && (lastPlayedRank === null || rank === lastPlayedRank + 1)) {
+        // Удаляем карту из руки игрока
+        setPlayers(prev => prev.map((p, idx) => idx === playerIdx ? {
+          ...p,
+          cards: p.cards.filter(c => c.id !== card.id)
+        } : p));
+        setLastPlayedRank(rank);
+        setCurrentPlayer((prev) => (prev + 1) % players.length);
+      }
       setDropZoneActive(false);
     },
     onDragStart: (card: Card, playerIdx: number) => {
@@ -87,11 +142,25 @@ export default function GamePageContent() {
     },
   });
 
+  // Анимация раздачи: карты появляются по одной с задержкой
+  React.useEffect(() => {
+    if (!dealt) {
+      let timeout = setTimeout(() => setDealt(true), players.length * 300 + 500);
+      return () => clearTimeout(timeout);
+    }
+  }, [dealt, players.length]);
+
   return (
     <div className={styles.tableWrapper}>
       <div className={styles.tableBg}>
-        {/* Стол */}
         <div className={styles.tableCenter} />
+        {/* Колода в центре */}
+        {deck.length > 0 && (
+          <div className={styles.deckInCenter}>
+            <Image src={"/img/cards/" + CARD_BACK} alt="deck" width={64} height={96} style={{boxShadow:'0 0 16px #ffd700'}} />
+            <span className={styles.deckCount}>{deck.length}</span>
+          </div>
+        )}
         {/* Игроки по кругу */}
         {players.map((p, i) => (
           <div
@@ -102,22 +171,33 @@ export default function GamePageContent() {
             <div className={styles.avatarWrap}>
               <Image src={p.avatar} alt="avatar" width={30} height={30} className={styles.avatar} />
               <span className={styles.playerName}>{p.name}</span>
+              {currentPlayer === i && stage === 2 && <span style={{color:'#ffd700',marginLeft:4,fontWeight:700}}>⬤</span>}
             </div>
             <div className={styles.cardsRow}>
-              {p.cards.map((card, ci) => (
-                <Card
-                  key={card.id}
-                  image={card.open ? (card.image.split('/').pop() as string) : CARD_BACK}
-                  draggable={p.isUser && stage === 2 && card.open}
-                  onDragStart={e => dragProps.onDragStart(card, i, e)}
-                  onTouchStart={e => dragProps.onTouchStart(card, i, e)}
-                  style={{
-                    zIndex: ci,
-                    boxShadow: p.isUser ? '0 0 12px #ffd700' : undefined,
-                    transform: p.isUser ? `translateY(-${ci*8}px)` : `rotate(${(ci-1)*8}deg)`
-                  }}
-                />
-              ))}
+              <AnimatePresence>
+                {p.cards.map((card, ci) => (
+                  <motion.div
+                    key={card.id}
+                    initial={{ opacity: 0, y: -40 }}
+                    animate={{ opacity: dealt ? 1 : 0, y: 0 }}
+                    exit={{ opacity: 0, y: 40 }}
+                    transition={{ delay: (i * 0.3) + (ci * 0.1), duration: 0.4 }}
+                    style={{ display: 'inline-block' }}
+                  >
+                    <Card
+                      image={card.open ? (card.image.split('/').pop() as string) : CARD_BACK}
+                      draggable={p.isUser && stage === 2 && card.open && currentPlayer === i && (lastPlayedRank === null || getCardRank(card.image) === lastPlayedRank + 1)}
+                      onDragStart={e => dragProps.onDragStart(card, i, e)}
+                      onTouchStart={e => dragProps.onTouchStart(card, i, e)}
+                      style={{
+                        zIndex: ci,
+                        boxShadow: p.isUser ? '0 0 12px #ffd700' : undefined,
+                        transform: p.isUser ? `translateY(-${ci*8}px)` : `rotate(${(ci-1)*8}deg)`
+                      }}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
           </div>
         ))}
@@ -130,7 +210,7 @@ export default function GamePageContent() {
       </div>
       {/* Кнопка взять карту */}
       {stage === 1 && (
-        <button className={styles.drawButton} onClick={() => setStage(2)}>
+        <button className={styles.drawButton} onClick={() => { setStage(2); setDealt(true); }}>
           Взять карту
         </button>
       )}

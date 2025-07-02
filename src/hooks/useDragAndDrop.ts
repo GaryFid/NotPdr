@@ -29,8 +29,9 @@ export function useDragAndDrop({ onDrop, onDragStart, onDragEnd }: DragAndDropPa
     onTouchStart: (card, playerIdx, e) => {
       dragData.current = { card, playerIdx };
       if (onDragStart) onDragStart(card, playerIdx);
-      // Для мобильных: слушаем touchmove/touchend
-      const move = (evt: TouchEvent) => evt.preventDefault();
+      const move = (evt: TouchEvent) => {
+        if (evt.cancelable) evt.preventDefault();
+      };
       const end = (evt: TouchEvent) => {
         if (onDrop && dragData.current) onDrop(dragData.current.card, dragData.current.playerIdx);
         if (onDragEnd) onDragEnd();
