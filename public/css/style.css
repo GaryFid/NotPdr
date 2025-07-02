@@ -734,4 +734,25 @@ input, textarea, select {
 
 .animate-glow {
   box-shadow: 0 0 32px 0 #0ea5e9cc, 0 0 8px 0 #fff2;
+}
+
+.glass-btn {
+  background: rgba(30,40,80,0.35);
+  backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(255,255,255,0.08);
+}
+.glass-wallet {
+  background: rgba(30,40,80,0.55);
+  backdrop-filter: blur(18px);
+  border: 2.5px solid #ffd70044;
+}
+.neon-text {
+  text-shadow: 0 0 8px #38bdf8, 0 0 24px #38bdf8, 0 0 2px #fff;
+}
+.animate-fade-in {
+  animation: fadeIn 1.2s cubic-bezier(.4,0,.2,1) both;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(24px);}
+  to { opacity: 1; transform: none; }
 } 
