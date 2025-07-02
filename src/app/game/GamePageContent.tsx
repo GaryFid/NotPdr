@@ -7,6 +7,7 @@ import { useDragAndDrop } from '@/hooks/useDragAndDrop';
 import type { Player, Card } from '../../types/game';
 import { motion, AnimatePresence } from 'framer-motion';
 import React from 'react';
+import { useSearchParams } from 'next/navigation';
 
 const CARD_IMAGES = [
   '2_of_clubs.png','2_of_diamonds.png','2_of_hearts.png','2_of_spades.png',
@@ -65,7 +66,7 @@ function Card({ image, draggable, onDragStart, onTouchStart, style }: {
       onTouchStart={onTouchStart}
       style={style}
     >
-      <Image src={`/img/cards/${image}`} alt="card" width={64} height={96} priority />
+      <Image src={`/img/cards/${image}`} alt="card" width={42} height={64} priority />
     </div>
   );
 }
@@ -100,7 +101,8 @@ function generateDeckAndDeal(playersCount: number, cardsPerPlayer: number) {
 }
 
 export default function GamePageContent() {
-  const playersCount = 6;
+  const params = useSearchParams();
+  const playersCount = Math.max(4, Math.min(9, parseInt(params.get('table') || '6', 10)));
   const cardsPerPlayer = 3;
   const [{ hands, deck }] = useState(() => generateDeckAndDeal(playersCount, cardsPerPlayer));
   const [players, setPlayers] = useState<Player[]>(() => getPlayers(playersCount).map((p, i) => ({
@@ -156,8 +158,8 @@ export default function GamePageContent() {
         <div className={styles.tableCenter} />
         {/* Колода в центре */}
         {deck.length > 0 && (
-          <div className={styles.deckInCenter}>
-            <Image src={"/img/cards/" + CARD_BACK} alt="deck" width={64} height={96} style={{boxShadow:'0 0 16px #ffd700'}} />
+          <div className={styles.deckInCenter} style={{position:'absolute',left:'50%',top:'50%',transform:'translate(-50%,-50%)',zIndex:5}}>
+            <Image src={"/img/cards/" + CARD_BACK} alt="deck" width={42} height={64} style={{boxShadow:'0 0 16px #ffd700'}} />
             <span className={styles.deckCount}>{deck.length}</span>
           </div>
         )}
@@ -210,11 +212,22 @@ export default function GamePageContent() {
       </div>
       {/* Кнопка взять карту */}
       {stage === 1 && (
-        <button className={styles.drawButton} onClick={() => { setStage(2); setDealt(true); }}>
-          Взять карту
-        </button>
+        <>
+          <button className={styles.drawButton} onClick={() => { setStage(2); setDealt(true); }}>
+            Взять карту
+          </button>
+          <div style={{display:'flex',justifyContent:'center',gap:8,marginTop:12}}>
+            {players[0].cards.map((card, ci) => (
+              <Card
+                key={card.id}
+                image={card.open ? (card.image.split('/').pop() as string) : CARD_BACK}
+                draggable={false}
+                style={{zIndex:ci,transform:`translateY(-${ci*4}px) scale(1.15)`}}
+              />
+            ))}
+          </div>
+        </>
       )}
-      <BottomNav />
     </div>
   );
 } 

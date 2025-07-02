@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import SideMenu from './SideMenu';
+import { usePathname } from 'next/navigation';
 
 const mainCoin = {
   name: 'TON',
@@ -14,6 +15,8 @@ function formatCrypto(val: number) {
 }
 
 export default function BottomNav() {
+  const pathname = usePathname();
+  const isMainMenu = pathname === '/' || pathname === '/main';
   const [open, setOpen] = useState(false);
 
   const handleWalletClick = () => {
@@ -33,16 +36,17 @@ export default function BottomNav() {
       >
         <div className="backdrop-blur-xl bg-gradient-to-t from-[#181c2a]/95 via-[#232b3e]/90 to-[#0f2027]/80 border-t border-white/10 shadow-2xl">
           <div className="relative flex justify-center items-center px-4 py-3 max-w-md mx-auto gap-4">
-            {/* Баланс монеты */}
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.2 }}
-              className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-[#232b3e]/80 border border-[#ffd700] shadow-lg"
-            >
-              <Image src={mainCoin.icon} alt={mainCoin.name} width={28} height={28} />
-              <span className="text-xl font-bold text-[#ffd700] tabular-nums">{formatCrypto(mainCoin.value)}</span>
-            </motion.div>
+            {isMainMenu && (
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.2 }}
+                className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-[#232b3e]/80 border border-[#ffd700] shadow-lg"
+              >
+                <Image src={mainCoin.icon} alt={mainCoin.name} width={28} height={28} />
+                <span className="text-xl font-bold text-[#ffd700] tabular-nums">{formatCrypto(mainCoin.value)}</span>
+              </motion.div>
+            )}
           </div>
           {/* Bottom safe area for iOS */}
           <div className="h-safe-area-inset-bottom bg-gradient-to-t from-[#181c2a]/60 to-transparent" />
