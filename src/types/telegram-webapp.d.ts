@@ -27,6 +27,7 @@ interface TelegramWebApp {
   expand(): void;
   isExpanded: boolean;
   sendData(data: string): void;
+  colorScheme?: 'light' | 'dark';
   // ... другие методы и свойства
 }
 
