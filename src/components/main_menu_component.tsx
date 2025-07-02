@@ -4,6 +4,14 @@ import { motion } from 'framer-motion'
 import { Play, User, Star, Book, Wallet, UserPlus, Store, Menu } from 'lucide-react'
 import { useGameStore } from '../store/gameStore'
 import { useTelegram } from '../hooks/useTelegram'
+import { useState } from 'react'
+
+const coins = [
+  { name: 'TON', icon: '/img/ton-icon.svg', value: 12345.67 },
+  { name: 'TRUMP', icon: '/img/trump-icon.svg', value: 9876.54 },
+  { name: 'SOLANA', icon: '/img/solana-icon.svg', value: 23456.78 },
+  { name: 'JETTON', icon: '/img/jetton-icon.svg', value: 10000.00 },
+]
 
 interface MainMenuProps {
   onNavigate: (page: 'game' | 'invite' | 'shop' | 'profile' | 'menu') => void
@@ -13,6 +21,7 @@ interface MainMenuProps {
 export function MainMenu({ onNavigate, balance = 1000 }: MainMenuProps) {
   const { startGame, stats } = useGameStore()
   const { hapticFeedback, showMainButton, hideMainButton } = useTelegram()
+  const [walletOpen, setWalletOpen] = useState(false)
 
   const handleStartSinglePlayer = () => {
     hapticFeedback('medium')
@@ -28,13 +37,32 @@ export function MainMenu({ onNavigate, balance = 1000 }: MainMenuProps) {
     <div className="main-menu-container">
       <div className="main-menu-inner">
         {/* Верхний бар */}
-        <div className="menu-header">
+        <div className="menu-header" style={{ position: 'relative' }}>
           <button onClick={() => window.history.back()} className="px-3 py-1 rounded-lg border border-red-400 text-red-200 font-semibold text-base hover:bg-red-400/10 transition-all">Назад</button>
           <span className="menu-title">P.I.D.R.</span>
-          <button onClick={() => onNavigate('menu')} className="flex items-center gap-2 px-3 py-1 rounded-lg border border-blue-400 text-blue-200 font-semibold text-base hover:bg-blue-400/10 transition-all">
-            <Menu size={24} />
+          <button
+            className="wallet-btn"
+            onClick={() => setWalletOpen((v) => !v)}
+            style={{ position: 'relative' }}
+          >
+            <Wallet className="wallet-icon" />
             <img src="/img/ton-icon.svg" alt="TON" className="w-6 h-6" />
           </button>
+          {walletOpen && (
+            <div className="wallet-dropdown fade-in">
+              {coins.map((coin) => (
+                <div className="wallet-coin" key={coin.name}>
+                  <img src={coin.icon} alt={coin.name} className="w-7 h-7" />
+                  <span className="wallet-coin-name">{coin.name}</span>
+                  <span className="wallet-coin-value">{coin.value}</span>
+                </div>
+              ))}
+              <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+                <button className="wallet-action-btn wallet-action-btn--deposit">Пополнить</button>
+                <button className="wallet-action-btn wallet-action-btn--withdraw">Вывод</button>
+              </div>
+            </div>
+          )}
         </div>
         {/* Баланс */}
         <div className="menu-balance-card">
