@@ -59,38 +59,43 @@
 .card {
   position: relative;
   width: 42px;
-  height: 64px;
+  height: 66px;
   background: transparent;
-  border-radius: 6px;
-  box-shadow: 0 2px 8px #000a;
+  border-radius: 10px;
+  box-shadow: 0 4px 24px #000a, 0 0 12px #ffd70055;
   overflow: visible;
   padding: 0;
   margin: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: box-shadow 0.25s, transform 0.18s;
+  animation: card-fade-in 0.5s cubic-bezier(.22,1,.36,1) both;
 }
-.card:active {
-  box-shadow: 0 0 16px #ffd700, 0 2px 12px #000a;
-  transform: scale(1.05);
-}
-.cardBackUnderlay {
+.card::before {
+  content: '';
   position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 46px;
-  height: 70px;
-  transform: translate(-50%, -50%);
+  left: 0; top: 0; right: 0; bottom: 0;
+  border-radius: 10px;
   z-index: 0;
-  opacity: 0.7;
-  filter: blur(1px) drop-shadow(0 2px 8px #ffd70088);
+  background: linear-gradient(135deg, #fffbe6 0%, #ffe066 100%);
+  opacity: 0.18;
   pointer-events: none;
-  user-select: none;
+}
+.card:active, .card:hover {
+  box-shadow: 0 0 32px #ffd700cc, 0 6px 32px #000a;
+  transform: scale(1.08);
+  z-index: 10;
 }
 .card img {
   position: relative;
   z-index: 1;
-  border-radius: 6px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px #ffd70044;
+}
+@keyframes card-fade-in {
+  0% { opacity: 0; transform: scale(0.92) translateY(12px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 .dropZone {
   position: absolute;
