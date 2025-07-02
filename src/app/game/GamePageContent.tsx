@@ -239,19 +239,19 @@ export default function GamePageContent() {
                     transition={{ delay: (i * 0.3) + (ci * 0.1), duration: 0.4 }}
                     style={{ display: 'inline-block' }}
                   >
-                    <Card
-                      image={card.open ? (card.image.split('/').pop() as string) : CARD_BACK}
-                      draggable={p.isUser && stage === 2 && card.open && currentPlayer === i && (lastPlayedRank === null || getCardRank(card.image) === lastPlayedRank + 1)}
-                      onDragStart={e => dragProps.onDragStart(card, i, e)}
-                      onTouchStart={e => dragProps.onTouchStart(card, i, e)}
-                      style={{
-                        zIndex: ci,
-                        boxShadow: p.isUser ? '0 0 12px #ffd700' : undefined,
-                        transform: p.isUser ? `translateY(-${ci*8}px)` : `rotate(${(ci-1)*8}deg)`,
-                        background: card.open ? '#fff' : 'transparent', // Белый фон под открытой картой
-                        border: card.open ? '2px solid #ffd700' : 'none',
-                      }}
-                    />
+                    <div
+                      className={styles.card + ' ' + (card.open ? styles.open : styles.closed)}
+                      style={{ zIndex: ci }}
+                    >
+                      <Image
+                        src={card.open ? `/img/cards/${card.image.split('/').pop()}` : `/img/cards/back.png`}
+                        alt={card.open ? 'card' : 'back'}
+                        width={42}
+                        height={66}
+                        draggable={false}
+                        priority
+                      />
+                    </div>
                   </motion.div>
                 ))}
               </AnimatePresence>
@@ -273,17 +273,20 @@ export default function GamePageContent() {
           </button>
           <div style={{display:'flex',justifyContent:'center',gap:8,marginTop:12}}>
             {players[0].cards.map((card, ci) => (
-              <Card
+              <div
                 key={card.id}
-                image={card.open ? (card.image.split('/').pop() as string) : CARD_BACK}
-                draggable={false}
-                style={{
-                  zIndex:ci,
-                  transform:`translateY(-${ci*4}px) scale(1.15)`,
-                  background: card.open ? '#fff' : 'transparent',
-                  border: card.open ? '2px solid #ffd700' : 'none',
-                }}
-              />
+                className={styles.card + ' ' + (card.open ? styles.open : styles.closed)}
+                style={{ zIndex: ci }}
+              >
+                <Image
+                  src={card.open ? `/img/cards/${card.image.split('/').pop()}` : `/img/cards/back.png`}
+                  alt={card.open ? 'card' : 'back'}
+                  width={42}
+                  height={66}
+                  draggable={false}
+                  priority
+                />
+              </div>
             ))}
           </div>
         </>
