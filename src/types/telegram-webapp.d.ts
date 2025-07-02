@@ -1,6 +1,6 @@
 // Типы для Telegram WebApp API
 
-interface TelegramWebAppUser {
+export interface TelegramWebAppUser {
   id: number;
   is_bot?: boolean;
   first_name: string;
@@ -13,13 +13,13 @@ interface TelegramWebAppUser {
   photo_url?: string;
 }
 
-interface TelegramWebAppInitDataUnsafe {
+export interface TelegramWebAppInitDataUnsafe {
   user?: TelegramWebAppUser;
   chat?: any;
   // ... другие поля, если нужны
 }
 
-interface TelegramWebApp {
+export interface TelegramWebApp {
   initData: string;
   initDataUnsafe: TelegramWebAppInitDataUnsafe;
   ready(): void;
