@@ -177,7 +177,7 @@ export const useGameStore = create<GameState>()(
         // Раздаем карты
         const shuffledDeck = [...DEFAULT_CARDS].sort(() => Math.random() - 0.5)
         players.forEach(player => {
-          player.cards = shuffledDeck.slice(0, 5) // Каждому игроку по 5 карт
+          player.cards = shuffledDeck.slice(0, 3) // Каждому игроку по 3 карт
         })
         
         set({
@@ -186,7 +186,7 @@ export const useGameStore = create<GameState>()(
           currentRound: 1,
           players,
           currentPlayerId: players[0].id,
-          deck: shuffledDeck.slice(5 * playersCount),
+          deck: shuffledDeck.slice(3 * playersCount),
           playedCards: [],
           lastPlayedCard: null
         })

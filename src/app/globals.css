@@ -725,4 +725,150 @@ input:focus, textarea:focus, select:focus {
 @keyframes shine {
   0% { left: -100%; }
   100% { left: 100%; }
+}/* Улучшенные стили для BottomNav */
+.bottom-nav-glassmorphism {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(0, 0, 0, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 -8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Поддержка safe area для iOS */
+.h-safe-area-inset-bottom {
+  height: env(safe-area-inset-bottom);
+  min-height: 8px;
+}
+
+/* Улучшенная анимация для иконок */
+@keyframes iconFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-2px); }
+}
+
+.nav-icon-active {
+  animation: iconFloat 2s ease-in-out infinite;
+}
+
+/* Градиентные тени для активных элементов */
+.nav-item-shadow {
+  box-shadow: 
+    0 4px 15px rgba(0, 0, 0, 0.2),
+    0 0 20px currentColor;
+}
+
+/* Улучшенная типография для лейблов */
+.nav-label {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-variant-numeric: tabular-nums;
+  text-rendering: optimizeLegibility;
+}
+
+/* Поддержка темной темы */
+@media (prefers-color-scheme: dark) {
+  .bottom-nav-glassmorphism {
+    background: rgba(0, 0, 0, 0.3);
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+  }
+}
+
+/* Адаптивность для разных размеров экрана */
+@media (max-width: 480px) {
+  .bottom-nav-container {
+    padding: 0.5rem 0.25rem;
+  }
+  
+  .nav-button {
+    min-width: 50px;
+    padding: 0.5rem;
+  }
+  
+  .nav-icon {
+    font-size: 1.125rem;
+  }
+  
+  .nav-label {
+    font-size: 0.6875rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .nav-label {
+    display: none;
+  }
+  
+  .nav-button {
+    min-width: 44px;
+  }
+}
+
+/* Анимация появления */
+@keyframes slideUpNav {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.bottom-nav-enter {
+  animation: slideUpNav 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Пульсация для уведомлений */
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.nav-notification {
+  animation: pulse 2s infinite;
+}
+
+/* Улучшенная поддержка touch для мобильных устройств */
+.nav-button {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Поддержка RTL языков */
+[dir="rtl"] .bottom-nav-container {
+  flex-direction: row-reverse;
+}
+
+/* Высококонтрастный режим */
+@media (prefers-contrast: high) {
+  .bottom-nav-glassmorphism {
+    background: rgba(0, 0, 0, 0.9);
+    border-top: 2px solid #ffffff;
+  }
+  
+  .nav-item-active {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+}
+
+/* Уменьшенная анимация для пользователей с ограниченной подвижностью */
+@media (prefers-reduced-motion: reduce) {
+  .nav-icon-active {
+    animation: none;
+  }
+  
+  .bottom-nav-enter {
+    animation: none;
+  }
+  
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }
