@@ -99,8 +99,6 @@ body {
 
 .card-back {
     background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
-    background-image: url('../img/card-back.png');
-    background-size: cover;
 }
 
 .card-value {
@@ -131,8 +129,6 @@ body {
 
 .deck {
     background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
-    background-image: url('../img/card-back.png');
-    background-size: cover;
 }
 
 /* Игровой контейнер */
