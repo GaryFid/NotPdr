@@ -19,20 +19,20 @@ export default function GameSetupPage() {
   const [testMode, setTestMode] = useState(false);
 
   return (
-    <Box minH="100vh" bgGradient="linear(to-br, #181f2a, #232b3e)" pb={20}>
-      <Flex as="header" align="center" justify="space-between" px={4} py={3} borderBottomWidth={1} borderColor="#232b3e" bg="#181f2a" position="sticky" top={0} zIndex={20}>
+    <Box minH="100vh" className="main-menu-container" pb={20}>
+      <Flex as="header" align="center" justify="space-between" px={4} py={3} className="menu-header" position="sticky" top={0} zIndex={20} boxShadow="md">
         <Button variant="ghost" color="white" _hover={{ color: '#ffd700' }} onClick={() => history.back()}><FaArrowLeft /></Button>
-        <Text fontSize="lg" fontWeight="bold" color="#ffd700">Настройка игры</Text>
+        <Text fontSize="lg" fontWeight="bold" className="menu-title">Настройка игры</Text>
         <Box w={8} />
       </Flex>
-      <Box as="main" maxW="lg" mx="auto" px={2}>
+      <Box as="main" className="main-menu-inner" maxW="lg" mx="auto" px={2}>
         {/* Выбор стола */}
         <motion.section initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{duration:0.3}}>
           <Box mt={6} mb={4}>
-            <Text color="#ffd700" fontWeight={600} fontSize="md" mb={2}>Выберите стол</Text>
+            <Text color="#ffd700" fontWeight={600} fontSize="md" mb={2} className="menu-actions-title">Выберите стол</Text>
             <Grid templateColumns="repeat(3, 1fr)" gap={4}>
               {tables.map(n => (
-                <Button key={n} onClick={()=>setSelectedTable(n)} position="relative" flexDir="column" alignItems="center" justifyContent="center" aspectRatio={1} borderRadius="xl" transition="all 0.2s" fontSize="3xl" fontWeight="bold" bg={selectedTable===n?'#ffd700':'#232b3e'} color={selectedTable===n?'#232b3e':'white'} boxShadow={selectedTable===n?'xl':'none'} style={selectedTable===n?{transform:'scale(1.05)'}:{}}>
+                <Button key={n} onClick={()=>setSelectedTable(n)} position="relative" flexDir="column" alignItems="center" justifyContent="center" aspectRatio={1} borderRadius="xl" transition="all 0.2s" fontSize="3xl" fontWeight="bold" className={selectedTable===n?'menu-balance-card':'menu-action-card'} color={selectedTable===n?'#232b3e':'white'} boxShadow={selectedTable===n?'xl':'none'} style={selectedTable===n?{transform:'scale(1.05)'}:{}}>
                   {n}
                   <Text fontSize="xs" mt={1}>{n} игроков</Text>
                   {selectedTable===n && <Box position="absolute" top={2} right={2} bg="white" color="#ffd700" borderRadius="full" p={1}><FaCheck /></Box>}
@@ -44,10 +44,10 @@ export default function GameSetupPage() {
         {/* Режимы игры */}
         <motion.section initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{duration:0.3}}>
           <Box mb={4}>
-            <Text color="#ffd700" fontWeight={600} fontSize="md" mb={2}>Режим игры</Text>
+            <Text color="#ffd700" fontWeight={600} fontSize="md" mb={2} className="menu-actions-title">Режим игры</Text>
             <Flex gap={4}>
               {modes.map(mode => (
-                <Button key={mode.key} onClick={()=>setSelectedMode(mode.key)} flexDir="column" alignItems="center" justifyContent="center" flex={1} borderRadius="xl" p={4} transition="all 0.2s" fontSize="2xl" fontWeight="bold" bg={selectedMode===mode.key?'#ffd700':'#232b3e'} color={selectedMode===mode.key?'#232b3e':'white'} boxShadow={selectedMode===mode.key?'xl':'none'} style={selectedMode===mode.key?{transform:'scale(1.05)'}:{}}>
+                <Button key={mode.key} onClick={()=>setSelectedMode(mode.key)} flexDir="column" alignItems="center" justifyContent="center" flex={1} borderRadius="xl" p={4} transition="all 0.2s" fontSize="2xl" fontWeight="bold" className={selectedMode===mode.key?'menu-balance-card':'menu-action-card'} color={selectedMode===mode.key?'#232b3e':'white'} boxShadow={selectedMode===mode.key?'xl':'none'} style={selectedMode===mode.key?{transform:'scale(1.05)'}:{}}>
                   <Box mb={1}>{mode.icon}</Box>
                   <Text fontSize="xs" fontWeight="bold">{mode.label}</Text>
                 </Button>
@@ -58,7 +58,7 @@ export default function GameSetupPage() {
         {/* Дополнительные настройки */}
         <motion.section initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{duration:0.3}}>
           <Box mb={4}>
-            <Text color="#ffd700" fontWeight={600} fontSize="md" mb={2}>Дополнительные настройки</Text>
+            <Text color="#ffd700" fontWeight={600} fontSize="md" mb={2} className="menu-actions-title">Дополнительные настройки</Text>
             <VStack gap={4} align="stretch">
               <label style={{display:'flex',alignItems:'center',gap:8}}>
                 <input type="checkbox" checked={addBots} onChange={(e)=>setAddBots(e.target.checked)} style={{ accentColor: '#ffd700', width: 20, height: 20, borderRadius: 6, marginRight: 8 }} />

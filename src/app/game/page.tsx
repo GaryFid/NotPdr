@@ -1,69 +1,81 @@
 'use client'
-import { Box, Flex, Text, Button, Grid, Image, VStack } from '@chakra-ui/react';
-import { motion } from 'framer-motion';
-import { FaCog, FaArrowLeft, FaUser, FaPlus } from 'react-icons/fa';
+import { useSearchParams } from 'next/navigation';
+import { useMemo } from 'react';
+import { Box, Flex, Text, Button, Image as ChakraImage } from '@chakra-ui/react';
+import { FaCog, FaArrowLeft, FaRobot } from 'react-icons/fa';
 import BottomNav from '../../components/BottomNav';
 
-const players = [
-  { name: 'Игрок 1', avatar: '/img/player-avatar.svg', cards: 5 },
-  { name: 'Игрок 2', avatar: '/img/player-avatar.svg', cards: 3 },
-  { name: 'Игрок 3', avatar: '/img/player-avatar.svg', cards: 2 },
-  { name: 'Игрок 4', avatar: '/img/player-avatar.svg', cards: 4 },
+const cardBack = '/img/cards/back.png';
+const cardFaces = [
+  '/img/cards/ace_of_spades.png',
+  '/img/cards/king_of_hearts.png',
+  '/img/cards/queen_of_diamonds.png',
+  '/img/cards/jack_of_clubs.png',
+  // ... можно добавить любые карты для примера
 ];
 
+function getPlayers(count: number) {
+  // Для примера: 1 реальный игрок, остальные — AI
+  return Array.from({ length: count }, (_, i) => ({
+    name: i === 0 ? 'Вы' : `AI ${i}`,
+    avatar: '/img/player-avatar.svg',
+    openCard: cardFaces[i % cardFaces.length],
+    closedCards: [cardBack, cardBack],
+    isUser: i === 0,
+  }));
+}
+
 export default function GamePage() {
+  const params = useSearchParams();
+  const table = parseInt(params.get('table') || '4', 10);
+  const players = useMemo(() => getPlayers(table), [table]);
+
+  // Определяем, кто ходит первым (у кого самая "старшая" карта)
+  const firstPlayerIdx = 0; // TODO: логика сравнения карт
+
+  // Расположение игроков по кругу
+  const getPlayerPosition = (idx: number, total: number) => {
+    const angle = (2 * Math.PI * idx) / total - Math.PI / 2;
+    const radius = 160;
+    return {
+      left: `calc(50% + ${Math.cos(angle) * radius}px - 48px)`,
+      top: `calc(50% + ${Math.sin(angle) * radius}px - 60px)`,
+    };
+  };
+
   return (
-    <Box minH="100vh" bgGradient="linear(to-br, #0f2027, #2c5364)" pb={20} display="flex" flexDir="column">
-      <Flex direction="column" align="center" maxW="420px" mx="auto" w="100%" px={4} flex={1}>
-        {/* Game stage info */}
-        <Box bg="#232b3e" borderRadius="xl" boxShadow="lg" p={6} w="100%" mt={4} mb={4} textAlign="center">
-          <Text fontWeight="bold" color="#ffd700" fontSize="lg" mb={1}>Стадия 1</Text>
-          <Text fontSize="sm" color="gray.400">Сбросьте карту той же масти или значения</Text>
-        </Box>
-        {/* Table */}
-        <Box w="100%" aspectRatio={16/9} bgGradient="linear(to-br, #1a4a7a, #3390ec)" borderRadius="3xl" boxShadow="2xl" position="relative" display="flex" alignItems="center" justifyContent="center" mb={4}>
-          {/* Card deck and discard */}
-          <Flex position="absolute" left="50%" top="50%" transform="translate(-50%, -50%)" gap={8} zIndex={10}>
-            <Box w={16} h={24} bgGradient="linear(to-br, #1a4a7a, #3390ec)" borderRadius="lg" boxShadow="lg" display="flex" alignItems="center" justifyContent="center">
-              <Image src="/img/card-back.png" alt="deck" w="full" h="full" objectFit="cover" borderRadius="lg" />
-            </Box>
-            <Box w={16} h={24} bg="white" borderRadius="lg" boxShadow="lg" display="flex" alignItems="center" justifyContent="center">
-              <Text fontSize="2xl" fontWeight="bold" color="#1a4a7a">A♠</Text>
-            </Box>
-          </Flex>
-          {/* Players */}
-          {players.map((p, i) => (
-            <Box key={i} position="absolute" right={i===0?undefined:2} left={i===0?'50%':undefined} top={i===0?2:`${20+20*i}%`} transform={i===0?'translateX(-50%)':undefined} zIndex={20}>
-              <Box display="flex" flexDir="column" alignItems="center">
-                <Image src={p.avatar} alt="avatar" boxSize={12} borderRadius="full" borderWidth={2} borderColor="white" mb={1} />
-                <Text fontSize="xs" fontWeight="bold" color="white" textShadow="0 1px 4px #000">{p.name}</Text>
-                <Text fontSize="xs" color="whiteAlpha.800">Карт: {p.cards}</Text>
-              </Box>
-            </Box>
-          ))}
-          {/* Settings button */}
-          <Button position="absolute" top={4} right={4} w={10} h={10} bg="white" borderRadius="full" display="flex" alignItems="center" justifyContent="center" boxShadow="lg" zIndex={30}><FaCog color="#1a4a7a" size={20} /></Button>
-        </Box>
-        {/* Game controls */}
-        <Box bg="#232b3e" borderRadius="xl" boxShadow="lg" p={6} w="100%" mb={4}>
-          <Flex align="center" gap={3} mb={2}>
-            <Image src="/img/player-avatar.svg" alt="avatar" boxSize={10} borderRadius="full" borderWidth={2} borderColor="#1a4a7a" />
-            <Text fontWeight="bold" color="#ffd700">Игрок 1</Text>
-          </Flex>
-          <Flex gap={2} mb={2}>
-            <Button flex={1} px={4} py={2} borderRadius="xl" bgGradient="linear(to-r, #232b3e, #ffd700)" color="white" fontWeight="bold" _hover={{ bgGradient: 'linear(to-r, yellow.400, yellow.300)' }}>Взять карту</Button>
-          </Flex>
-          <Flex gap={2} overflowX="auto" pb={2}>
-            {[1,2,3,4,5].map(i => (
-              <Box key={i} w={16} h={24} bg="white" borderRadius="lg" boxShadow="lg" display="flex" flexDir="column" alignItems="center" justifyContent="center" cursor="pointer" _hover={{ transform: 'scale(1.05)' }} transition="all 0.2s">
-                <Text fontSize="xl" fontWeight="bold" color="#1a4a7a">{i===1?'A':'K'}</Text>
-                <Text fontSize="lg" color="#1a4a7a">♠</Text>
-              </Box>
-            ))}
-          </Flex>
-        </Box>
-        <BottomNav />
+    <Box minH="100vh" className="main-menu-container" pb={20}>
+      <Flex as="header" align="center" justify="space-between" px={4} py={3} className="menu-header" position="sticky" top={0} zIndex={20} boxShadow="md">
+        <Button variant="ghost" color="white" _hover={{ color: '#ffd700' }} onClick={() => history.back()}><FaArrowLeft /></Button>
+        <Text fontSize="lg" fontWeight="bold" className="menu-title">Игра</Text>
+        <Button variant="ghost" color="white" _hover={{ color: '#ffd700' }}><FaCog /></Button>
       </Flex>
+      <Box position="relative" width="100%" maxWidth={420} height={420} mx="auto" mt={8} mb={8}>
+        {/* Стол */}
+        <Box position="absolute" left="50%" top="50%" style={{ transform: 'translate(-50%, -50%)' }} width={260} height={260} borderRadius="full" boxShadow="2xl" bgGradient="radial(#232b3e 60%, #0a1833 100%)" border="4px solid #ffd700" zIndex={1} />
+        {/* Игроки по кругу */}
+        {players.map((p, i) => (
+          <Box key={i} position="absolute" style={getPlayerPosition(i, players.length)} zIndex={2} display="flex" flexDirection="column" alignItems="center">
+            <ChakraImage src={p.avatar} alt="avatar" boxSize={48} borderRadius="full" borderWidth={3} borderColor={i===firstPlayerIdx?'#ffd700':'#fff'} mb={1} boxShadow="lg" />
+            <Flex gap={1} mb={1}>
+              <ChakraImage src={p.closedCards[0]} alt="closed" boxSize={32} borderRadius="md" boxShadow="md" />
+              <ChakraImage src={p.closedCards[1]} alt="closed" boxSize={32} borderRadius="md" boxShadow="md" />
+              <ChakraImage src={p.openCard} alt="open" boxSize={32} borderRadius="md" boxShadow="md" border={i===firstPlayerIdx?'2px solid #ffd700':'2px solid #fff'} />
+            </Flex>
+            <Text fontSize="sm" fontWeight="bold" color="#ffd700" textShadow="0 1px 4px #000">{p.name}</Text>
+          </Box>
+        ))}
+      </Box>
+      {/* Кнопки действий */}
+      <Flex justify="center" gap={4} mt={2}>
+        <Button px={6} py={3} borderRadius="xl" bg="#ffd700" color="#232b3e" fontWeight="bold" _hover={{ bg: 'yellow.400' }}>
+          Взять карту
+        </Button>
+        <Button px={6} py={3} borderRadius="xl" bgGradient="linear(to-r, #232b3e, #ffd700)" color="white" fontWeight="bold" _hover={{ bgGradient: 'linear(to-r, yellow.400, yellow.300)' }}>
+          Пас
+        </Button>
+      </Flex>
+      <BottomNav />
     </Box>
   );
 } 
