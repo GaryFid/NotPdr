@@ -755,4 +755,21 @@ input, textarea, select {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(24px);}
   to { opacity: 1; transform: none; }
+}
+
+.action-card {
+  background: #101c33;
+  border: 2px solid #ff3b3b;
+  border-radius: 18px;
+  box-shadow: 0 2px 12px #0004;
+  padding: 28px 0 18px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: box-shadow .18s, border-color .18s, background .18s;
+}
+.action-card:hover {
+  border-color: #ffd700;
+  background: #182a4d;
+  box-shadow: 0 4px 24px #ffd70044;
 } 
