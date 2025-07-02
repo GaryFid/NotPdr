@@ -1,0 +1,110 @@
+.tableWrapper {
+  min-height: 100vh;
+  background: radial-gradient(ellipse at center, #1a2340 60%, #0a1833 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-bottom: 80px;
+}
+.tableBg {
+  position: relative;
+  width: 480px;
+  height: 480px;
+  margin: 40px auto 0 auto;
+  background: none;
+}
+.tableCenter {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, #22305a 70%, #0a1833 100%);
+  border-radius: 50%;
+  box-shadow: 0 0 60px 10px #ffd70044, 0 0 0 8px #ffd700;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+}
+.playerSeat {
+  position: absolute;
+  width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 2;
+}
+.avatarWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.avatar {
+  border-radius: 50%;
+  border: 2px solid #ffd700;
+  box-shadow: 0 2px 8px #000a;
+}
+.playerName {
+  color: #ffd700;
+  font-weight: 600;
+  font-size: 15px;
+  text-shadow: 0 1px 4px #000;
+}
+.cardsRow {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+.card {
+  width: 64px;
+  height: 96px;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px #000a;
+  background: #fff;
+  overflow: hidden;
+  transition: box-shadow 0.2s, transform 0.2s;
+  cursor: grab;
+}
+.card:active {
+  box-shadow: 0 0 16px #ffd700, 0 2px 12px #000a;
+  transform: scale(1.05);
+}
+.dropZone {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 120px;
+  height: 160px;
+  background: rgba(255, 215, 0, 0.12);
+  border: 2px dashed #ffd700;
+  border-radius: 16px;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffd700;
+  font-weight: bold;
+  font-size: 18px;
+  z-index: 10;
+  box-shadow: 0 0 24px #ffd70044;
+}
+.drawButton {
+  margin: 0 auto;
+  margin-top: 12px;
+  display: block;
+  padding: 18px 48px;
+  font-size: 22px;
+  font-weight: bold;
+  color: #232b3e;
+  background: linear-gradient(90deg, #ffd700 60%, #fffbe6 100%);
+  border: none;
+  border-radius: 32px;
+  box-shadow: 0 4px 24px #ffd70044;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.drawButton:hover {
+  background: linear-gradient(90deg, #ffe066 60%, #fffbe6 100%);
+  box-shadow: 0 6px 32px #ffd70066;
+} 

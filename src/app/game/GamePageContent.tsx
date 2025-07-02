@@ -1,81 +1,140 @@
 'use client'
-import { useSearchParams } from 'next/navigation';
-import { useMemo } from 'react';
-import { Box, Flex, Text, Button, Image as ChakraImage } from '@chakra-ui/react';
-import { FaCog, FaArrowLeft } from 'react-icons/fa';
+import { useState, useMemo } from 'react';
+import Image from 'next/image';
 import BottomNav from '../../components/BottomNav';
+import styles from './GameTable.module.css';
+import { useDragAndDrop } from '../../hooks/useDragAndDrop';
+import type { Player, Card } from '../../types/game';
 
-const cardBack = '/img/cards/back.png';
-const cardFaces = [
-  '/img/cards/ace_of_spades.png',
-  '/img/cards/king_of_hearts.png',
-  '/img/cards/queen_of_diamonds.png',
-  '/img/cards/jack_of_clubs.png',
-  // ... можно добавить любые карты для примера
+const CARD_IMAGES = [
+  '2_of_clubs.png','2_of_diamonds.png','2_of_hearts.png','2_of_spades.png',
+  '3_of_clubs.png','3_of_diamonds.png','3_of_hearts.png','3_of_spades.png',
+  '4_of_clubs.png','4_of_diamonds.png','4_of_hearts.png','4_of_spades.png',
+  '5_of_clubs.png','5_of_diamonds.png','5_of_hearts.png','5_of_spades.png',
+  '6_of_clubs.png','6_of_diamonds.png','6_of_hearts.png','6_of_spades.png',
+  '7_of_clubs.png','7_of_diamonds.png','7_of_hearts.png','7_of_spades.png',
+  '8_of_clubs.png','8_of_diamonds.png','8_of_hearts.png','8_of_spades.png',
+  '9_of_clubs.png','9_of_diamonds.png','9_of_hearts.png','9_of_spades.png',
+  '10_of_clubs.png','10_of_diamonds.png','10_of_hearts.png','10_of_spades.png',
+  'ace_of_clubs.png','ace_of_diamonds.png','ace_of_hearts.png','ace_of_spades.png',
+  'jack_of_clubs.png','jack_of_diamonds.png','jack_of_hearts.png','jack_of_spades.png',
+  'king_of_clubs.png','king_of_diamonds.png','king_of_hearts.png','king_of_spades.png',
+  'queen_of_clubs.png','queen_of_diamonds.png','queen_of_hearts.png','queen_of_spades.png',
 ];
+const CARD_BACK = 'back.png';
+const BOT_NAMES = ['Petr','Ivan','Albert','Ignat','Robert','Alex','Sergey','Dmitry','Oleg'];
+const BOT_AVATAR = '/img/player-avatar.svg';
+const USER_AVATAR = '/img/player-avatar.svg';
 
-function getPlayers(count: number) {
-  // Для примера: 1 реальный игрок, остальные — AI
+function getPlayers(count: number, userName = 'Вы'): Player[] {
   return Array.from({ length: count }, (_, i) => ({
-    name: i === 0 ? 'Вы' : `AI ${i}`,
-    avatar: '/img/player-avatar.svg',
-    openCard: cardFaces[i % cardFaces.length],
-    closedCards: [cardBack, cardBack],
+    id: i,
+    name: i === 0 ? userName : BOT_NAMES[i-1] || `AI${i}`,
+    avatar: i === 0 ? USER_AVATAR : BOT_AVATAR,
+    cards: [
+      { id: `c${i}a`, image: CARD_BACK, open: false },
+      { id: `c${i}b`, image: CARD_BACK, open: false },
+      { id: `c${i}c`, image: `/img/cards/${CARD_IMAGES[(i*3)%CARD_IMAGES.length]}`, open: true },
+    ],
     isUser: i === 0,
   }));
 }
 
-export default function GamePageContent() {
-  const params = useSearchParams();
-  const table = parseInt(params.get('table') || '4', 10);
-  const players = useMemo(() => getPlayers(table), [table]);
-
-  // Определяем, кто ходит первым (у кого самая "старшая" карта)
-  const firstPlayerIdx = 0; // TODO: логика сравнения карт
-
-  // Расположение игроков по кругу
-  const getPlayerPosition = (idx: number, total: number) => {
-    const angle = (2 * Math.PI * idx) / total - Math.PI / 2;
-    const radius = 160;
-    return {
-      left: `calc(50% + ${Math.cos(angle) * radius}px - 48px)`,
-      top: `calc(50% + ${Math.sin(angle) * radius}px - 60px)`,
-    };
+function getCirclePosition(idx: number, total: number, radius = 180) {
+  const angle = (2 * Math.PI * idx) / total - Math.PI / 2;
+  return {
+    left: `calc(50% + ${Math.cos(angle) * radius}px - 60px)` ,
+    top: `calc(50% + ${Math.sin(angle) * radius}px - 60px)` ,
   };
+}
+
+function Card({ image, draggable, onDragStart, onTouchStart, style }: {
+  image: string;
+  draggable?: boolean;
+  onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void;
+  onTouchStart?: (e: React.TouchEvent<HTMLDivElement>) => void;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <div
+      className={styles.card}
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onTouchStart={onTouchStart}
+      style={style}
+    >
+      <Image src={`/img/cards/${image}`} alt="card" width={64} height={96} priority />
+    </div>
+  );
+}
+
+export default function GamePageContent() {
+  const [stage, setStage] = useState<1 | 2>(1); // 1: draw, 2: play
+  const [players, setPlayers] = useState<Player[]>(() => getPlayers(6));
+  const [draggedCard, setDraggedCard] = useState<{card: Card; playerIdx: number} | null>(null);
+  const [dropZoneActive, setDropZoneActive] = useState(false);
+  const { dragProps, dropProps } = useDragAndDrop({
+    onDrop: (card: Card, playerIdx: number) => {
+      setDropZoneActive(false);
+    },
+    onDragStart: (card: Card, playerIdx: number) => {
+      setDraggedCard({ card, playerIdx });
+      setDropZoneActive(true);
+    },
+    onDragEnd: () => {
+      setDraggedCard(null);
+      setDropZoneActive(false);
+    },
+  });
 
   return (
-    <Box minH="100vh" className="main-menu-container" pb={20}>
-      <Flex as="header" align="center" justify="space-between" px={4} py={3} className="menu-header" position="sticky" top={0} zIndex={20} boxShadow="md">
-        <Button variant="ghost" color="white" _hover={{ color: '#ffd700' }} onClick={() => history.back()}><FaArrowLeft /></Button>
-        <Text fontSize="lg" fontWeight="bold" className="menu-title">Игра</Text>
-        <Button variant="ghost" color="white" _hover={{ color: '#ffd700' }}><FaCog /></Button>
-      </Flex>
-      <Box position="relative" width="100%" maxWidth={420} height={420} mx="auto" mt={8} mb={8}>
+    <div className={styles.tableWrapper}>
+      <div className={styles.tableBg}>
         {/* Стол */}
-        <Box position="absolute" left="50%" top="50%" style={{ transform: 'translate(-50%, -50%)' }} width={260} height={260} borderRadius="full" boxShadow="2xl" bgGradient="radial(#232b3e 60%, #0a1833 100%)" border="4px solid #ffd700" zIndex={1} />
+        <div className={styles.tableCenter} />
         {/* Игроки по кругу */}
         {players.map((p, i) => (
-          <Box key={i} position="absolute" style={getPlayerPosition(i, players.length)} zIndex={2} display="flex" flexDirection="column" alignItems="center">
-            <ChakraImage src={p.avatar} alt="avatar" boxSize={48} borderRadius="full" borderWidth={3} borderColor={i===firstPlayerIdx?'#ffd700':'#fff'} mb={1} boxShadow="lg" />
-            <Flex gap={1} mb={1}>
-              <ChakraImage src={p.closedCards[0]} alt="closed" boxSize={32} borderRadius="md" boxShadow="md" />
-              <ChakraImage src={p.closedCards[1]} alt="closed" boxSize={32} borderRadius="md" boxShadow="md" />
-              <ChakraImage src={p.openCard} alt="open" boxSize={32} borderRadius="md" boxShadow="md" border={i===firstPlayerIdx?'2px solid #ffd700':'2px solid #fff'} />
-            </Flex>
-            <Text fontSize="sm" fontWeight="bold" color="#ffd700" textShadow="0 1px 4px #000">{p.name}</Text>
-          </Box>
+          <div
+            key={p.id}
+            className={styles.playerSeat}
+            style={getCirclePosition(i, players.length)}
+          >
+            <div className={styles.avatarWrap}>
+              <Image src={p.avatar} alt="avatar" width={30} height={30} className={styles.avatar} />
+              <span className={styles.playerName}>{p.name}</span>
+            </div>
+            <div className={styles.cardsRow}>
+              {p.cards.map((card, ci) => (
+                <Card
+                  key={card.id}
+                  image={card.open ? (card.image.split('/').pop() as string) : CARD_BACK}
+                  draggable={p.isUser && stage === 2 && card.open}
+                  onDragStart={e => dragProps.onDragStart(card, i, e)}
+                  onTouchStart={e => dragProps.onTouchStart(card, i, e)}
+                  style={{
+                    zIndex: ci,
+                    boxShadow: p.isUser ? '0 0 12px #ffd700' : undefined,
+                    transform: p.isUser ? `translateY(-${ci*8}px)` : `rotate(${(ci-1)*8}deg)`
+                  }}
+                />
+              ))}
+            </div>
+          </div>
         ))}
-      </Box>
-      {/* Кнопки действий */}
-      <Flex justify="center" gap={4} mt={2}>
-        <Button px={6} py={3} borderRadius="xl" bg="#ffd700" color="#232b3e" fontWeight="bold" _hover={{ bg: 'yellow.400' }}>
+        {/* Зона сброса */}
+        {stage === 2 && (
+          <div className={styles.dropZone} {...dropProps}>
+            <span>Сбросить карту</span>
+          </div>
+        )}
+      </div>
+      {/* Кнопка взять карту */}
+      {stage === 1 && (
+        <button className={styles.drawButton} onClick={() => setStage(2)}>
           Взять карту
-        </Button>
-        <Button px={6} py={3} borderRadius="xl" bgGradient="linear(to-r, #232b3e, #ffd700)" color="white" fontWeight="bold" _hover={{ bgGradient: 'linear(to-r, yellow.400, yellow.300)' }}>
-          Пас
-        </Button>
-      </Flex>
+        </button>
+      )}
       <BottomNav />
-    </Box>
+    </div>
   );
 } 

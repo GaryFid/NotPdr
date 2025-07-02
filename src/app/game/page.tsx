@@ -1,4 +1,5 @@
-'use client'
+'use client';
+
 import { Suspense } from 'react';
 import GamePageContent from './GamePageContent';
 
