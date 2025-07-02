@@ -51,6 +51,22 @@ function getCirclePosition(idx: number, total: number, radius = 180) {
   };
 }
 
+function getFirstPlayerIdx(players: Player[]): number {
+  let maxRank = -1;
+  let idx = 0;
+  players.forEach((p, i) => {
+    const openCard = p.cards.find(c => c.open);
+    if (openCard) {
+      const rank = getCardRank(openCard.image);
+      if (rank > maxRank) {
+        maxRank = rank;
+        idx = i;
+      }
+    }
+  });
+  return idx;
+}
+
 function Card({ image, draggable, onDragStart, onTouchStart, style }: {
   image: string;
   draggable?: boolean;
@@ -66,6 +82,15 @@ function Card({ image, draggable, onDragStart, onTouchStart, style }: {
       onTouchStart={onTouchStart}
       style={style}
     >
+      <Image
+        src={'/img/cards/back@2x.png'}
+        alt="back-underlay"
+        width={48}
+        height={72}
+        className={styles.cardBackUnderlay}
+        draggable={false}
+        unoptimized
+      />
       <Image
         src={`/img/cards/${image}`}
         alt="card"
@@ -123,7 +148,14 @@ export default function GamePageContent() {
   })));
   const [stage, setStage] = useState<1 | 2>(1); // 1: раздача, 2: игра
   const [dealt, setDealt] = useState(false);
-  const [currentPlayer, setCurrentPlayer] = useState(0);
+  const [currentPlayer, setCurrentPlayer] = useState(() => getFirstPlayerIdx(getPlayers(playersCount).map((p, i) => ({
+    ...p,
+    cards: [
+      { id: `c${i}a`, image: CARD_BACK, open: false },
+      { id: `c${i}b`, image: CARD_BACK, open: false },
+      { id: `c${i}c`, image: `/img/cards/${hands[i][2]}`, open: true },
+    ],
+  }))));
   const [lastPlayedRank, setLastPlayedRank] = useState<number | null>(null);
   const [draggedCard, setDraggedCard] = useState<{card: Card; playerIdx: number} | null>(null);
   const [dropZoneActive, setDropZoneActive] = useState(false);

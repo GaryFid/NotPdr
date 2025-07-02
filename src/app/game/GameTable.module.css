@@ -57,6 +57,7 @@
   margin-bottom: 2px;
 }
 .card {
+  position: relative;
   width: 42px;
   height: 64px;
   background: transparent;
@@ -72,6 +73,22 @@
 .card:active {
   box-shadow: 0 0 16px #ffd700, 0 2px 12px #000a;
   transform: scale(1.05);
+}
+.cardBackUnderlay {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 48px;
+  height: 72px;
+  transform: translate(-50%, -50%);
+  z-index: 0;
+  filter: drop-shadow(0 2px 8px #000a);
+  pointer-events: none;
+  user-select: none;
+}
+.card img {
+  position: relative;
+  z-index: 1;
 }
 .dropZone {
   position: absolute;
