@@ -186,22 +186,38 @@ export const useGameStore = create<GameState>()(
       
       // Игровые действия
       startGame: (mode, playersCount = 2) => {
-        // Создаем стандартную колоду карт для P.I.D.R
+        // Создаем полную стандартную колоду карт (52 карты)
         const standardDeck = [
+          // Двойки (2)
           '2_of_clubs.png','2_of_diamonds.png','2_of_hearts.png','2_of_spades.png',
+          // Тройки (3) 
           '3_of_clubs.png','3_of_diamonds.png','3_of_hearts.png','3_of_spades.png',
+          // Четверки (4)
           '4_of_clubs.png','4_of_diamonds.png','4_of_hearts.png','4_of_spades.png',
+          // Пятерки (5)
           '5_of_clubs.png','5_of_diamonds.png','5_of_hearts.png','5_of_spades.png',
+          // Шестерки (6)
           '6_of_clubs.png','6_of_diamonds.png','6_of_hearts.png','6_of_spades.png',
+          // Семерки (7)
           '7_of_clubs.png','7_of_diamonds.png','7_of_hearts.png','7_of_spades.png',
+          // Восьмерки (8)
           '8_of_clubs.png','8_of_diamonds.png','8_of_hearts.png','8_of_spades.png',
+          // Девятки (9)
           '9_of_clubs.png','9_of_diamonds.png','9_of_hearts.png','9_of_spades.png',
+          // Десятки (10)
           '10_of_clubs.png','10_of_diamonds.png','10_of_hearts.png','10_of_spades.png',
+          // Валеты (11)
           'jack_of_clubs.png','jack_of_diamonds.png','jack_of_hearts.png','jack_of_spades.png',
+          // Дамы (12)
           'queen_of_clubs.png','queen_of_diamonds.png','queen_of_hearts.png','queen_of_spades.png',
+          // Короли (13)
           'king_of_clubs.png','king_of_diamonds.png','king_of_hearts.png','king_of_spades.png',
+          // Тузы (14)
           'ace_of_clubs.png','ace_of_diamonds.png','ace_of_hearts.png','ace_of_spades.png'
         ];
+        
+        // Проверяем что у нас ровно 52 карты
+        console.log('🃏 Размер колоды:', standardDeck.length, 'карт');
         
         // Перемешиваем колоду
         const shuffledImages = [...standardDeck].sort(() => Math.random() - 0.5);

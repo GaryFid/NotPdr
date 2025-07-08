@@ -151,7 +151,8 @@ export default function GamePageContent() {
     makeMove,
     placeCardOnSelf,
     drawCardFromDeck,
-    processPlayerTurn
+    processPlayerTurn,
+    nextTurn
   } = useGameStore();
   
   const [dealt, setDealt] = useState(false);
@@ -207,9 +208,18 @@ export default function GamePageContent() {
 
   return (
     <div className={styles.tableWrapper}>
+      {/* Информация о стадии и колоде */}
+      <div className={styles.gameHeader}>
+        <div className={styles.stageInfo}>Стадия {gameStage}</div>
+        <div className={styles.deckInfo}>Колода: {deck.length}</div>
+        {availableTargets.length > 0 && (
+          <div className={styles.targetInfo}>Ходов: {availableTargets.length}</div>
+        )}
+      </div>
+      
       {showFirstMove && currentPlayer && (
         <div className={styles.firstMoveBanner}>
-          Ходит: <b>{currentPlayer.name}</b> (Стадия {gameStage})
+          Ходит: <b>{currentPlayer.name}</b>
         </div>
       )}
       <div className={styles.tableBg}>
@@ -238,22 +248,33 @@ export default function GamePageContent() {
                 {isCurrentPlayer && <span style={{color:'#ffd700',marginLeft:4,fontWeight:700}}>⬤</span>}
                 {isTargetAvailable && <span style={{color:'#00ff00',marginLeft:4}}>🎯</span>}
               </div>
-              <div className={styles.cardsRow}>
-                <AnimatePresence>
-                  {p.cards.map((card, ci) => (
+                          <div className={styles.cardsRow}>
+              <AnimatePresence>
+                {p.cards.map((card, ci) => {
+                  const isTopCard = ci === p.cards.length - 1;
+                  const cardOffset = ci * 8; // Смещение для нахлеста
+                  
+                  return (
                     <motion.div
                       key={card.id}
                       initial={{ opacity: 0, y: -40 }}
                       animate={{ opacity: dealt ? 1 : 0, y: 0 }}
                       exit={{ opacity: 0, y: 40 }}
                       transition={{ delay: (i * 0.3) + (ci * 0.1), duration: 0.4 }}
-                      style={{ display: 'inline-block' }}
+                      style={{ 
+                        position: 'absolute',
+                        left: `${cardOffset}px`,
+                        zIndex: ci + 1
+                      }}
                     >
                       <div
-                        className={`${styles.card} ${card.open ? styles.open : styles.closed} ${isTargetAvailable && ci === p.cards.length - 1 ? styles.targetCard : ''}`}
-                        style={{ zIndex: ci, cursor: isTargetAvailable && ci === p.cards.length - 1 ? 'pointer' : 'default' }}
+                        className={`${styles.card} ${card.open ? styles.open : styles.closed} ${isTargetAvailable && isTopCard ? styles.targetCard : ''}`}
+                        style={{ 
+                          cursor: isTargetAvailable && isTopCard ? 'pointer' : 'default',
+                          transform: isTargetAvailable && isTopCard ? 'scale(1.05)' : 'scale(1)'
+                        }}
                         onClick={() => {
-                          if (isTargetAvailable && ci === p.cards.length - 1) {
+                          if (isTargetAvailable && isTopCard) {
                             makeMove(p.id);
                           }
                         }}
@@ -268,9 +289,10 @@ export default function GamePageContent() {
                         />
                       </div>
                     </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
+                  );
+                })}
+              </AnimatePresence>
+            </div>
             </div>
           );
         })}
@@ -282,18 +304,79 @@ export default function GamePageContent() {
         )}
       </div>
       
-      {/* Кнопки управления для 1-й стадии */}
-      {gameStage === 1 && (
-        <div className={styles.gameControls}>
+      {/* Новый интерфейс для 1-й стадии */}
+      {gameStage === 1 && currentPlayer && (
+        <div className={styles.gameInterface}>
+          {/* 4 кнопки управления */}
+          <div className={styles.actionButtons}>
+            <button 
+              className={styles.gameButton}
+              onClick={drawCardFromDeck}
+              disabled={deck.length === 0}
+            >
+              Взять из колоды
+            </button>
+            <button 
+              className={styles.gameButton}
+              onClick={() => {
+                // Пропуск хода
+                setTimeout(() => nextTurn(), 500);
+              }}
+            >
+              Пропустить ход
+            </button>
+            <button 
+              className={`${styles.gameButton} ${styles.disabled}`}
+              disabled={true}
+              title="Доступно со 2-й стадии"
+            >
+              Одна карта!
+            </button>
+            <button 
+              className={`${styles.gameButton} ${styles.disabled}`}
+              disabled={true}
+              title="Доступно со 2-й стадии"
+            >
+              Сколько карт?
+            </button>
+          </div>
+          
+          {/* Кнопка "Положить себе" если нужна */}
           {canPlaceOnSelf && (
-            <button className={styles.actionButton} onClick={placeCardOnSelf}>
+            <button className={styles.placeOnSelfButton} onClick={placeCardOnSelf}>
               Положить себе и пропустить ход
             </button>
           )}
-          <div className={styles.gameInfo}>
-            <p>Стадия 1: Накопление карт</p>
-            <p>Карт в колоде: {deck.length}</p>
-            {availableTargets.length > 0 && <p>Доступно ходов: {availableTargets.length}</p>}
+          
+          {/* Отображение карт в руке игрока */}
+          <div className={styles.playerHand}>
+            <div className={styles.handTitle}>
+              Ваши карты ({currentPlayer.cards.length})
+            </div>
+            <div className={styles.handCards}>
+              {currentPlayer.cards.map((card, index) => (
+                <div 
+                  key={card.id} 
+                  className={`${styles.handCard} ${card.open ? styles.open : styles.closed}`}
+                  style={{ zIndex: index }}
+                >
+                  <Image
+                    src={card.open && card.image ? `/img/cards/${card.image}` : `/img/cards/back.png`}
+                    alt={card.open ? 'card' : 'back'}
+                    width={50}
+                    height={75}
+                    draggable={false}
+                    priority
+                  />
+                  {/* Показать ранг карты если открыта */}
+                  {card.open && card.rank && (
+                    <div className={styles.cardRank}>
+                      {card.rank === 14 ? 'A' : card.rank === 13 ? 'K' : card.rank === 12 ? 'Q' : card.rank === 11 ? 'J' : card.rank}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
