@@ -277,4 +277,130 @@
 @keyframes rotate-border {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* Заглушка для 2-й стадии */
+.stage2Placeholder {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: stage2-appear 1s ease-out;
+}
+
+.stage2Content {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 40px 60px;
+  border-radius: 24px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 500px;
+  animation: content-bounce 0.8s ease-out 0.5s both;
+}
+
+.stage2Content h1 {
+  font-size: 3rem;
+  margin: 0 0 16px 0;
+  background: linear-gradient(45deg, #ffd700, #ff6b6b, #4ecdc4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: rainbow-text 2s linear infinite;
+}
+
+.stage2Content h2 {
+  font-size: 1.8rem;
+  color: #333;
+  margin: 0 0 32px 0;
+  font-weight: 600;
+}
+
+.stage2Stats {
+  background: rgba(255, 215, 0, 0.1);
+  padding: 20px;
+  border-radius: 16px;
+  margin: 24px 0;
+  border: 2px solid #ffd700;
+}
+
+.stage2Stats p {
+  margin: 8px 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.comingSoon {
+  margin-top: 32px;
+  padding: 20px;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 16px;
+  border: 2px solid #667eea;
+}
+
+.comingSoon p {
+  margin: 8px 0;
+  font-size: 1.1rem;
+  color: #555;
+  font-weight: 500;
+}
+
+.stage2Actions {
+  margin-top: 32px;
+}
+
+.restartButton {
+  padding: 16px 32px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #fff;
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+}
+
+.restartButton:hover {
+  background: linear-gradient(45deg, #5a67d8, #6b46c1);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.6);
+}
+
+@keyframes stage2-appear {
+  0% { 
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes content-bounce {
+  0% { 
+    opacity: 0;
+    transform: translateY(-50px) scale(0.9);
+  }
+  60% {
+    transform: translateY(10px) scale(1.02);
+  }
+  100% { 
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes rainbow-text {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 } 

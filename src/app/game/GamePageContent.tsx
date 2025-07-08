@@ -297,6 +297,35 @@ export default function GamePageContent() {
           </div>
         </div>
       )}
+      
+      {/* Заглушка для 2-й стадии */}
+      {gameStage === 2 && (
+        <div className={styles.stage2Placeholder}>
+          <div className={styles.stage2Content}>
+            <h1>🎉 ПОЗДРАВЛЯЕМ! 🎉</h1>
+            <h2>Ты дошел до 2-й стадии!</h2>
+            <div className={styles.stage2Stats}>
+              <p>👥 Игроков: {players.length}</p>
+              <p>🃏 Карт роздано: {players.reduce((sum, p) => sum + p.cards.length, 0)}</p>
+              <p>🏆 Текущий игрок: {currentPlayer?.name}</p>
+            </div>
+            <div className={styles.comingSoon}>
+              <p>😎 Скоро здесь будет эпичное продолжение...</p>
+              <p>🚀 2-я стадия в разработке!</p>
+            </div>
+            <div className={styles.stage2Actions}>
+              <button 
+                className={styles.restartButton} 
+                onClick={() => {
+                  startGame('multiplayer', playersCount);
+                }}
+              >
+                🔄 Начать заново
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

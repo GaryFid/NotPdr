@@ -665,8 +665,21 @@ export const useGameStore = create<GameState>()(
       checkStage1End: () => {
         const { deck, gameStage } = get();
         if (gameStage === 1 && deck.length === 0) {
-          set({ gameStage: 2 });
-          get().showNotification('1-я стадия завершена! Начинается 2-я стадия!', 'success');
+          set({ 
+            gameStage: 2,
+            availableTargets: [],
+            canPlaceOnSelf: false,
+            mustDrawFromDeck: false
+          });
+          
+          // Заглушка для 2-й стадии
+          setTimeout(() => {
+            get().showNotification('🎉 Ты реально до 2-ой стадии дошел?! 🎉', 'success');
+            
+            setTimeout(() => {
+              get().showNotification('😎 Пока что это все... Скоро будет продолжение!', 'info');
+            }, 2000);
+          }, 1000);
         }
       },
       
