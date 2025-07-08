@@ -8,6 +8,7 @@ import type { Player, Card } from '../../types/game';
 import { motion, AnimatePresence } from 'framer-motion';
 import React from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useGameStore } from '@/store/gameStore';
 
 const CARD_IMAGES = [
   '2_of_clubs.png','2_of_diamonds.png','2_of_hearts.png','2_of_spades.png',
@@ -136,41 +137,41 @@ function generateDeckAndDeal(playersCount: number, cardsPerPlayer: number) {
 export default function GamePageContent() {
   const params = useSearchParams();
   const playersCount = Math.max(4, Math.min(9, parseInt(params.get('table') || '6', 10)));
-  const cardsPerPlayer = 3;
-  const [{ hands, deck }] = useState(() => generateDeckAndDeal(playersCount, cardsPerPlayer));
-  const [players, setPlayers] = useState<Player[]>(() => getPlayers(playersCount).map((p, i) => ({
-    ...p,
-    cards: [
-      { id: `c${i}a`, image: CARD_BACK, open: false },
-      { id: `c${i}b`, image: CARD_BACK, open: false },
-      { id: `c${i}c`, image: `/img/cards/${hands[i][2]}`, open: true },
-    ],
-  })));
-  const [stage, setStage] = useState<1 | 2>(1); // 1: раздача, 2: игра
+  
+  // Используем новый game store
+  const {
+    players,
+    gameStage,
+    currentPlayerId,
+    deck,
+    availableTargets,
+    canPlaceOnSelf,
+    isGameActive,
+    startGame,
+    makeMove,
+    placeCardOnSelf,
+    drawCardFromDeck,
+    processPlayerTurn
+  } = useGameStore();
+  
   const [dealt, setDealt] = useState(false);
-  const [currentPlayer, setCurrentPlayer] = useState(() => getFirstPlayerIdx(getPlayers(playersCount).map((p, i) => ({
-    ...p,
-    cards: [
-      { id: `c${i}a`, image: CARD_BACK, open: false },
-      { id: `c${i}b`, image: CARD_BACK, open: false },
-      { id: `c${i}c`, image: `/img/cards/${hands[i][2]}`, open: true },
-    ],
-  }))));
-  const [lastPlayedRank, setLastPlayedRank] = useState<number | null>(null);
   const [draggedCard, setDraggedCard] = useState<{card: Card; playerIdx: number} | null>(null);
   const [dropZoneActive, setDropZoneActive] = useState(false);
+  
+  // Инициализируем игру при первой загрузке
+  React.useEffect(() => {
+    if (!isGameActive) {
+      startGame('multiplayer', playersCount);
+    }
+  }, [isGameActive, playersCount, startGame]);
   const { dragProps, dropProps } = useDragAndDrop({
     onDrop: (card: Card, playerIdx: number) => {
-      // Логика хода: можно положить только карту на 1 ранг выше
-      const rank = getCardRank(card.image);
-      if (playerIdx === currentPlayer && (lastPlayedRank === null || rank === lastPlayedRank + 1)) {
-        // Удаляем карту из руки игрока
-        setPlayers(prev => prev.map((p, idx) => idx === playerIdx ? {
-          ...p,
-          cards: p.cards.filter(c => c.id !== card.id)
-        } : p));
-        setLastPlayedRank(rank);
-        setCurrentPlayer((prev) => (prev + 1) % players.length);
+      // Новая логика для P.I.D.R: проверяем доступные цели
+      const currentPlayerIndex = players.findIndex(p => p.id === currentPlayerId);
+      const targetPlayer = players[playerIdx];
+      
+      if (currentPlayerIndex >= 0 && targetPlayer && availableTargets.includes(playerIdx)) {
+        makeMove(targetPlayer.id);
       }
       setDropZoneActive(false);
     },
@@ -192,19 +193,23 @@ export default function GamePageContent() {
     }
   }, [dealt, players.length]);
 
+  // Находим индекс текущего игрока
+  const currentPlayerIndex = players.findIndex(p => p.id === currentPlayerId);
+  const currentPlayer = currentPlayerIndex >= 0 ? players[currentPlayerIndex] : null;
+  
   // --- Анимационная надпись для первого хода ---
   const [showFirstMove, setShowFirstMove] = useState(true);
   useEffect(() => {
     setShowFirstMove(true);
     const t = setTimeout(() => setShowFirstMove(false), 3000);
     return () => clearTimeout(t);
-  }, []);
+  }, [currentPlayerId]);
 
   return (
     <div className={styles.tableWrapper}>
-      {showFirstMove && (
+      {showFirstMove && currentPlayer && (
         <div className={styles.firstMoveBanner}>
-          Ходит первый: <b>{players[currentPlayer]?.name}</b>
+          Ходит: <b>{currentPlayer.name}</b> (Стадия {gameStage})
         </div>
       )}
       <div className={styles.tableBg}>
@@ -217,79 +222,80 @@ export default function GamePageContent() {
           </div>
         )}
         {/* Игроки по кругу */}
-        {players.map((p, i) => (
-          <div
-            key={p.id}
-            className={styles.playerSeat}
-            style={getCirclePosition(i, players.length)}
-          >
-            <div className={styles.avatarWrap}>
-              <Image src={p.avatar} alt="avatar" width={30} height={30} className={styles.avatar} />
-              <span className={styles.playerName}>{p.name}</span>
-              {currentPlayer === i && stage === 2 && <span style={{color:'#ffd700',marginLeft:4,fontWeight:700}}>⬤</span>}
-            </div>
-            <div className={styles.cardsRow}>
-              <AnimatePresence>
-                {p.cards.map((card, ci) => (
-                  <motion.div
-                    key={card.id}
-                    initial={{ opacity: 0, y: -40 }}
-                    animate={{ opacity: dealt ? 1 : 0, y: 0 }}
-                    exit={{ opacity: 0, y: 40 }}
-                    transition={{ delay: (i * 0.3) + (ci * 0.1), duration: 0.4 }}
-                    style={{ display: 'inline-block' }}
-                  >
-                    <div
-                      className={styles.card + ' ' + (card.open ? styles.open : styles.closed)}
-                      style={{ zIndex: ci }}
+        {players.map((p, i) => {
+          const isCurrentPlayer = p.id === currentPlayerId;
+          const isTargetAvailable = availableTargets.includes(i);
+          
+          return (
+            <div
+              key={p.id}
+              className={`${styles.playerSeat} ${isTargetAvailable ? styles.highlightedTarget : ''}`}
+              style={getCirclePosition(i, players.length)}
+            >
+              <div className={styles.avatarWrap}>
+                <Image src={p.avatar || USER_AVATAR} alt="avatar" width={30} height={30} className={styles.avatar} />
+                <span className={styles.playerName}>{p.name}</span>
+                {isCurrentPlayer && <span style={{color:'#ffd700',marginLeft:4,fontWeight:700}}>⬤</span>}
+                {isTargetAvailable && <span style={{color:'#00ff00',marginLeft:4}}>🎯</span>}
+              </div>
+              <div className={styles.cardsRow}>
+                <AnimatePresence>
+                  {p.cards.map((card, ci) => (
+                    <motion.div
+                      key={card.id}
+                      initial={{ opacity: 0, y: -40 }}
+                      animate={{ opacity: dealt ? 1 : 0, y: 0 }}
+                      exit={{ opacity: 0, y: 40 }}
+                      transition={{ delay: (i * 0.3) + (ci * 0.1), duration: 0.4 }}
+                      style={{ display: 'inline-block' }}
                     >
-                      <Image
-                        src={card.open ? `/img/cards/${card.image.split('/').pop()}` : `/img/cards/back.png`}
-                        alt={card.open ? 'card' : 'back'}
-                        width={42}
-                        height={66}
-                        draggable={false}
-                        priority
-                      />
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+                      <div
+                        className={`${styles.card} ${card.open ? styles.open : styles.closed} ${isTargetAvailable && ci === p.cards.length - 1 ? styles.targetCard : ''}`}
+                        style={{ zIndex: ci, cursor: isTargetAvailable && ci === p.cards.length - 1 ? 'pointer' : 'default' }}
+                        onClick={() => {
+                          if (isTargetAvailable && ci === p.cards.length - 1) {
+                            makeMove(p.id);
+                          }
+                        }}
+                      >
+                        <Image
+                          src={card.open && card.image ? `/img/cards/${card.image}` : `/img/cards/back.png`}
+                          alt={card.open ? 'card' : 'back'}
+                          width={42}
+                          height={66}
+                          draggable={false}
+                          priority
+                        />
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         {/* Зона сброса */}
-        {stage === 2 && (
+        {gameStage >= 2 && (
           <div className={styles.dropZone} {...dropProps}>
-            <span>Сбросить карту</span>
+            <span>Зона сброса</span>
           </div>
         )}
       </div>
-      {/* Кнопка взять карту */}
-      {stage === 1 && (
-        <>
-          <button className={styles.drawButton} onClick={() => { setStage(2); setDealt(true); }}>
-            Взять карту
-          </button>
-          <div style={{display:'flex',justifyContent:'center',gap:8,marginTop:12}}>
-            {players[0].cards.map((card, ci) => (
-              <div
-                key={card.id}
-                className={styles.card + ' ' + (card.open ? styles.open : styles.closed)}
-                style={{ zIndex: ci }}
-              >
-                <Image
-                  src={card.open ? `/img/cards/${card.image.split('/').pop()}` : `/img/cards/back.png`}
-                  alt={card.open ? 'card' : 'back'}
-                  width={42}
-                  height={66}
-                  draggable={false}
-                  priority
-                />
-              </div>
-            ))}
+      
+      {/* Кнопки управления для 1-й стадии */}
+      {gameStage === 1 && (
+        <div className={styles.gameControls}>
+          {canPlaceOnSelf && (
+            <button className={styles.actionButton} onClick={placeCardOnSelf}>
+              Положить себе и пропустить ход
+            </button>
+          )}
+          <div className={styles.gameInfo}>
+            <p>Стадия 1: Накопление карт</p>
+            <p>Карт в колоде: {deck.length}</p>
+            {availableTargets.length > 0 && <p>Доступно ходов: {availableTargets.length}</p>}
           </div>
-        </>
+        </div>
       )}
     </div>
   );
