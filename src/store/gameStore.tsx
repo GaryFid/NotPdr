@@ -300,8 +300,16 @@ export const useGameStore = create<GameState>()(
         
         get().showNotification(`Игра начата! Ходит первым: ${players[firstPlayerIndex].name}`, 'success');
         
-        // Запускаем обработку первого хода
-        setTimeout(() => get().processPlayerTurn(players[firstPlayerIndex].id), 1000);
+        // Для первого хода просто проверяем доступные цели, без автоматического взятия карт
+        setTimeout(() => {
+          const targets = get().findAvailableTargets(players[firstPlayerIndex].id);
+          if (targets.length > 0) {
+            set({ availableTargets: targets });
+          } else {
+            // Если нет доступных ходов - показываем кнопку "положить себе"
+            set({ canPlaceOnSelf: true });
+          }
+        }, 1000);
       },
       
       endGame: () => {
