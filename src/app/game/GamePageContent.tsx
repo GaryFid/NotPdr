@@ -150,9 +150,7 @@ export default function GamePageContent() {
     startGame,
     makeMove,
     placeCardOnSelf,
-    drawCardFromDeck,
-    processPlayerTurn,
-    nextTurn
+    processPlayerTurn
   } = useGameStore();
   
   const [dealt, setDealt] = useState(false);
@@ -307,23 +305,14 @@ export default function GamePageContent() {
       {/* Новый интерфейс для 1-й стадии */}
       {gameStage === 1 && currentPlayer && (
         <div className={styles.gameInterface}>
-          {/* 4 кнопки управления */}
+          {/* 3 кнопки управления */}
           <div className={styles.actionButtons}>
             <button 
-              className={styles.gameButton}
-              onClick={drawCardFromDeck}
-              disabled={deck.length === 0}
+              className={`${styles.gameButton} ${styles.disabled}`}
+              disabled={true}
+              title="Доступно со 2-й стадии"
             >
-              Взять из колоды
-            </button>
-            <button 
-              className={styles.gameButton}
-              onClick={() => {
-                // Пропуск хода
-                setTimeout(() => nextTurn(), 500);
-              }}
-            >
-              Пропустить ход
+              Взять нижнюю карту
             </button>
             <button 
               className={`${styles.gameButton} ${styles.disabled}`}
