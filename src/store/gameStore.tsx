@@ -70,6 +70,13 @@ interface GameState {
   lastPlayerToDrawCard: string | null // ID игрока, который последним взял карту
   trumpSuit: 'clubs' | 'diamonds' | 'hearts' | 'spades' | null // Козырь второй стадии
   
+  // Состояние 2-й стадии (дурак)
+  tableStack: Card[] // Стопка карт на столе (нижняя = первая, верхняя = последняя)
+  selectedHandCard: Card | null // Выбранная карта в руке (для двойного клика)
+  stage2TurnPhase: 'selecting_card' | 'playing_card' | 'waiting_beat' | 'round_complete' // Фазы хода 2-й стадии
+  roundInProgress: boolean // Идет ли текущий раунд битья
+  currentRoundInitiator: string | null // Кто начал текущий раунд
+  
   // Статистика и настройки
   stats: GameStats
   settings: GameSettings
@@ -112,6 +119,15 @@ interface GameState {
   resetTurnState: () => void
   onDeckClick: () => void
   findAvailableTargetsForDeckCard: (deckCard: Card) => number[]
+  
+  // Методы для 2-й стадии
+  selectHandCard: (card: Card) => void
+  playSelectedCard: () => void
+  canBeatCard: (attackCard: Card, defendCard: Card, trumpSuit: string) => boolean
+  beatCard: (defendCard: Card) => void
+  takeTableCards: () => void
+  checkRoundComplete: () => boolean
+  initializeStage2: () => void
   
   // Управление картами
   selectCard: (card: Card | null) => void
@@ -188,6 +204,13 @@ export const useGameStore = create<GameState>()(
       lastDrawnCard: null,
       lastPlayerToDrawCard: null,
       trumpSuit: null,
+      
+      // Состояние 2-й стадии (дурак)
+      tableStack: [],
+      selectedHandCard: null,
+      stage2TurnPhase: 'selecting_card',
+      roundInProgress: false,
+      currentRoundInitiator: null,
       
       // Состояния хода для новой логики
       turnPhase: 'analyzing_hand',
@@ -774,6 +797,9 @@ export const useGameStore = create<GameState>()(
           currentRound: 1 // Сбрасываем раунды для новой стадии
         });
         
+        // Инициализируем 2-ю стадию
+        get().initializeStage2();
+        
         // Уведомления о начале второй стадии
         setTimeout(() => {
           get().showNotification('🎉 Первая стадия завершена!', 'success');
@@ -1056,6 +1082,195 @@ export const useGameStore = create<GameState>()(
            });
            
            return targets;
+         },
+         
+         // ===== МЕТОДЫ ДЛЯ 2-Й СТАДИИ =====
+         
+         // Инициализация 2-й стадии
+         initializeStage2: () => {
+           set({
+             stage2TurnPhase: 'selecting_card',
+             roundInProgress: false,
+             currentRoundInitiator: null,
+             tableStack: [],
+             selectedHandCard: null
+           });
+         },
+         
+         // Выбор карты в руке (двойной клик)
+         selectHandCard: (card: Card) => {
+           const { selectedHandCard } = get();
+           
+           if (selectedHandCard?.id === card.id) {
+             // Второй клик - играем карту
+             get().playSelectedCard();
+           } else {
+             // Первый клик - выбираем карту
+             set({ selectedHandCard: card });
+           }
+         },
+         
+         // Розыгрыш выбранной карты
+         playSelectedCard: () => {
+           const { selectedHandCard, currentPlayerId, players, tableStack, roundInProgress } = get();
+           if (!selectedHandCard || !currentPlayerId) return;
+           
+           const currentPlayer = players.find(p => p.id === currentPlayerId);
+           if (!currentPlayer) return;
+           
+           // Убираем карту из руки игрока
+           const cardIndex = currentPlayer.cards.findIndex(c => c.id === selectedHandCard.id);
+           if (cardIndex === -1) return;
+           
+           currentPlayer.cards.splice(cardIndex, 1);
+           
+           // Добавляем карту на стол (всегда наверх стопки)
+           const playedCard = { ...selectedHandCard };
+           playedCard.open = false; // На столе карты рубашкой вверх
+           
+           set({
+             players: [...players],
+             tableStack: [...tableStack, playedCard],
+             selectedHandCard: null,
+             roundInProgress: true,
+             currentRoundInitiator: roundInProgress ? get().currentRoundInitiator : currentPlayerId,
+             stage2TurnPhase: 'waiting_beat'
+           });
+           
+           get().showNotification(`${currentPlayer.name} сыграл карту`, 'info');
+           
+           // Переходим к следующему игроку
+           get().nextTurn();
+         },
+         
+         // Проверка возможности побить карту
+         canBeatCard: (attackCard: Card, defendCard: Card, trumpSuit: string) => {
+           if (!attackCard.image || !defendCard.image) return false;
+           
+           const attackSuit = get().getCardSuit(attackCard.image);
+           const defendSuit = get().getCardSuit(defendCard.image);
+           const attackRank = get().getCardRank(attackCard.image);
+           const defendRank = get().getCardRank(defendCard.image);
+           
+           // Правило "Пики только Пикями"
+           if (attackSuit === 'spades' && defendSuit !== 'spades') {
+             return false;
+           }
+           
+           // Бить той же мастью старшей картой
+           if (attackSuit === defendSuit) {
+             return defendRank > attackRank;
+           }
+           
+           // Бить козырем некозырную карту
+           if (defendSuit === trumpSuit && attackSuit !== trumpSuit) {
+             return true;
+           }
+           
+           return false;
+         },
+         
+         // Побить карту на столе
+         beatCard: (defendCard: Card) => {
+           const { currentPlayerId, players, tableStack, trumpSuit } = get();
+           if (!currentPlayerId || tableStack.length === 0) return;
+           
+           const currentPlayer = players.find(p => p.id === currentPlayerId);
+           if (!currentPlayer) return;
+           
+           const topCard = tableStack[tableStack.length - 1]; // Верхняя карта для битья
+           
+           // Проверяем можем ли побить
+           if (!get().canBeatCard(topCard, defendCard, trumpSuit || '')) {
+             get().showNotification('Нельзя побить эту карту!', 'error');
+             return;
+           }
+           
+           // Убираем карту из руки
+           const cardIndex = currentPlayer.cards.findIndex(c => c.id === defendCard.id);
+           if (cardIndex === -1) return;
+           
+           currentPlayer.cards.splice(cardIndex, 1);
+           
+           // Добавляем карту на стол
+           const playedCard = { ...defendCard };
+           playedCard.open = false; // Рубашкой вверх
+           
+           set({
+             players: [...players],
+             tableStack: [...tableStack, playedCard]
+           });
+           
+           get().showNotification(`${currentPlayer.name} побил карту!`, 'success');
+           
+           // Проверяем завершение раунда
+           if (get().checkRoundComplete()) {
+             // Раунд завершен - карты в биту, текущий игрок ходит снова
+             setTimeout(() => {
+               set({
+                 tableStack: [],
+                 roundInProgress: false,
+                 currentRoundInitiator: null,
+                 stage2TurnPhase: 'selecting_card'
+               });
+               get().showNotification('Раунд завершен! Карты в биту', 'success');
+             }, 1000);
+           } else {
+             // Переходим к следующему игроку
+             get().nextTurn();
+           }
+         },
+         
+         // Взять карты со стола
+         takeTableCards: () => {
+           const { currentPlayerId, players, tableStack } = get();
+           if (!currentPlayerId || tableStack.length === 0) return;
+           
+           const currentPlayer = players.find(p => p.id === currentPlayerId);
+           if (!currentPlayer) return;
+           
+           // Берем нижнюю карту (первую в стопке)
+           const bottomCard = tableStack[0];
+           bottomCard.open = true; // Открываем взятую карту
+           
+           currentPlayer.cards.push(bottomCard);
+           
+           set({
+             players: [...players],
+             tableStack: tableStack.slice(1) // Убираем нижнюю карту
+           });
+           
+           get().showNotification(`${currentPlayer.name} взял карту со стола`, 'warning');
+           
+           // Если стол пуст - раунд завершен
+           if (tableStack.length === 1) { // Была только одна карта
+             set({
+               tableStack: [],
+               roundInProgress: false,
+               currentRoundInitiator: null,
+               stage2TurnPhase: 'selecting_card'
+             });
+           }
+           
+           // Переходим к следующему игроку
+           get().nextTurn();
+         },
+         
+         // Проверка завершения раунда
+         checkRoundComplete: () => {
+           const { currentPlayerId, currentRoundInitiator, players } = get();
+           if (!currentRoundInitiator) return false;
+           
+           // Найдем индекс инициатора раунда
+           const initiatorIndex = players.findIndex(p => p.id === currentRoundInitiator);
+           const currentIndex = players.findIndex(p => p.id === currentPlayerId);
+           
+           if (initiatorIndex === -1 || currentIndex === -1) return false;
+           
+           // Раунд завершается когда доходим до игрока перед инициатором
+           const beforeInitiatorIndex = (initiatorIndex - 1 + players.length) % players.length;
+           
+           return currentIndex === beforeInitiatorIndex;
          }
     }),
     {

@@ -162,7 +162,20 @@ export default function GamePageContent() {
     onDeckClick,
     placeCardOnSelfByRules,
     takeCardNotByRules,
-    findAvailableTargetsForDeckCard
+    findAvailableTargetsForDeckCard,
+    // Поля для 2-й стадии
+    tableStack,
+    selectedHandCard,
+    stage2TurnPhase,
+    roundInProgress,
+    currentRoundInitiator,
+    // Методы для 2-й стадии
+    selectHandCard,
+    playSelectedCard,
+    canBeatCard,
+    beatCard,
+    takeTableCards,
+    checkRoundComplete
   } = useGameStore();
   
   const [dealt, setDealt] = useState(false);
@@ -233,7 +246,93 @@ export default function GamePageContent() {
         </div>
       )}
       <div className={styles.tableBg}>
-        <div className={styles.tableCenter} />
+        <div className={styles.tableCenter}>
+          {/* Информация о 2-й стадии */}
+          {gameStage === 2 && (
+            <div style={{
+              position: 'absolute',
+              top: '20px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              color: '#ffd700',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              textAlign: 'center',
+              textShadow: '0 0 8px rgba(0,0,0,0.8)',
+              zIndex: 10
+            }}>
+              <div>Ходит: <span style={{color: '#00ff88'}}>{players.find(p => p.id === currentPlayerId)?.name || 'Игрок'}</span></div>
+              <div>Козырь: <span style={{color: '#ff6b35'}}>
+                {trumpSuit === 'clubs' ? '♣ Трефы' : 
+                 trumpSuit === 'diamonds' ? '♦ Бубны' :
+                 trumpSuit === 'hearts' ? '♥ Червы' : 
+                 trumpSuit === 'spades' ? '♠ Пики' : 'Неизвестно'}
+              </span></div>
+              <div style={{color: '#ff4757', marginTop: '4px'}}>Пики только Пикями!</div>
+            </div>
+          )}
+          
+          {/* Стопка карт на столе для 2-й стадии */}
+          {gameStage === 2 && tableStack.length > 0 && (
+            <div style={{
+              position: 'absolute',
+              left: '50%',
+              top: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 6
+            }}>
+              {tableStack.map((card, index) => (
+                <div
+                  key={`table-${card.id}-${index}`}
+                  style={{
+                    position: 'absolute',
+                    left: `${index * 2}px`,
+                    top: `${index * 2}px`,
+                    zIndex: index
+                  }}
+                >
+                  <Image 
+                    src={"/img/cards/" + CARD_BACK}
+                    alt="table card" 
+                    width={42} 
+                    height={64}
+                    style={{
+                      boxShadow: index === tableStack.length - 1 ? 
+                        '0 0 12px #ffd700' : '0 0 8px rgba(0,0,0,0.5)'
+                    }}
+                  />
+                </div>
+              ))}
+              
+              {/* Индикаторы для верхней/нижней карты */}
+              {tableStack.length > 1 && (
+                <>
+                  <div style={{
+                    position: 'absolute',
+                    left: '-60px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: '#ff6b35',
+                    fontSize: '12px',
+                    fontWeight: 'bold'
+                  }}>
+                    Бить ↗
+                  </div>
+                  <div style={{
+                    position: 'absolute',
+                    right: '-60px',
+                    bottom: '10px',
+                    color: '#70a1ff',
+                    fontSize: '12px',
+                    fontWeight: 'bold'
+                  }}>
+                    ↙ Брать
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
         {/* Колода (смещена правее) */}
         {deck.length > 0 && (
           <div 
@@ -503,22 +602,33 @@ export default function GamePageContent() {
               <div style={{ position: 'relative', height: '75px', width: '120px', margin: '0 auto' }}>
                 {currentPlayer.cards.map((card, index) => {
                   const isTopCard = index === currentPlayer.cards.length - 1;
-                  const isPlayable = isTopCard && card.open && availableTargets.length > 0 && (turnPhase === 'analyzing_hand' || turnPhase === 'waiting_target_selection');
+                  // Для 1-й стадии
+                  const isPlayable = (gameStage as number) === 1 && isTopCard && card.open && availableTargets.length > 0 && (turnPhase === 'analyzing_hand' || turnPhase === 'waiting_target_selection');
+                  // Для 2-й стадии - любая открытая карта может быть выбрана
+                  const isSelectableStage2 = (gameStage as number) === 2 && card.open && stage2TurnPhase === 'selecting_card';
+                  const isSelected = (gameStage as number) === 2 && selectedHandCard?.id === card.id;
                   const cardOffset = index * 8; // Смещение для нахлеста
                   
                   return (
                     <div 
                       key={card.id} 
-                      className={`${styles.handCard} ${card.open ? styles.open : styles.closed} ${isPlayable ? styles.playable : ''}`}
+                      className={`${styles.handCard} ${card.open ? styles.open : styles.closed} ${isPlayable ? styles.playable : ''} ${isSelectableStage2 ? styles.playable : ''}`}
                       style={{ 
                         position: 'absolute',
                         left: `${cardOffset}px`,
-                        zIndex: index + 1
+                        top: isSelected ? '-8px' : '0px', // Выбранная карта поднимается
+                        zIndex: index + 1,
+                        transform: isSelected ? 'scale(1.05)' : 'scale(1)',
+                        filter: isSelected ? 'drop-shadow(0 0 8px #00ff00)' : 'none',
+                        transition: 'all 0.2s ease-in-out'
                       }}
                       onClick={() => {
                         if (isPlayable) {
-                          // Клик по верхней открытой карте - начинаем выбор цели
+                          // 1-я стадия: клик по верхней открытой карте - начинаем выбор цели
                           useGameStore.setState({ turnPhase: 'waiting_target_selection' });
+                        } else if (isSelectableStage2) {
+                          // 2-я стадия: выбор карты (двойной клик)
+                          selectHandCard(card);
                         }
                       }}
                     >
@@ -583,6 +693,69 @@ export default function GamePageContent() {
               })}
               </div>
             </div>
+            
+            {/* Кнопки для 2-й стадии */}
+            {(gameStage as number) === 2 && tableStack.length > 0 && stage2TurnPhase === 'waiting_beat' && (
+              <div style={{
+                marginTop: '16px',
+                display: 'flex',
+                gap: '12px',
+                justifyContent: 'center'
+              }}>
+                {/* Кнопка "Побить" - показывается если есть карты для битья */}
+                {currentPlayer.cards.some(card => 
+                  card.open && canBeatCard(tableStack[tableStack.length - 1], card, trumpSuit || '')
+                ) && (
+                  <button
+                    style={{
+                      background: 'linear-gradient(145deg, #ff6b35, #f73e3e)',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 12px rgba(255, 107, 53, 0.4)'
+                    }}
+                    onClick={() => {
+                      // Логика выбора карты для битья
+                      const beatableCards = currentPlayer.cards.filter(card => 
+                        card.open && canBeatCard(tableStack[tableStack.length - 1], card, trumpSuit || '')
+                      );
+                      if (beatableCards.length === 1) {
+                        beatCard(beatableCards[0]);
+                      } else {
+                        // Если несколько карт - показать выбор
+                        alert('Выберите карту для битья из доступных');
+                      }
+                    }}
+                  >
+                    ⚔️ Побить
+                  </button>
+                )}
+                
+                {/* Кнопка "Взять" */}
+                <button
+                  style={{
+                    background: 'linear-gradient(145deg, #70a1ff, #5855e6)',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(112, 161, 255, 0.4)'
+                  }}
+                  onClick={() => {
+                    takeTableCards();
+                  }}
+                >
+                  📥 Взять
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
