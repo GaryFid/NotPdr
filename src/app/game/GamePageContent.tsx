@@ -420,7 +420,7 @@ export default function GamePageContent() {
           const isCurrentPlayer = p.id === currentPlayerId;
           const isTargetAvailable = availableTargets.includes(i);
           // В состоянии ожидания выбора цели все доступные цели кликабельны
-          const isClickableTarget = isTargetAvailable && (turnPhase === 'waiting_target_selection' || turnPhase === 'analyzing_hand');
+          const isClickableTarget = isTargetAvailable && (turnPhase === 'waiting_target_selection');
           
           return (
             <div
@@ -525,6 +525,16 @@ export default function GamePageContent() {
                         draggable: true
                       } : {})}
                     >
+                      {/* Золотой фон под картой */}
+                      <div style={{
+                        position: 'absolute',
+                        width: '50px',
+                        height: '75px',
+                        background: 'linear-gradient(145deg, #ffd700, #ffed4e)',
+                        borderRadius: '8px',
+                        zIndex: -1,
+                        boxShadow: '0 2px 8px rgba(255, 215, 0, 0.3)'
+                      }}></div>
                       <Image
                         src={card.open && card.image ? `/img/cards/${card.image}` : `/img/cards/back.png`}
                         alt={card.open ? 'card' : 'back'}
@@ -532,7 +542,10 @@ export default function GamePageContent() {
                         height={75}
                         draggable={false}
                         priority
-                        style={{ pointerEvents: 'none' }}
+                        style={{ 
+                          pointerEvents: 'none',
+                          borderRadius: '8px'
+                        }}
                       />
                     </div>
                     {/* Показать ранг карты если открыта */}

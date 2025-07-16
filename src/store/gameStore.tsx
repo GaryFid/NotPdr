@@ -806,14 +806,14 @@ export const useGameStore = create<GameState>()(
         // ЭТАП 1: Анализ руки (ТОЛЬКО если не пропускаем)
         if (!skipHandAnalysis && currentPlayer.cards.length > 0) {
           if (get().canMakeMove(playerId)) {
-            // Может ходить - показываем цели
+            // Может ходить - показываем цели и ждем клика по карте
             const targets = get().findAvailableTargets(playerId);
             console.log(`✅ Может ходить картой из руки, цели:`, targets);
             set({ 
               availableTargets: targets,
-              turnPhase: 'waiting_deck_action'
+              turnPhase: 'analyzing_hand'  // ИСПРАВЛЕНО: оставляем в режиме анализа руки
             });
-            return; // Ждем хода игрока
+            return; // Ждем клика по карте в руке игрока
           } else {
             console.log(`❌ Не может ходить картой из руки`);
           }
