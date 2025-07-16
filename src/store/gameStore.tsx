@@ -59,6 +59,17 @@ interface GameState {
   mustDrawFromDeck: boolean // Должен ли игрок взять карту из колоды
   canPlaceOnSelf: boolean // Может ли игрок положить карту себе
   
+  // Состояния хода для новой логики
+  turnPhase: 'analyzing_hand' | 'showing_deck_hint' | 'deck_card_revealed' | 'waiting_deck_action' | 'turn_ended'
+  revealedDeckCard: Card | null // Открытая карта из колоды (слева от колоды)
+  canPlaceOnSelfByRules: boolean // Может ли положить карту из колоды на себя по правилам
+  skipHandAnalysis: boolean // Пропуск анализа руки после укладки на себя
+  
+  // Для второй стадии
+  lastDrawnCard: Card | null // Последняя взятая карта из колоды
+  lastPlayerToDrawCard: string | null // ID игрока, который последним взял карту
+  trumpSuit: 'clubs' | 'diamonds' | 'hearts' | 'spades' | null // Козырь второй стадии
+  
   // Статистика и настройки
   stats: GameStats
   settings: GameSettings
@@ -90,6 +101,17 @@ interface GameState {
   placeCardOnSelf: () => void
   checkStage1End: () => void
   processPlayerTurn: (playerId: string) => void
+  determineTrumpSuit: () => 'clubs' | 'diamonds' | 'hearts' | 'spades' | null
+  getCardSuit: (imageName: string) => 'clubs' | 'diamonds' | 'hearts' | 'spades' | 'unknown'
+  
+  // Новые методы для алгоритма хода
+  revealDeckCard: () => boolean
+  canPlaceCardOnSelf: (deckCard: Card, playerTopCard: Card) => boolean  
+  placeCardOnSelfByRules: () => void
+  takeCardNotByRules: () => void
+  resetTurnState: () => void
+  onDeckClick: () => void
+  findAvailableTargetsForDeckCard: (deckCard: Card) => number[]
   
   // Управление картами
   selectCard: (card: Card | null) => void
@@ -161,6 +183,17 @@ export const useGameStore = create<GameState>()(
       availableTargets: [],
       mustDrawFromDeck: false,
       canPlaceOnSelf: false,
+      
+      // Для второй стадии
+      lastDrawnCard: null,
+      lastPlayerToDrawCard: null,
+      trumpSuit: null,
+      
+      // Состояния хода для новой логики
+      turnPhase: 'analyzing_hand',
+      revealedDeckCard: null,
+      canPlaceOnSelfByRules: false,
+      skipHandAnalysis: false,
       
       stats: {
         gamesPlayed: 0,
@@ -283,6 +316,9 @@ export const useGameStore = create<GameState>()(
           player.isCurrentPlayer = index === firstPlayerIndex;
         });
         
+        // Сбрасываем состояние и начинаем игру
+        get().resetTurnState();
+        
         set({
           isGameActive: true,
           gameMode: mode,
@@ -293,9 +329,10 @@ export const useGameStore = create<GameState>()(
           playedCards: [],
           lastPlayedCard: null,
           gameStage: 1,
-          availableTargets: [],
-          mustDrawFromDeck: false,
-          canPlaceOnSelf: false
+          // Сбрасываем данные второй стадии
+          lastDrawnCard: null,
+          lastPlayerToDrawCard: null,
+          trumpSuit: null
         });
         
         get().showNotification(`Игра начата! Ходит первым: ${players[firstPlayerIndex].name}`, 'success');
@@ -414,12 +451,13 @@ export const useGameStore = create<GameState>()(
           newRound = currentRound + 1
         }
         
+        // Сбрасываем все состояния хода
+        get().resetTurnState();
+        
         set({
           players: [...players],
           currentPlayerId: nextPlayerId,
-          currentRound: newRound,
-          availableTargets: [], // Сбрасываем цели
-          canPlaceOnSelf: false, // Сбрасываем флаг
+          currentRound: newRound
         })
         
         get().showNotification(`Ход переходит к ${nextPlayer.name}`, 'info')
@@ -558,14 +596,20 @@ export const useGameStore = create<GameState>()(
         
         const currentRank = get().getCardRank(topCard.image || '');
         
-        // Определяем целевой ранг с учетом специального правила Туза
-        // ПРАВИЛО: Только двойка (2) может перекрыть Туз (14)!
+        // Определяем целевой ранг с учетом правил P.I.D.R.
+        // ПРАВИЛО: Ищем у соперников карты на 1 ранг НИЖЕ нашей карты
+        // ИСКЛЮЧЕНИЕ: Только двойка (2) может ложиться на Туз (14)!
         let targetRank: number;
-        if (currentRank === 2) {
-          // Двойка может ложиться на Туз (14) - ИСКЛЮЧЕНИЕ!
+        
+        if (currentRank === 14) {
+          // Туз НЕ может ложиться ни на что! (только двойка может на туз)
+          return [];
+        } else if (currentRank === 2) {
+          // Двойка может ложиться ТОЛЬКО на Туз (14) - ИСКЛЮЧЕНИЕ!
           targetRank = 14;
         } else {
-          // Обычное правило: на 1 ранг ниже (К→Д, Д→В, В→10, и т.д.)
+          // Обычное правило: ищем карты на 1 ранг ниже
+          // К(13) → Д(12), Д(12) → В(11), В(11) → 10, ..., 3 → 2
           targetRank = currentRank - 1;
         }
         
@@ -592,49 +636,53 @@ export const useGameStore = create<GameState>()(
         return targets.length > 0;
       },
       
-      // Выполнение хода
+      // Выполнение хода (обновленная логика)
       makeMove: (targetPlayerId: string) => {
-        const { players, currentPlayerId } = get();
+        const { players, currentPlayerId, revealedDeckCard } = get();
         if (!currentPlayerId) return;
         
         const currentPlayer = players.find(p => p.id === currentPlayerId);
         const targetPlayer = players.find(p => p.id === targetPlayerId);
         
-        if (!currentPlayer || !targetPlayer || currentPlayer.cards.length === 0) return;
+        if (!currentPlayer || !targetPlayer) return;
         
-        // Перемещаем верхнюю карту с текущего игрока на целевого
-        const cardToMove = currentPlayer.cards.pop();
-        if (cardToMove) {
-          targetPlayer.cards.push(cardToMove);
+        let cardToMove: Card | undefined;
+        
+        // Определяем какую карту перемещаем
+        if (revealedDeckCard) {
+          // Ходим картой из колоды
+          cardToMove = revealedDeckCard;
           
-          set({ 
-            players: [...players],
-            availableTargets: [] // Убираем подсветку после хода
+          // Убираем карту из колоды и сбрасываем состояние
+          const { deck } = get();
+          set({
+            deck: deck.slice(1),
+            revealedDeckCard: null,
+            lastDrawnCard: cardToMove,
+            lastPlayerToDrawCard: currentPlayerId
           });
-          get().showNotification(`Карта переложена на ${targetPlayer.name}!`, 'success');
-          
-          // После хода ОБЯЗАТЕЛЬНО берем карту из колоды
-          setTimeout(() => {
-            const cardDrawn = get().drawCardFromDeck();
-            if (!cardDrawn) {
-              // Колода пуста - проверяем окончание стадии
-              get().checkStage1End();
-              return;
-            }
-            
-            // После взятия карты проверяем новую верхнюю карту
-            setTimeout(() => {
-              if (get().canMakeMove(currentPlayerId)) {
-                // Может ходить - показываем новые цели
-                const targets = get().findAvailableTargets(currentPlayerId);
-                set({ availableTargets: targets });
-              } else {
-                // Не может ходить - может положить себе
-                set({ canPlaceOnSelf: true });
-              }
-            }, 500);
-          }, 500);
+        } else {
+          // Ходим верхней картой из руки
+          if (currentPlayer.cards.length === 0) return;
+          cardToMove = currentPlayer.cards.pop();
         }
+        
+        if (!cardToMove) return;
+        
+        // Перемещаем карту
+        targetPlayer.cards.push(cardToMove);
+        
+        set({ 
+          players: [...players],
+          skipHandAnalysis: false // После хода на соперника - ВСЕГДА анализ руки
+        });
+        
+        get().showNotification(`Карта переложена на ${targetPlayer.name}!`, 'success');
+        
+        // Продолжаем ход (анализ верхней карты в руке)
+        setTimeout(() => {
+          get().processPlayerTurn(currentPlayerId);
+        }, 1000);
       },
       
       // Взятие карты из колоды
@@ -652,9 +700,12 @@ export const useGameStore = create<GameState>()(
         
         currentPlayer.cards.push(drawnCard);
         
+        // Отслеживаем для второй стадии
         set({ 
           deck: deck.slice(1),
-          players: [...players]
+          players: [...players],
+          lastDrawnCard: drawnCard,
+          lastPlayerToDrawCard: currentPlayerId
         });
         
         get().showNotification(`${currentPlayer.name} взял карту из колоды (осталось: ${deck.length - 1})`, 'info');
@@ -687,80 +738,318 @@ export const useGameStore = create<GameState>()(
       
       // Проверка окончания 1-й стадии
       checkStage1End: () => {
-        const { deck, gameStage } = get();
-        if (gameStage === 1 && deck.length === 0) {
-          set({ 
-            gameStage: 2,
-            availableTargets: [],
-            canPlaceOnSelf: false,
-            mustDrawFromDeck: false
-          });
+        const { deck, gameStage, lastPlayerToDrawCard, players } = get();
+        if (gameStage !== 1 || deck.length > 0) return;
+        
+        console.log('🏁 Первая стадия завершена! Колода пуста.');
+        
+        // Определяем козырь второй стадии
+        const trumpSuit = get().determineTrumpSuit();
+        console.log('🃏 Козырь второй стадии:', trumpSuit);
+        
+        // Определяем стартового игрока (последний взявший карту)
+        let startingPlayerId = lastPlayerToDrawCard || players[0].id;
+        console.log('🎮 Стартовый игрок второй стадии:', startingPlayerId);
+        
+        // Обновляем текущего игрока
+        players.forEach(p => p.isCurrentPlayer = p.id === startingPlayerId);
+        
+        set({ 
+          gameStage: 2,
+          availableTargets: [],
+          canPlaceOnSelf: false,
+          mustDrawFromDeck: false,
+          trumpSuit: trumpSuit,
+          currentPlayerId: startingPlayerId,
+          players: [...players],
+          currentRound: 1 // Сбрасываем раунды для новой стадии
+        });
+        
+        // Уведомления о начале второй стадии
+        setTimeout(() => {
+          get().showNotification('🎉 Первая стадия завершена!', 'success');
           
-          // Заглушка для 2-й стадии
           setTimeout(() => {
-            get().showNotification('🎉 Ты реально до 2-ой стадии дошел?! 🎉', 'success');
+            const startingPlayer = players.find(p => p.id === startingPlayerId);
+            get().showNotification(`🚀 Вторая стадия! Ходит: ${startingPlayer?.name || 'Игрок'}`, 'info');
             
             setTimeout(() => {
-              get().showNotification('😎 Пока что это все... Скоро будет продолжение!', 'info');
+              const trumpName = trumpSuit === 'clubs' ? 'Трефы' : 
+                              trumpSuit === 'diamonds' ? 'Бубны' :
+                              trumpSuit === 'hearts' ? 'Червы' : 
+                              trumpSuit === 'spades' ? 'Пики' : 'Неизвестно';
+              get().showNotification(`🃏 Козырь: ${trumpName}`, 'warning');
             }, 2000);
-          }, 1000);
-        }
+          }, 2000);
+        }, 1000);
       },
       
-      // Обработка хода игрока (основная логика 1-й стадии)
+      // Обработка хода игрока (НОВАЯ логика)
       processPlayerTurn: (playerId: string) => {
-        const { gameStage, deck } = get();
+        const { gameStage, players, skipHandAnalysis, deck } = get();
         if (gameStage !== 1) return;
         
-        const analyzeAndMove = () => {
-          // 1. Анализируем верхнюю открытую карту
+        console.log(`🎮 Обработка хода игрока: ${playerId}, пропуск анализа руки: ${skipHandAnalysis}`);
+        
+        const currentPlayer = players.find(p => p.id === playerId);
+        if (!currentPlayer) return;
+        
+        // ЭТАП 1: Анализ руки (ТОЛЬКО если не пропускаем)
+        if (!skipHandAnalysis && currentPlayer.cards.length > 0) {
           if (get().canMakeMove(playerId)) {
-            // Если может положить - показываем доступные цели и ждем действия игрока
+            // Может ходить - показываем цели
             const targets = get().findAvailableTargets(playerId);
+            console.log(`✅ Может ходить картой из руки, цели:`, targets);
             set({ 
               availableTargets: targets,
-              canPlaceOnSelf: false,
-              mustDrawFromDeck: false 
+              turnPhase: 'waiting_deck_action'
             });
-            return true; // Ждем действия игрока
+            return; // Ждем хода игрока
+          } else {
+            console.log(`❌ Не может ходить картой из руки`);
           }
-          return false; // Не может ходить
-        };
-        
-        // Сначала анализируем текущую верхнюю карту
-        if (analyzeAndMove()) {
-          return; // Ждем хода игрока
+        } else if (skipHandAnalysis) {
+          console.log(`⏭️ Пропускаем анализ руки, идем к колоде`);
+          set({ skipHandAnalysis: false }); // Сбрасываем флаг
         }
         
-        // Если не может ходить - берет карту из колоды
-        const cardDrawn = get().drawCardFromDeck();
-        if (!cardDrawn) {
-          // Колода пуста
+        // ЭТАП 2: Работа с колодой
+        if (deck.length === 0) {
+          console.log(`🔚 Колода пуста - завершаем стадию`);
           get().checkStage1End();
-          if (deck.length === 0) {
-            get().nextTurn(); // Переходим к следующему игроку только если стадия не закончилась
-          }
           return;
         }
         
-        // После взятия карты анализируем НОВУЮ верхнюю карту
-        setTimeout(() => {
-          if (analyzeAndMove()) {
-            // Может ходить новой картой - продолжает ход
-            return;
-          } else {
-            // Не может ходить новой картой - кладет себе и заканчивает ход
-            set({ 
-              canPlaceOnSelf: true,
-              availableTargets: [],
-              mustDrawFromDeck: false 
-            });
-          }
-          
-          // Проверяем окончание стадии
+        // Показываем подсказку о клике на колоду
+        set({ turnPhase: 'showing_deck_hint' });
+        get().showNotification(`${currentPlayer.name}: кликните на колоду чтобы открыть карту`, 'info');
+      },
+      
+      // Обработка клика по колоде
+      onDeckClick: () => {
+        const { turnPhase, currentPlayerId, players, revealedDeckCard } = get();
+        if (turnPhase !== 'showing_deck_hint' || !currentPlayerId) return;
+        
+        // Открываем карту из колоды
+        if (!get().revealDeckCard()) {
           get().checkStage1End();
-        }, 1000);
-      }
+          return;
+        }
+        
+        const { revealedDeckCard: newRevealedCard } = get();
+        if (!newRevealedCard) return;
+        
+        const currentPlayer = players.find(p => p.id === currentPlayerId);
+        if (!currentPlayer) return;
+        
+                 console.log(`🃏 Открыта карта из колоды:`, newRevealedCard.image);
+         
+         // Проверяем возможности с картой из колоды
+         const deckTargets = get().findAvailableTargetsForDeckCard(newRevealedCard);
+         const canMoveToOpponents = deckTargets.length > 0;
+        
+        let canPlaceOnSelfByRules = false;
+        if (currentPlayer.cards.length > 0) {
+          const topCard = currentPlayer.cards[currentPlayer.cards.length - 1];
+          canPlaceOnSelfByRules = get().canPlaceCardOnSelf(newRevealedCard, topCard);
+        }
+        
+                 set({
+           turnPhase: 'waiting_deck_action',
+           canPlaceOnSelfByRules: canPlaceOnSelfByRules,
+           availableTargets: canMoveToOpponents ? deckTargets : []
+         });
+        
+        console.log(`🎯 Доступные действия: ходить на соперников: ${canMoveToOpponents}, положить на себя: ${canPlaceOnSelfByRules}`);
+        
+        if (canMoveToOpponents) {
+          get().showNotification('Выберите: сходить на соперника или положить на себя', 'info');
+        } else if (canPlaceOnSelfByRules) {
+          get().showNotification('Можете положить карту на себя по правилам или взять просто так', 'warning');
+        } else {
+          get().showNotification('Нет доступных ходов - карта будет взята', 'warning');
+          // Автоматически берем через 2 секунды
+          setTimeout(() => {
+            get().takeCardNotByRules();
+          }, 2000);
+        }
+      },
+      
+      // Определение козыря для второй стадии
+      determineTrumpSuit: () => {
+        const { lastDrawnCard } = get();
+        
+        if (!lastDrawnCard || !lastDrawnCard.image) return null;
+        
+        // Определяем масть последней взятой карты
+        const lastSuit = get().getCardSuit(lastDrawnCard.image);
+        
+        // Если не пики - это козырь
+        if (lastSuit !== 'spades' && lastSuit !== 'unknown') {
+          return lastSuit as 'clubs' | 'diamonds' | 'hearts' | 'spades';
+        }
+        
+        // Если пики или неизвестно - ищем в истории взятых карт
+        // TODO: Реализовать поиск предпоследней не-пиковой карты
+        // Пока возвращаем червы как дефолт
+        console.log('🃏 Последняя карта была пики, нужно найти предпоследнюю не-пиковую');
+        return 'hearts';
+      },
+      
+      // Определение масти карты
+      getCardSuit: (imageName: string) => {
+        const name = imageName.replace('.png', '').replace('/img/cards/', '');
+        if (name.includes('clubs')) return 'clubs';
+        if (name.includes('diamonds')) return 'diamonds';
+        if (name.includes('hearts')) return 'hearts';
+                 if (name.includes('spades')) return 'spades';
+         return 'unknown';
+       },
+       
+       // ===== НОВЫЕ МЕТОДЫ ДЛЯ АЛГОРИТМА ХОДА =====
+       
+       // Показать карту из колоды
+       revealDeckCard: () => {
+         const { deck } = get();
+         if (deck.length === 0) return false;
+         
+         const topCard = { ...deck[0] };
+         topCard.rank = get().getCardRank(topCard.image || '');
+         topCard.open = true;
+         
+         set({ 
+           revealedDeckCard: topCard,
+           turnPhase: 'deck_card_revealed'
+         });
+         
+         return true;
+       },
+       
+       // Проверка возможности положить карту из колоды на себя по правилам
+       canPlaceCardOnSelf: (deckCard: Card, playerTopCard: Card) => {
+         if (!deckCard.image || !playerTopCard.image) return false;
+         
+         const deckRank = get().getCardRank(deckCard.image);
+         const playerRank = get().getCardRank(playerTopCard.image);
+         
+         // Логика как в findAvailableTargets: ищем цель на 1 ранг ниже
+         if (deckRank === 14) {
+           return false; // Туз не может ложиться ни на что
+         } else if (deckRank === 2) {
+           return playerRank === 14; // Двойка только на туз
+         } else {
+           return playerRank === (deckRank - 1); // Обычное правило
+         }
+       },
+       
+       // Положить карту из колоды на себя по правилам
+       placeCardOnSelfByRules: () => {
+         const { players, currentPlayerId, revealedDeckCard, deck } = get();
+         if (!currentPlayerId || !revealedDeckCard) return;
+         
+         const currentPlayer = players.find(p => p.id === currentPlayerId);
+         if (!currentPlayer) return;
+         
+         // Добавляем карту из колоды на верх стопки игрока
+         currentPlayer.cards.push(revealedDeckCard);
+         
+         // Отслеживаем для второй стадии
+         set({
+           players: [...players],
+           deck: deck.slice(1),
+           lastDrawnCard: revealedDeckCard,
+           lastPlayerToDrawCard: currentPlayerId,
+           revealedDeckCard: null,
+           skipHandAnalysis: true, // ⭐ Пропускаем анализ руки!
+           turnPhase: 'analyzing_hand' // Возвращаемся к началу (но с пропуском)
+         });
+         
+         get().showNotification(`${currentPlayer.name} положил карту на себя по правилам`, 'info');
+         
+         // Продолжаем ход (открываем новую карту из колоды)
+         setTimeout(() => {
+           get().processPlayerTurn(currentPlayerId);
+         }, 1000);
+       },
+       
+       // Взять карту не по правилам (завершение хода)
+       takeCardNotByRules: () => {
+         const { players, currentPlayerId, revealedDeckCard, deck } = get();
+         if (!currentPlayerId || !revealedDeckCard) return;
+         
+         const currentPlayer = players.find(p => p.id === currentPlayerId);
+         if (!currentPlayer) return;
+         
+         // Добавляем карту игроку
+         currentPlayer.cards.push(revealedDeckCard);
+         
+         // Отслеживаем для второй стадии
+         set({
+           players: [...players],
+           deck: deck.slice(1),
+           lastDrawnCard: revealedDeckCard,
+           lastPlayerToDrawCard: currentPlayerId,
+           turnPhase: 'turn_ended'
+         });
+         
+         get().showNotification(`${currentPlayer.name} взял карту и пропускает ход`, 'warning');
+         get().resetTurnState();
+         
+         // Переход к следующему игроку
+         setTimeout(() => {
+           get().nextTurn();
+         }, 1500);
+       },
+       
+                // Сброс состояния хода
+         resetTurnState: () => {
+           set({
+             turnPhase: 'analyzing_hand',
+             revealedDeckCard: null,
+             availableTargets: [],
+             canPlaceOnSelf: false,
+             canPlaceOnSelfByRules: false,
+             skipHandAnalysis: false
+           });
+         },
+         
+         // Поиск целей для карты из колоды
+         findAvailableTargetsForDeckCard: (deckCard: Card) => {
+           const { players, currentPlayerId } = get();
+           if (!deckCard.image || !currentPlayerId) return [];
+           
+           const deckRank = get().getCardRank(deckCard.image);
+           
+           // Определяем целевой ранг (та же логика что в findAvailableTargets)
+           let targetRank: number;
+           
+           if (deckRank === 14) {
+             // Туз НЕ может ложиться ни на что!
+             return [];
+           } else if (deckRank === 2) {
+             // Двойка может ложиться ТОЛЬКО на Туз (14)
+             targetRank = 14;
+           } else {
+             // Обычное правило: ищем карты на 1 ранг ниже
+             targetRank = deckRank - 1;
+           }
+           
+           const targets: number[] = [];
+           players.forEach((player, index) => {
+             if (player.id === currentPlayerId) return; // Не можем положить на себя
+             
+             // Проверяем верхнюю карту игрока
+             const playerTopCard = player.cards[player.cards.length - 1];
+             if (playerTopCard && playerTopCard.open && playerTopCard.image) {
+               const playerRank = get().getCardRank(playerTopCard.image);
+               if (playerRank === targetRank) {
+                 targets.push(index);
+               }
+             }
+           });
+           
+           return targets;
+         }
     }),
     {
       name: 'pidr-game-storage',

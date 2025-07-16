@@ -150,7 +150,17 @@ export default function GamePageContent() {
     startGame,
     makeMove,
     placeCardOnSelf,
-    processPlayerTurn
+    processPlayerTurn,
+    // Новые состояния для обновленной логики
+    turnPhase,
+    revealedDeckCard,
+    canPlaceOnSelfByRules,
+    trumpSuit,
+    // Новые методы
+    onDeckClick,
+    placeCardOnSelfByRules,
+    takeCardNotByRules,
+    findAvailableTargetsForDeckCard
   } = useGameStore();
   
   const [dealt, setDealt] = useState(false);
@@ -222,13 +232,174 @@ export default function GamePageContent() {
       )}
       <div className={styles.tableBg}>
         <div className={styles.tableCenter} />
-        {/* Колода в центре */}
+        {/* Колода (смещена правее) */}
         {deck.length > 0 && (
-          <div className={styles.deckInCenter} style={{position:'absolute',left:'50%',top:'50%',transform:'translate(-50%,-50%)',zIndex:5}}>
-            <Image src={"/img/cards/" + CARD_BACK} alt="deck" width={42} height={64} style={{boxShadow:'0 0 16px #ffd700'}} />
+          <div 
+            className={styles.deckInCenter} 
+            style={{
+              position:'absolute',
+              left:'calc(50% + 40px)', // Смещена правее
+              top:'50%',
+              transform:'translate(-50%,-50%)',
+              zIndex:5,
+              cursor: turnPhase === 'showing_deck_hint' ? 'pointer' : 'default',
+              opacity: turnPhase === 'showing_deck_hint' ? 1 : 0.8,
+              filter: turnPhase === 'showing_deck_hint' ? 'drop-shadow(0 0 12px #00ff00)' : 'none'
+            }}
+            onClick={() => {
+              if (turnPhase === 'showing_deck_hint') {
+                onDeckClick();
+              }
+            }}
+          >
+            <Image 
+              src={"/img/cards/" + CARD_BACK} 
+              alt="deck" 
+              width={42} 
+              height={64} 
+              style={{
+                boxShadow: turnPhase === 'showing_deck_hint' ? '0 0 16px #00ff00' : '0 0 16px #ffd700'
+              }} 
+            />
             <span className={styles.deckCount}>{deck.length}</span>
+            {turnPhase === 'showing_deck_hint' && (
+              <div style={{
+                position: 'absolute',
+                top: '-25px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                background: '#00ff00',
+                color: '#000',
+                padding: '2px 8px',
+                borderRadius: '8px',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                whiteSpace: 'nowrap'
+              }}>
+                КЛИКНИ!
+              </div>
+            )}
           </div>
         )}
+
+        {/* Открытая карта из колоды (слева от колоды) */}
+        {revealedDeckCard && (
+          <div 
+            className={styles.revealedCard}
+            style={{
+              position:'absolute',
+              left:'calc(50% - 40px)', // Слева от колоды
+              top:'50%',
+              transform:'translate(-50%,-50%)',
+              zIndex:6
+            }}
+          >
+            <Image 
+              src={`/img/cards/${revealedDeckCard.image}`} 
+              alt="revealed card" 
+              width={42} 
+              height={64} 
+              style={{
+                boxShadow: '0 0 20px #ff6600',
+                border: '2px solid #ff6600'
+              }} 
+            />
+            <div style={{
+              position: 'absolute',
+              top: '-30px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: '#ff6600',
+              color: '#fff',
+              padding: '2px 8px',
+              borderRadius: '8px',
+              fontSize: '11px',
+              fontWeight: 'bold',
+              whiteSpace: 'nowrap'
+            }}>
+              Карта колоды
+            </div>
+          </div>
+        )}
+
+        {/* Кнопки действий для карты из колоды */}
+        {revealedDeckCard && turnPhase === 'waiting_deck_action' && (
+          <div 
+            style={{
+              position:'absolute',
+              left:'50%',
+              top:'calc(50% + 60px)', // Под картами
+              transform:'translateX(-50%)',
+              zIndex:7,
+              display: 'flex',
+              gap: '8px',
+              flexWrap: 'wrap',
+              justifyContent: 'center'
+            }}
+          >
+            {/* Кнопка "Сходить на соперника" (если есть цели) */}
+            {availableTargets.length > 0 && (
+              <button
+                style={{
+                  background: '#00ff00',
+                  color: '#000',
+                  border: 'none',
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(0,255,0,0.4)'
+                }}
+                onClick={() => {
+                  // Пользователь должен кликнуть на игрока
+                  // Логика уже реализована в клике по игроку
+                }}
+              >
+                🎯 Сходить ({availableTargets.length})
+              </button>
+            )}
+            
+            {/* Кнопка "Положить на себя по правилам" */}
+            {canPlaceOnSelfByRules && (
+              <button
+                style={{
+                  background: '#ffd700',
+                  color: '#000',
+                  border: 'none',
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(255,215,0,0.4)'
+                }}
+                onClick={placeCardOnSelfByRules}
+              >
+                🏠 На себя (по правилам)
+              </button>
+            )}
+            
+            {/* Кнопка "Взять просто так" */}
+            <button
+              style={{
+                background: '#ff4444',
+                color: '#fff',
+                border: 'none',
+                padding: '6px 12px',
+                borderRadius: '8px',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(255,68,68,0.4)'
+              }}
+              onClick={takeCardNotByRules}
+            >
+              ❌ Взять и пропустить
+            </button>
+          </div>
+        )}
+
         {/* Игроки по кругу */}
         {players.map((p, i) => {
           const isCurrentPlayer = p.id === currentPlayerId;
@@ -370,21 +541,71 @@ export default function GamePageContent() {
         </div>
       )}
       
-      {/* Заглушка для 2-й стадии */}
+      {/* Информация о второй стадии */}
       {gameStage === 2 && (
         <div className={styles.stage2Placeholder}>
           <div className={styles.stage2Content}>
-            <h1>🎉 ПОЗДРАВЛЯЕМ! 🎉</h1>
-            <h2>Ты дошел до 2-й стадии!</h2>
+            <h1>🎉 ВТОРАЯ СТАДИЯ! 🎉</h1>
+            <h2>Теперь действуют правила мастей</h2>
+            
             <div className={styles.stage2Stats}>
-              <p>👥 Игроков: {players.length}</p>
-              <p>🃏 Карт роздано: {players.reduce((sum, p) => sum + p.cards.length, 0)}</p>
-              <p>🏆 Текущий игрок: {currentPlayer?.name}</p>
+              <div style={{
+                background: 'rgba(255, 215, 0, 0.2)',
+                border: '2px solid #ffd700',
+                borderRadius: '12px',
+                padding: '12px',
+                margin: '12px 0'
+              }}>
+                <h3 style={{ color: '#ffd700', margin: '0 0 8px 0' }}>🃏 КОЗЫРЬ:</h3>
+                <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
+                  {trumpSuit === 'clubs' && '♣️ ТРЕФЫ'}
+                  {trumpSuit === 'diamonds' && '♦️ БУБНЫ'}
+                  {trumpSuit === 'hearts' && '♥️ ЧЕРВЫ'}
+                  {trumpSuit === 'spades' && '♠️ ПИКИ'}
+                  {!trumpSuit && '❓ НЕ ОПРЕДЕЛЕН'}
+                </div>
+              </div>
+              
+              <div style={{
+                background: 'rgba(0, 255, 0, 0.2)',
+                border: '2px solid #00ff00',
+                borderRadius: '12px',
+                padding: '12px',
+                margin: '12px 0'
+              }}>
+                <h3 style={{ color: '#00ff00', margin: '0 0 8px 0' }}>🎮 ХОДИТ:</h3>
+                <div style={{ fontSize: '20px', fontWeight: 'bold' }}>
+                  {currentPlayer?.name || 'Неизвестно'}
+                </div>
+                <div style={{ fontSize: '14px', opacity: 0.8 }}>
+                  (последний взявший карту в 1-й стадии)
+                </div>
+              </div>
+              
+              <div className={styles.stage2Stats}>
+                <p>👥 Игроков: {players.length}</p>
+                <p>🃏 Карт на руках: {players.reduce((sum, p) => sum + p.cards.length, 0)}</p>
+                {players.map(p => (
+                  <p key={p.id} style={{ fontSize: '12px', opacity: 0.8 }}>
+                    {p.name}: {p.cards.length} карт
+                  </p>
+                ))}
+              </div>
             </div>
+            
             <div className={styles.comingSoon}>
-              <p>😎 Скоро здесь будет эпичное продолжение...</p>
-              <p>🚀 2-я стадия в разработке!</p>
+              <h3 style={{ color: '#ff6600' }}>🚧 НОВЫЕ ПРАВИЛА:</h3>
+              <ul style={{ textAlign: 'left', margin: '8px 0' }}>
+                <li>✅ Масти должны совпадать или быть одного цвета</li>
+                <li>🔶 Механика "Последняя!" (при 1 карте)</li>
+                <li>❓ Механика "Сколько карт?"</li>
+                <li>⚠️ Система штрафов</li>
+              </ul>
+              <p style={{ color: '#ffd700', fontWeight: 'bold' }}>
+                🚀 Полная реализация в разработке...
+              </p>
             </div>
+            
             <div className={styles.stage2Actions}>
               <button 
                 className={styles.restartButton} 
