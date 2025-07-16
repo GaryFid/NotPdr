@@ -409,7 +409,7 @@ export default function GamePageContent() {
                   }
                 }}
               >
-                🏠 {canPlaceOnSelfByRules ? 'По правилам' : 'Положить себе и пропустить'}
+                🏠 {canPlaceOnSelfByRules ? 'Себе' : 'Положить себе и пропустить'}
               </button>
             )}
           </div>
@@ -500,22 +500,28 @@ export default function GamePageContent() {
               Ваши карты ({currentPlayer.cards.length})
             </div>
             <div className={styles.handCards}>
-              {currentPlayer.cards.map((card, index) => {
-                const isTopCard = index === currentPlayer.cards.length - 1;
-                const isPlayable = isTopCard && card.open && availableTargets.length > 0 && (turnPhase === 'analyzing_hand' || turnPhase === 'waiting_target_selection');
-                
-                return (
-                  <div 
-                    key={card.id} 
-                    className={`${styles.handCard} ${card.open ? styles.open : styles.closed} ${isPlayable ? styles.playable : ''}`}
-                    style={{ zIndex: index }}
-                    onClick={() => {
-                      if (isPlayable) {
-                        // Клик по верхней открытой карте - начинаем выбор цели
-                        useGameStore.setState({ turnPhase: 'waiting_target_selection' });
-                      }
-                    }}
-                  >
+              <div style={{ position: 'relative', height: '75px', width: '120px', margin: '0 auto' }}>
+                {currentPlayer.cards.map((card, index) => {
+                  const isTopCard = index === currentPlayer.cards.length - 1;
+                  const isPlayable = isTopCard && card.open && availableTargets.length > 0 && (turnPhase === 'analyzing_hand' || turnPhase === 'waiting_target_selection');
+                  const cardOffset = index * 8; // Смещение для нахлеста
+                  
+                  return (
+                    <div 
+                      key={card.id} 
+                      className={`${styles.handCard} ${card.open ? styles.open : styles.closed} ${isPlayable ? styles.playable : ''}`}
+                      style={{ 
+                        position: 'absolute',
+                        left: `${cardOffset}px`,
+                        zIndex: index + 1
+                      }}
+                      onClick={() => {
+                        if (isPlayable) {
+                          // Клик по верхней открытой карте - начинаем выбор цели
+                          useGameStore.setState({ turnPhase: 'waiting_target_selection' });
+                        }
+                      }}
+                    >
                     <div 
                       style={{ width: '100%', height: '100%' }}
                       {...(isPlayable && card.image ? {
@@ -575,6 +581,7 @@ export default function GamePageContent() {
                   </div>
                 );
               })}
+              </div>
             </div>
           </div>
         </div>
