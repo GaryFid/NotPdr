@@ -291,7 +291,21 @@ export default function GamePageContent() {
               left:'calc(50% - 40px)', // Слева от колоды
               top:'50%',
               transform:'translate(-50%,-50%)',
-              zIndex:6
+              zIndex:6,
+              cursor: turnPhase === 'waiting_deck_action' ? 'pointer' : 'default'
+            }}
+            onClick={() => {
+              if (turnPhase === 'waiting_deck_action') {
+                // При клике на карту показываем действия
+                const hasTargets = availableTargets.length > 0;
+                if (hasTargets || canPlaceOnSelfByRules) {
+                  // Если есть цели или можем положить на себя - переключаем в режим выбора действия
+                  useGameStore.setState({ turnPhase: 'showing_card_actions' });
+                } else {
+                  // Если нет ни одного варианта - автоматически берём карту
+                  takeCardNotByRules();
+                }
+              }
             }}
           >
             <Image 
@@ -300,8 +314,8 @@ export default function GamePageContent() {
               width={42} 
               height={64} 
               style={{
-                boxShadow: '0 0 20px #ff6600',
-                border: '2px solid #ff6600'
+                boxShadow: turnPhase === 'waiting_deck_action' ? '0 0 20px #00ff00' : '0 0 20px #ff6600',
+                border: turnPhase === 'waiting_deck_action' ? '2px solid #00ff00' : '2px solid #ff6600'
               }} 
             />
             <div style={{
@@ -309,21 +323,21 @@ export default function GamePageContent() {
               top: '-30px',
               left: '50%',
               transform: 'translateX(-50%)',
-              background: '#ff6600',
-              color: '#fff',
+              background: turnPhase === 'waiting_deck_action' ? '#00ff00' : '#ff6600',
+              color: turnPhase === 'waiting_deck_action' ? '#000' : '#fff',
               padding: '2px 8px',
               borderRadius: '8px',
               fontSize: '11px',
               fontWeight: 'bold',
               whiteSpace: 'nowrap'
             }}>
-              Карта колоды
+              {turnPhase === 'waiting_deck_action' ? 'КЛИКНИ НА КАРТУ!' : 'Карта колоды'}
             </div>
           </div>
         )}
 
         {/* Кнопки действий для карты из колоды */}
-        {revealedDeckCard && turnPhase === 'waiting_deck_action' && (
+        {revealedDeckCard && turnPhase === 'showing_card_actions' && (
           <div 
             style={{
               position:'absolute',
@@ -344,59 +358,48 @@ export default function GamePageContent() {
                   background: '#00ff00',
                   color: '#000',
                   border: 'none',
-                  padding: '6px 12px',
+                  padding: '8px 16px',
                   borderRadius: '8px',
-                  fontSize: '12px',
+                  fontSize: '14px',
                   fontWeight: 'bold',
                   cursor: 'pointer',
                   boxShadow: '0 2px 8px rgba(0,255,0,0.4)'
                 }}
                 onClick={() => {
-                  // Пользователь должен кликнуть на игрока
-                  // Логика уже реализована в клике по игроку
+                  // Переключаемся в режим ожидания клика по сопернику
+                  useGameStore.setState({ turnPhase: 'waiting_target_selection' });
                 }}
               >
                 🎯 Сходить ({availableTargets.length})
               </button>
             )}
             
-            {/* Кнопка "Положить на себя по правилам" */}
-            {canPlaceOnSelfByRules && (
+            {/* Кнопка "Положить на себя и пропустить ход" (если некому положить или можно по правилам) */}
+            {(availableTargets.length === 0 || canPlaceOnSelfByRules) && (
               <button
                 style={{
                   background: '#ffd700',
                   color: '#000',
                   border: 'none',
-                  padding: '6px 12px',
+                  padding: '8px 16px',
                   borderRadius: '8px',
-                  fontSize: '12px',
+                  fontSize: '14px',
                   fontWeight: 'bold',
                   cursor: 'pointer',
                   boxShadow: '0 2px 8px rgba(255,215,0,0.4)'
                 }}
-                onClick={placeCardOnSelfByRules}
+                onClick={() => {
+                  if (canPlaceOnSelfByRules) {
+                    placeCardOnSelfByRules();
+                  } else {
+                    // Если некому положить - берём карту и пропускаем ход
+                    takeCardNotByRules();
+                  }
+                }}
               >
-                🏠 На себя (по правилам)
+                🏠 {canPlaceOnSelfByRules ? 'По правилам' : 'Положить себе и пропустить'}
               </button>
             )}
-            
-            {/* Кнопка "Взять просто так" */}
-            <button
-              style={{
-                background: '#ff4444',
-                color: '#fff',
-                border: 'none',
-                padding: '6px 12px',
-                borderRadius: '8px',
-                fontSize: '12px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(255,68,68,0.4)'
-              }}
-              onClick={takeCardNotByRules}
-            >
-              ❌ Взять и пропустить
-            </button>
           </div>
         )}
 
@@ -404,6 +407,8 @@ export default function GamePageContent() {
         {players.map((p, i) => {
           const isCurrentPlayer = p.id === currentPlayerId;
           const isTargetAvailable = availableTargets.includes(i);
+          // В состоянии ожидания выбора цели все доступные цели кликабельны
+          const isClickableTarget = isTargetAvailable && (turnPhase === 'waiting_target_selection' || turnPhase === 'analyzing_hand');
           
           return (
             <div
@@ -437,13 +442,13 @@ export default function GamePageContent() {
                       }}
                     >
                       <div
-                        className={`${styles.card} ${card.open ? styles.open : styles.closed} ${isTargetAvailable && isTopCard ? styles.targetCard : ''}`}
+                        className={`${styles.card} ${card.open ? styles.open : styles.closed} ${isClickableTarget && isTopCard ? styles.targetCard : ''}`}
                         style={{ 
-                          cursor: isTargetAvailable && isTopCard ? 'pointer' : 'default',
-                          transform: isTargetAvailable && isTopCard ? 'scale(1.05)' : 'scale(1)'
+                          cursor: isClickableTarget && isTopCard ? 'pointer' : 'default',
+                          transform: isClickableTarget && isTopCard ? 'scale(1.05)' : 'scale(1)'
                         }}
                         onClick={() => {
-                          if (isTargetAvailable && isTopCard) {
+                          if (isClickableTarget && isTopCard) {
                             makeMove(p.id);
                           }
                         }}
@@ -476,31 +481,6 @@ export default function GamePageContent() {
       {/* Новый интерфейс для 1-й стадии */}
       {gameStage === 1 && currentPlayer && (
         <div className={styles.gameInterface}>
-          {/* 3 кнопки управления */}
-          <div className={styles.actionButtons}>
-            <button 
-              className={`${styles.gameButton} ${styles.disabled}`}
-              disabled={true}
-              title="Доступно со 2-й стадии"
-            >
-              Взять нижнюю карту
-            </button>
-            <button 
-              className={`${styles.gameButton} ${styles.disabled}`}
-              disabled={true}
-              title="Доступно со 2-й стадии"
-            >
-              Одна карта!
-            </button>
-            <button 
-              className={`${styles.gameButton} ${styles.disabled}`}
-              disabled={true}
-              title="Доступно со 2-й стадии"
-            >
-              Сколько карт?
-            </button>
-          </div>
-          
           {/* Кнопка "Положить себе" если нужна */}
           {canPlaceOnSelf && (
             <button className={styles.placeOnSelfButton} onClick={placeCardOnSelf}>
@@ -593,12 +573,45 @@ export default function GamePageContent() {
               </div>
             </div>
             
+            {/* 3 кнопки управления для 2-й стадии (появляются когда определен козырь и игрок) */}
+            {trumpSuit && currentPlayer && (
+              <div className={styles.actionButtons} style={{ margin: '20px 0' }}>
+                <button 
+                  className={styles.gameButton}
+                  onClick={() => {
+                    // TODO: Реализовать логику "Взять нижнюю карту"
+                    console.log("Взять нижнюю карту");
+                  }}
+                >
+                  Взять нижнюю карту
+                </button>
+                <button 
+                  className={styles.gameButton}
+                  onClick={() => {
+                    // TODO: Реализовать логику "Одна карта!"
+                    console.log("Одна карта!");
+                  }}
+                >
+                  Одна карта!
+                </button>
+                <button 
+                  className={styles.gameButton}
+                  onClick={() => {
+                    // TODO: Реализовать логику "Сколько карт?"
+                    console.log("Сколько карт?");
+                  }}
+                >
+                  Сколько карт?
+                </button>
+              </div>
+            )}
+            
             <div className={styles.comingSoon}>
               <h3 style={{ color: '#ff6600' }}>🚧 НОВЫЕ ПРАВИЛА:</h3>
               <ul style={{ textAlign: 'left', margin: '8px 0' }}>
                 <li>✅ Масти должны совпадать или быть одного цвета</li>
                 <li>🔶 Механика "Последняя!" (при 1 карте)</li>
-                <li>❓ Механика "Сколько карт?"</li>
+                <li>✅ Кнопки управления теперь доступны</li>
                 <li>⚠️ Система штрафов</li>
               </ul>
               <p style={{ color: '#ffd700', fontWeight: 'bold' }}>

@@ -60,7 +60,7 @@ interface GameState {
   canPlaceOnSelf: boolean // Может ли игрок положить карту себе
   
   // Состояния хода для новой логики
-  turnPhase: 'analyzing_hand' | 'showing_deck_hint' | 'deck_card_revealed' | 'waiting_deck_action' | 'turn_ended'
+  turnPhase: 'analyzing_hand' | 'showing_deck_hint' | 'deck_card_revealed' | 'waiting_deck_action' | 'showing_card_actions' | 'waiting_target_selection' | 'turn_ended'
   revealedDeckCard: Card | null // Открытая карта из колоды (слева от колоды)
   canPlaceOnSelfByRules: boolean // Может ли положить карту из колоды на себя по правилам
   skipHandAnalysis: boolean // Пропуск анализа руки после укладки на себя
@@ -638,7 +638,7 @@ export const useGameStore = create<GameState>()(
       
       // Выполнение хода (обновленная логика)
       makeMove: (targetPlayerId: string) => {
-        const { players, currentPlayerId, revealedDeckCard } = get();
+        const { players, currentPlayerId, revealedDeckCard, turnPhase } = get();
         if (!currentPlayerId) return;
         
         const currentPlayer = players.find(p => p.id === currentPlayerId);
@@ -649,7 +649,7 @@ export const useGameStore = create<GameState>()(
         let cardToMove: Card | undefined;
         
         // Определяем какую карту перемещаем
-        if (revealedDeckCard) {
+        if (revealedDeckCard && (turnPhase === 'waiting_target_selection' || turnPhase === 'waiting_deck_action')) {
           // Ходим картой из колоды
           cardToMove = revealedDeckCard;
           
@@ -659,12 +659,18 @@ export const useGameStore = create<GameState>()(
             deck: deck.slice(1),
             revealedDeckCard: null,
             lastDrawnCard: cardToMove,
-            lastPlayerToDrawCard: currentPlayerId
+            lastPlayerToDrawCard: currentPlayerId,
+            turnPhase: 'turn_ended'
           });
         } else {
           // Ходим верхней картой из руки
           if (currentPlayer.cards.length === 0) return;
           cardToMove = currentPlayer.cards.pop();
+          
+          set({ 
+            players: [...players],
+            skipHandAnalysis: false // После хода на соперника - ВСЕГДА анализ руки
+          });
         }
         
         if (!cardToMove) return;
@@ -673,16 +679,22 @@ export const useGameStore = create<GameState>()(
         targetPlayer.cards.push(cardToMove);
         
         set({ 
-          players: [...players],
-          skipHandAnalysis: false // После хода на соперника - ВСЕГДА анализ руки
+          players: [...players]
         });
         
         get().showNotification(`Карта переложена на ${targetPlayer.name}!`, 'success');
         
-        // Продолжаем ход (анализ верхней карты в руке)
-        setTimeout(() => {
-          get().processPlayerTurn(currentPlayerId);
-        }, 1000);
+        // Продолжаем ход (анализ верхней карты в руке) только если это был ход из руки
+        if (!revealedDeckCard || (turnPhase !== 'waiting_target_selection' && turnPhase !== 'waiting_deck_action')) {
+          setTimeout(() => {
+            get().processPlayerTurn(currentPlayerId);
+          }, 1000);
+        } else {
+          // Если это был ход картой из колоды - возвращаемся к анализу руки
+          setTimeout(() => {
+            get().processPlayerTurn(currentPlayerId);
+          }, 1000);
+        }
       },
       
       // Взятие карты из колоды
