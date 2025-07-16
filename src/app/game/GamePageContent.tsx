@@ -308,6 +308,15 @@ export default function GamePageContent() {
               }
             }}
           >
+            {/* Белый фон под картой */}
+            <div style={{
+              position: 'absolute',
+              width: '42px',
+              height: '64px',
+              backgroundColor: '#ffffff',
+              borderRadius: '6px',
+              zIndex: -1
+            }}></div>
             <Image 
               src={`/img/cards/${revealedDeckCard.image}`} 
               alt="revealed card" 
@@ -315,7 +324,8 @@ export default function GamePageContent() {
               height={64} 
               style={{
                 boxShadow: turnPhase === 'waiting_deck_action' ? '0 0 20px #00ff00' : '0 0 20px #ff6600',
-                border: turnPhase === 'waiting_deck_action' ? '2px solid #00ff00' : '2px solid #ff6600'
+                border: turnPhase === 'waiting_deck_action' ? '2px solid #00ff00' : '2px solid #ff6600',
+                borderRadius: '6px'
               }} 
             />
             <div style={{
@@ -481,12 +491,6 @@ export default function GamePageContent() {
       {/* Новый интерфейс для 1-й стадии */}
       {gameStage === 1 && currentPlayer && (
         <div className={styles.gameInterface}>
-          {/* Кнопка "Положить себе" если нужна */}
-          {canPlaceOnSelf && (
-            <button className={styles.placeOnSelfButton} onClick={placeCardOnSelf}>
-              Положить себе и пропустить ход
-            </button>
-          )}
           
           {/* Отображение карт в руке игрока */}
           <div className={styles.playerHand}>

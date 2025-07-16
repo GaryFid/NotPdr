@@ -601,15 +601,12 @@ export const useGameStore = create<GameState>()(
         // ИСКЛЮЧЕНИЕ: Только двойка (2) может ложиться на Туз (14)!
         let targetRank: number;
         
-        if (currentRank === 14) {
-          // Туз НЕ может ложиться ни на что! (только двойка может на туз)
-          return [];
-        } else if (currentRank === 2) {
+        if (currentRank === 2) {
           // Двойка может ложиться ТОЛЬКО на Туз (14) - ИСКЛЮЧЕНИЕ!
           targetRank = 14;
         } else {
           // Обычное правило: ищем карты на 1 ранг ниже
-          // К(13) → Д(12), Д(12) → В(11), В(11) → 10, ..., 3 → 2
+          // Туз(14) → Король(13), Король(13) → Дама(12), Дама(12) → Валет(11), Валет(11) → 10, ..., 3 → 2
           targetRank = currentRank - 1;
         }
         
@@ -1035,14 +1032,12 @@ export const useGameStore = create<GameState>()(
            // Определяем целевой ранг (та же логика что в findAvailableTargets)
            let targetRank: number;
            
-           if (deckRank === 14) {
-             // Туз НЕ может ложиться ни на что!
-             return [];
-           } else if (deckRank === 2) {
+           if (deckRank === 2) {
              // Двойка может ложиться ТОЛЬКО на Туз (14)
              targetRank = 14;
            } else {
              // Обычное правило: ищем карты на 1 ранг ниже
+             // Туз(14) → Король(13), Король(13) → Дама(12), и т.д.
              targetRank = deckRank - 1;
            }
            
