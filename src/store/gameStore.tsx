@@ -829,6 +829,13 @@ export const useGameStore = create<GameState>()(
         const currentPlayer = players.find(p => p.id === playerId);
         if (!currentPlayer) return;
         
+        // ДЕБАГ: проверяем состояние карт игрока
+        const openCards = currentPlayer.cards.filter(c => c.open);
+        console.log(`📋 У игрока ${currentPlayer.name}: ${currentPlayer.cards.length} карт, из них открытых: ${openCards.length}`);
+        if (openCards.length > 0) {
+          console.log(`📋 Верхняя открытая карта:`, openCards[openCards.length - 1]?.image);
+        }
+        
         // ЭТАП 1: Анализ руки (ТОЛЬКО если не пропускаем)
         if (!skipHandAnalysis && currentPlayer.cards.length > 0) {
           if (get().canMakeMove(playerId)) {
@@ -839,9 +846,12 @@ export const useGameStore = create<GameState>()(
               availableTargets: targets,
               turnPhase: 'analyzing_hand'  // ИСПРАВЛЕНО: оставляем в режиме анализа руки
             });
+            get().showNotification(`${currentPlayer.name}: выберите карту для хода`, 'info');
             return; // Ждем клика по карте в руке игрока
           } else {
-            console.log(`❌ Не может ходить картой из руки`);
+            console.log(`❌ Не может ходить картой из руки, переходим к колоде`);
+            // ИСПРАВЛЕНО: явно переходим к этапу 2 (колода)
+            get().showNotification(`${currentPlayer.name}: нет ходов из руки, нужна карта из колоды`, 'warning');
           }
         } else if (skipHandAnalysis) {
           console.log(`⏭️ Пропускаем анализ руки, идем к колоде`);
@@ -985,7 +995,8 @@ export const useGameStore = create<GameState>()(
          const currentPlayer = players.find(p => p.id === currentPlayerId);
          if (!currentPlayer) return;
          
-         // Добавляем карту из колоды на верх стопки игрока
+         // Добавляем карту из колоды на верх стопки игрока (ОТКРЫТОЙ!)
+         revealedDeckCard.open = true; // ИСПРАВЛЕНО: убеждаемся что карта открыта
          currentPlayer.cards.push(revealedDeckCard);
          
          // Отслеживаем для второй стадии
@@ -999,9 +1010,9 @@ export const useGameStore = create<GameState>()(
            turnPhase: 'analyzing_hand' // Возвращаемся к началу (но с пропуском)
          });
          
-         get().showNotification(`${currentPlayer.name} положил карту на себя по правилам`, 'info');
+         get().showNotification(`${currentPlayer.name} положил карту на себя по правилам - ходит снова!`, 'success');
          
-         // Продолжаем ход (открываем новую карту из колоды)
+         // ИСПРАВЛЕНО: Продолжаем ход (анализируем руку, если нет открытых карт - идем к колоде)
          setTimeout(() => {
            get().processPlayerTurn(currentPlayerId);
          }, 1000);
