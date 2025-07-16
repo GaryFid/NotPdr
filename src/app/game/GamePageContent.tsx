@@ -59,10 +59,12 @@ function getFirstPlayerIdx(players: Player[]): number {
     const openCard = p.cards.find(c => c.open);
     if (openCard) {
       const rank = getCardRank(openCard.image);
+      // При одинаковых рангах ходит тот, кому ПЕРВОМУ упала старшая карта
       if (rank > maxRank) {
         maxRank = rank;
         idx = i;
       }
+      // НЕ МЕНЯЕМ idx при равенстве рангов - остается первый найденный!
     }
   });
   return idx;
@@ -498,28 +500,68 @@ export default function GamePageContent() {
               Ваши карты ({currentPlayer.cards.length})
             </div>
             <div className={styles.handCards}>
-              {currentPlayer.cards.map((card, index) => (
-                <div 
-                  key={card.id} 
-                  className={`${styles.handCard} ${card.open ? styles.open : styles.closed}`}
-                  style={{ zIndex: index }}
-                >
-                  <Image
-                    src={card.open && card.image ? `/img/cards/${card.image}` : `/img/cards/back.png`}
-                    alt={card.open ? 'card' : 'back'}
-                    width={50}
-                    height={75}
-                    draggable={false}
-                    priority
-                  />
-                  {/* Показать ранг карты если открыта */}
-                  {card.open && card.rank && (
-                    <div className={styles.cardRank}>
-                      {card.rank === 14 ? 'A' : card.rank === 13 ? 'K' : card.rank === 12 ? 'Q' : card.rank === 11 ? 'J' : card.rank}
+              {currentPlayer.cards.map((card, index) => {
+                const isTopCard = index === currentPlayer.cards.length - 1;
+                const isPlayable = isTopCard && card.open && availableTargets.length > 0 && (turnPhase === 'analyzing_hand' || turnPhase === 'waiting_target_selection');
+                
+                return (
+                  <div 
+                    key={card.id} 
+                    className={`${styles.handCard} ${card.open ? styles.open : styles.closed} ${isPlayable ? styles.playable : ''}`}
+                    style={{ zIndex: index }}
+                    onClick={() => {
+                      if (isPlayable) {
+                        // Клик по верхней открытой карте - начинаем выбор цели
+                        useGameStore.setState({ turnPhase: 'waiting_target_selection' });
+                      }
+                    }}
+                  >
+                    <div 
+                      style={{ width: '100%', height: '100%' }}
+                      {...(isPlayable && card.image ? {
+                        onDragStart: (e: React.DragEvent<HTMLDivElement>) => dragProps.onDragStart(card as any, index, e),
+                        onTouchStart: (e: React.TouchEvent<HTMLDivElement>) => dragProps.onTouchStart(card as any, index, e),
+                        onDragEnd: dragProps.onDragEnd,
+                        draggable: true
+                      } : {})}
+                    >
+                      <Image
+                        src={card.open && card.image ? `/img/cards/${card.image}` : `/img/cards/back.png`}
+                        alt={card.open ? 'card' : 'back'}
+                        width={50}
+                        height={75}
+                        draggable={false}
+                        priority
+                        style={{ pointerEvents: 'none' }}
+                      />
                     </div>
-                  )}
-                </div>
-              ))}
+                    {/* Показать ранг карты если открыта */}
+                    {card.open && card.rank && (
+                      <div className={styles.cardRank}>
+                        {card.rank === 14 ? 'A' : card.rank === 13 ? 'K' : card.rank === 12 ? 'Q' : card.rank === 11 ? 'J' : card.rank}
+                      </div>
+                    )}
+                    {/* Подсказка для верхней карты */}
+                    {isPlayable && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '-25px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        background: '#00ff00',
+                        color: '#000',
+                        padding: '2px 6px',
+                        borderRadius: '6px',
+                        fontSize: '10px',
+                        fontWeight: 'bold',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        КЛИКНИ!
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

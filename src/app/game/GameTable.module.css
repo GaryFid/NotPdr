@@ -1,12 +1,17 @@
 .tableWrapper {
-  min-height: 100vh;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
   background: radial-gradient(ellipse at center, #1a2340 60%, #0a1833 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  padding-bottom: 200px;
-  padding-top: 60px;
+  justify-content: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
 /* Заголовок игры */
@@ -300,18 +305,40 @@
 }
 
 .playerHand {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(145deg, #2d3748 0%, #1a202c 100%);
+  border: 2px solid #ffd700;
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 2px rgba(255, 215, 0, 0.2),
+    0 0 0 1px rgba(255, 215, 0, 0.1);
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
+
+.playerHand::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 20%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(255, 215, 0, 0.05) 0%, transparent 50%);
+  z-index: -1;
 }
 
 .handTitle {
   text-align: center;
   font-weight: bold;
-  font-size: 16px;
-  color: #333;
-  margin-bottom: 12px;
+  font-size: 18px;
+  color: #ffd700;
+  margin-bottom: 16px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  letter-spacing: 0.5px;
 }
 
 .handCards {
@@ -328,22 +355,52 @@
   width: 50px;
   height: 75px;
   border-radius: 8px;
-  transition: transform 0.2s;
+  transition: all 0.3s ease;
+  cursor: pointer;
 }
 
 .handCard:hover {
-  transform: translateY(-4px);
+  transform: translateY(-8px) scale(1.05);
   z-index: 100 !important;
 }
 
 .handCard.open {
   border: 2px solid #ffd700;
-  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+  box-shadow: 
+    0 4px 12px rgba(255, 215, 0, 0.4),
+    0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.handCard.open:hover {
+  box-shadow: 
+    0 8px 20px rgba(255, 215, 0, 0.6),
+    0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .handCard.closed {
-  border: 2px solid #ccc;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 2px solid #718096;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.handCard.playable {
+  border: 3px solid #00ff00 !important;
+  box-shadow: 
+    0 0 20px rgba(0, 255, 0, 0.5),
+    0 4px 12px rgba(0, 255, 0, 0.3) !important;
+  animation: glow-green 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow-green {
+  from {
+    box-shadow: 
+      0 0 20px rgba(0, 255, 0, 0.5),
+      0 4px 12px rgba(0, 255, 0, 0.3);
+  }
+  to {
+    box-shadow: 
+      0 0 30px rgba(0, 255, 0, 0.8),
+      0 6px 16px rgba(0, 255, 0, 0.5);
+  }
 }
 
 .handCard img {
