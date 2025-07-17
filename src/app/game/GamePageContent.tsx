@@ -247,29 +247,50 @@ export default function GamePageContent() {
       )}
       <div className={styles.tableBg}>
         <div className={styles.tableCenter}>
-          {/* Информация о 2-й стадии */}
-          {gameStage === 2 && (
-            <div style={{
-              position: 'absolute',
-              top: '20px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              color: '#ffd700',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              textAlign: 'center',
-              textShadow: '0 0 8px rgba(0,0,0,0.8)',
-              zIndex: 10
-            }}>
-              <div>Ходит: <span style={{color: '#00ff88'}}>{players.find(p => p.id === currentPlayerId)?.name || 'Игрок'}</span></div>
-              <div>Козырь: <span style={{color: '#ff6b35'}}>
-                {trumpSuit === 'clubs' ? '♣ Трефы' : 
-                 trumpSuit === 'diamonds' ? '♦ Бубны' :
-                 trumpSuit === 'hearts' ? '♥ Червы' : 
-                 trumpSuit === 'spades' ? '♠ Пики' : 'Неизвестно'}
-              </span></div>
-              <div style={{color: '#ff4757', marginTop: '4px'}}>Пики только Пикями!</div>
-            </div>
+          {/* Компактные указатели для 2-й стадии */}
+          {(gameStage as number) === 2 && (
+            <>
+              {/* Красная стрелочка - кто ходит */}
+              <div style={{
+                position: 'absolute',
+                top: '60px',
+                left: '30%',
+                transform: 'translateX(-50%)',
+                color: '#ff4757',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                textAlign: 'center',
+                textShadow: '0 0 8px rgba(0,0,0,0.8)',
+                zIndex: 10
+              }}>
+                <div style={{fontSize: '24px', marginBottom: '4px'}}>🔻</div>
+                <div style={{background: 'rgba(255, 71, 87, 0.9)', padding: '4px 8px', borderRadius: '6px', fontSize: '12px'}}>
+                  {players.find(p => p.id === currentPlayerId)?.name || 'Игрок'}
+                </div>
+              </div>
+              
+              {/* Желтая стрелочка - козырь */}
+              <div style={{
+                position: 'absolute',
+                top: '60px',
+                left: '70%',
+                transform: 'translateX(-50%)',
+                color: '#ffd700',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                textAlign: 'center',
+                textShadow: '0 0 8px rgba(0,0,0,0.8)',
+                zIndex: 10
+              }}>
+                <div style={{fontSize: '24px', marginBottom: '4px'}}>🔻</div>
+                <div style={{background: 'rgba(255, 215, 0, 0.9)', color: '#000', padding: '4px 8px', borderRadius: '6px', fontSize: '12px'}}>
+                  {trumpSuit === 'clubs' ? '♣' : 
+                   trumpSuit === 'diamonds' ? '♦' :
+                   trumpSuit === 'hearts' ? '♥' : 
+                   trumpSuit === 'spades' ? '♠' : '?'}
+                </div>
+              </div>
+            </>
           )}
           
           {/* Стопка карт на столе для 2-й стадии */}

@@ -147,7 +147,7 @@ interface GameState {
   addAchievement: (achievementId: string) => void
   
   // UI
-  showNotification: (message: string, type: 'success' | 'error' | 'warning' | 'info') => void
+  showNotification: (message: string, type: 'success' | 'error' | 'warning' | 'info', duration?: number) => void
   hideNotification: () => void
   setLoading: (loading: boolean) => void
 }
@@ -569,7 +569,7 @@ export const useGameStore = create<GameState>()(
       },
       
       // UI
-      showNotification: (message, type) => {
+      showNotification: (message, type, duration = 3000) => {
         set({
           notification: {
             message,
@@ -578,8 +578,8 @@ export const useGameStore = create<GameState>()(
           }
         })
         
-        // Автоматически скрываем через 3 секунды
-        setTimeout(() => get().hideNotification(), 3000)
+        // Автоматически скрываем через указанное время (по умолчанию 3 секунды)
+        setTimeout(() => get().hideNotification(), duration)
       },
       
       hideNotification: () => {
@@ -794,27 +794,32 @@ export const useGameStore = create<GameState>()(
         // Инициализируем 2-ю стадию
         get().initializeStage2();
         
-        // Уведомления о начале второй стадии
+        // Уведомления о начале второй стадии (по 5 секунд каждое)
         setTimeout(() => {
-          get().showNotification('🎉 Первая стадия завершена!', 'success');
+          get().showNotification('🎉 Первая стадия завершена!', 'success', 5000);
           
           setTimeout(() => {
             const startingPlayer = players.find(p => p.id === startingPlayerId);
-            get().showNotification(`🚀 Вторая стадия! Ходит: ${startingPlayer?.name || 'Игрок'}`, 'info');
+            get().showNotification(`🚀 Вторая стадия! Ходит: ${startingPlayer?.name || 'Игрок'}`, 'info', 5000);
             
             setTimeout(() => {
               const trumpName = trumpSuit === 'clubs' ? 'Трефы' : 
                               trumpSuit === 'diamonds' ? 'Бубны' :
                               trumpSuit === 'hearts' ? 'Червы' : 
                               trumpSuit === 'spades' ? 'Пики' : 'Неизвестно';
-              get().showNotification(`🃏 Козырь: ${trumpName}`, 'warning');
+              get().showNotification(`🃏 Козырь: ${trumpName}`, 'warning', 5000);
               
-              // ИСПРАВЛЕНО: Запускаем обработку хода для 2-й стадии
+              // Показываем правило "Пики только Пикями!"
               setTimeout(() => {
-                get().processPlayerTurn(startingPlayerId);
-              }, 1000);
-            }, 2000);
-          }, 2000);
+                get().showNotification('⚠️ Пики только Пикями!', 'error', 5000);
+                
+                // ИСПРАВЛЕНО: Запускаем обработку хода для 2-й стадии
+                setTimeout(() => {
+                  get().processPlayerTurn(startingPlayerId);
+                }, 1000);
+              }, 3000);
+            }, 3000);
+          }, 3000);
         }, 1000);
       },
       
@@ -829,7 +834,7 @@ export const useGameStore = create<GameState>()(
           set({ stage2TurnPhase: 'selecting_card' });
           const currentPlayer = players.find(p => p.id === playerId);
           if (currentPlayer) {
-            get().showNotification(`${currentPlayer.name}: выберите карту для хода`, 'info');
+            get().showNotification(`${currentPlayer.name}: выберите карту для хода`, 'info', 5000);
           }
           return;
         }
@@ -1164,7 +1169,7 @@ export const useGameStore = create<GameState>()(
              stage2TurnPhase: 'waiting_beat'
            });
            
-           get().showNotification(`${currentPlayer.name} сыграл карту`, 'info');
+           get().showNotification(`${currentPlayer.name} сыграл карту`, 'info', 5000);
            
            // Переходим к следующему игроку
            get().nextTurn();
@@ -1209,7 +1214,7 @@ export const useGameStore = create<GameState>()(
            
            // Проверяем можем ли побить
            if (!get().canBeatCard(topCard, defendCard, trumpSuit || '')) {
-             get().showNotification('Нельзя побить эту карту!', 'error');
+             get().showNotification('Нельзя побить эту карту!', 'error', 5000);
              return;
            }
            
@@ -1228,7 +1233,7 @@ export const useGameStore = create<GameState>()(
              tableStack: [...tableStack, playedCard]
            });
            
-           get().showNotification(`${currentPlayer.name} побил карту!`, 'success');
+           get().showNotification(`${currentPlayer.name} побил карту!`, 'success', 5000);
            
            // Проверяем завершение раунда
            if (get().checkRoundComplete()) {
@@ -1240,7 +1245,7 @@ export const useGameStore = create<GameState>()(
                  currentRoundInitiator: null,
                  stage2TurnPhase: 'selecting_card'
                });
-               get().showNotification('Раунд завершен! Карты в биту', 'success');
+               get().showNotification('Раунд завершен! Карты в биту', 'success', 5000);
              }, 1000);
            } else {
              // Переходим к следующему игроку
@@ -1267,7 +1272,7 @@ export const useGameStore = create<GameState>()(
              tableStack: tableStack.slice(1) // Убираем нижнюю карту
            });
            
-           get().showNotification(`${currentPlayer.name} взял карту со стола`, 'warning');
+           get().showNotification(`${currentPlayer.name} взял карту со стола`, 'warning', 5000);
            
            // Если стол пуст - раунд завершен
            if (tableStack.length === 1) { // Была только одна карта
