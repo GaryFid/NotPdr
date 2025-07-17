@@ -360,15 +360,9 @@ export const useGameStore = create<GameState>()(
         
         get().showNotification(`Игра начата! Ходит первым: ${players[firstPlayerIndex].name}`, 'success');
         
-        // Для первого хода просто проверяем доступные цели, без автоматического взятия карт
+        // ИСПРАВЛЕНО: Запускаем обработку хода первого игрока через новую систему
         setTimeout(() => {
-          const targets = get().findAvailableTargets(players[firstPlayerIndex].id);
-          if (targets.length > 0) {
-            set({ availableTargets: targets });
-          } else {
-            // Если нет доступных ходов - показываем кнопку "положить себе"
-            set({ canPlaceOnSelf: true });
-          }
+          get().processPlayerTurn(players[firstPlayerIndex].id);
         }, 1000);
       },
       
@@ -814,6 +808,11 @@ export const useGameStore = create<GameState>()(
                               trumpSuit === 'hearts' ? 'Червы' : 
                               trumpSuit === 'spades' ? 'Пики' : 'Неизвестно';
               get().showNotification(`🃏 Козырь: ${trumpName}`, 'warning');
+              
+              // ИСПРАВЛЕНО: Запускаем обработку хода для 2-й стадии
+              setTimeout(() => {
+                get().processPlayerTurn(startingPlayerId);
+              }, 1000);
             }, 2000);
           }, 2000);
         }, 1000);
@@ -822,9 +821,22 @@ export const useGameStore = create<GameState>()(
       // Обработка хода игрока (НОВАЯ логика)
       processPlayerTurn: (playerId: string) => {
         const { gameStage, players, skipHandAnalysis, deck } = get();
-        if (gameStage !== 1) return;
         
-        console.log(`🎮 Обработка хода игрока: ${playerId}, пропуск анализа руки: ${skipHandAnalysis}`);
+        // ИСПРАВЛЕНО: Обрабатываем как 1-ю так и 2-ю стадии
+        if (gameStage === 2) {
+          console.log(`🎮 Обработка хода игрока во 2-й стадии: ${playerId}`);
+          // Для 2-й стадии просто устанавливаем фазу выбора карты
+          set({ stage2TurnPhase: 'selecting_card' });
+          const currentPlayer = players.find(p => p.id === playerId);
+          if (currentPlayer) {
+            get().showNotification(`${currentPlayer.name}: выберите карту для хода`, 'info');
+          }
+          return;
+        }
+        
+        if (gameStage !== 1) return; // Только 1-я и 2-я стадии поддерживаются
+        
+        console.log(`🎮 Обработка хода игрока в 1-й стадии: ${playerId}, пропуск анализа руки: ${skipHandAnalysis}`);
         
         const currentPlayer = players.find(p => p.id === playerId);
         if (!currentPlayer) return;
@@ -850,8 +862,12 @@ export const useGameStore = create<GameState>()(
             return; // Ждем клика по карте в руке игрока
           } else {
             console.log(`❌ Не может ходить картой из руки, переходим к колоде`);
-            // ИСПРАВЛЕНО: явно переходим к этапу 2 (колода)
-            get().showNotification(`${currentPlayer.name}: нет ходов из руки, нужна карта из колоды`, 'warning');
+            get().showNotification(`${currentPlayer.name}: нет ходов из руки, кликните на колоду`, 'warning');
+            // ИСПРАВЛЕНО: очищаем состояние и переходим к колоде
+            set({ 
+              availableTargets: [],
+              canPlaceOnSelf: false 
+            });
           }
         } else if (skipHandAnalysis) {
           console.log(`⏭️ Пропускаем анализ руки, идем к колоде`);

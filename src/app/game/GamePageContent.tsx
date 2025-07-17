@@ -333,8 +333,8 @@ export default function GamePageContent() {
             </div>
           )}
         </div>
-        {/* Колода (смещена правее) */}
-        {deck.length > 0 && (
+        {/* Колода (смещена правее) - только для 1-й стадии */}
+        {(gameStage as number) === 1 && deck.length > 0 && (
           <div 
             className={styles.deckInCenter} 
             style={{
@@ -383,8 +383,8 @@ export default function GamePageContent() {
           </div>
         )}
 
-        {/* Открытая карта из колоды (слева от колоды) */}
-        {revealedDeckCard && (
+        {/* Открытая карта из колоды (слева от колоды) - только для 1-й стадии */}
+        {(gameStage as number) === 1 && revealedDeckCard && (
           <div 
             className={styles.revealedCard}
             style={{
@@ -447,8 +447,8 @@ export default function GamePageContent() {
           </div>
         )}
 
-        {/* Кнопки действий для карты из колоды */}
-        {revealedDeckCard && turnPhase === 'showing_card_actions' && (
+        {/* Кнопки действий для карты из колоды - только для 1-й стадии */}
+        {(gameStage as number) === 1 && revealedDeckCard && turnPhase === 'showing_card_actions' && (
           <div 
             style={{
               position:'absolute',
@@ -565,7 +565,13 @@ export default function GamePageContent() {
                         }}
                       >
                         <Image
-                          src={card.open && card.image ? `/img/cards/${card.image}` : `/img/cards/back.png`}
+                          src={
+                            // Во 2-й стадии карты других игроков всегда скрыты
+                            (gameStage as number) === 2 && p.id !== currentPlayerId ? 
+                              `/img/cards/back.png` :
+                            // В 1-й стадии показываем как обычно
+                            (card.open && card.image ? `/img/cards/${card.image}` : `/img/cards/back.png`)
+                          }
                           alt={card.open ? 'card' : 'back'}
                           width={42}
                           height={66}
@@ -757,10 +763,99 @@ export default function GamePageContent() {
               </div>
             )}
           </div>
-        </div>
+                </div>
       )}
       
-
+      {/* Интерфейс для 2-й стадии */}
+      {(gameStage as number) === 2 && currentPlayer && (
+        <div className={styles.gameInterface}>
+          
+          {/* Отображение карт в руке игрока для 2-й стадии */}
+          <div className={styles.playerHand}>
+            <div className={styles.handTitle}>
+              Ваши карты ({currentPlayer.cards.length})
+            </div>
+            <div className={styles.handCards}>
+              <div style={{ position: 'relative', height: '75px', width: '120px', margin: '0 auto' }}>
+                {currentPlayer.cards.map((card, index) => {
+                  const isSelectableStage2 = card.open && stage2TurnPhase === 'selecting_card';
+                  const isSelected = selectedHandCard?.id === card.id;
+                  const cardOffset = index * 8; // Смещение для нахлеста
+                  
+                  return (
+                    <div 
+                      key={card.id} 
+                      className={`${styles.handCard} ${card.open ? styles.open : styles.closed} ${isSelectableStage2 ? styles.playable : ''}`}
+                      style={{ 
+                        position: 'absolute',
+                        left: `${cardOffset}px`,
+                        top: isSelected ? '-8px' : '0px', // Выбранная карта поднимается
+                        zIndex: index + 1,
+                        transform: isSelected ? 'scale(1.05)' : 'scale(1)',
+                        filter: isSelected ? 'drop-shadow(0 0 8px #00ff00)' : 'none',
+                        transition: 'all 0.2s ease-in-out'
+                      }}
+                      onClick={() => {
+                        if (isSelectableStage2) {
+                          // 2-я стадия: выбор карты (двойной клик)
+                          selectHandCard(card);
+                        }
+                      }}
+                    >
+                    <div 
+                      style={{ width: '100%', height: '100%' }}
+                    >
+                      {/* Золотой фон под картой */}
+                      <div style={{
+                        position: 'absolute',
+                        width: '50px',
+                        height: '75px',
+                        background: 'linear-gradient(145deg, #ffd700, #ffed4e)',
+                        borderRadius: '8px',
+                        zIndex: -1,
+                        boxShadow: '0 2px 8px rgba(255, 215, 0, 0.3)'
+                      }}></div>
+                      <Image
+                        src={card.open && card.image ? `/img/cards/${card.image}` : `/img/cards/back.png`}
+                        alt={card.open ? 'card' : 'back'}
+                        width={50}
+                        height={75}
+                        draggable={false}
+                        priority
+                        style={{ 
+                          borderRadius: '8px',
+                          boxShadow: card.open ? '0 2px 8px rgba(0, 0, 0, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.5)'
+                        }}
+                      />
+                    </div>
+                    
+                    {/* Подсказка "КЛИКНИ!" для 2-й стадии */}
+                    {isSelectableStage2 && !isSelected && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '-20px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        background: '#00ff00',
+                        color: '#000',
+                        padding: '2px 6px',
+                        borderRadius: '6px',
+                        fontSize: '10px',
+                        fontWeight: 'bold',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        КЛИКНИ!
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+ 
     </div>
   );
 } 
