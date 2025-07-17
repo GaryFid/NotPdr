@@ -46,17 +46,47 @@ function getPlayers(count: number, userName = 'Вы'): Player[] {
 
 function getCirclePosition(idx: number, total: number, radius = 200) {
   const angle = (2 * Math.PI * idx) / total - Math.PI / 2;
-  // Улучшенное овальное позиционирование с учетом нового дизайна
-  const radiusX = radius * 1.3; // Еще больше по ширине для красивого овала
-  const radiusY = radius * 0.75; // Компактнее по высоте
   
-  // Дополнительные отступы для лучшего позиционирования
+  // Улучшенное овальное позиционирование специально для 9 игроков
+  let radiusX = radius * 1.6; // Еще больше по ширине для лучшего размещения 9 игроков
+  let radiusY = radius * 0.85; // Чуть больше по высоте для комфортного размещения
+  
+  // Специальные корректировки для лучшего позиционирования на экране
+  if (total === 9) {
+    // Для 9 игроков делаем более растянутый овал
+    radiusX = radius * 1.8;
+    radiusY = radius * 0.9;
+    
+    // Дополнительные корректировки для проблемных позиций
+    const adjustments = [
+      { x: 0, y: 0 },      // 0: сверху
+      { x: 15, y: -10 },   // 1: верх-право 
+      { x: 25, y: 0 },     // 2: право
+      { x: 15, y: 15 },    // 3: низ-право
+      { x: 0, y: 20 },     // 4: снизу
+      { x: -15, y: 15 },   // 5: низ-лево
+      { x: -25, y: 0 },    // 6: лево (проблемная зона)
+      { x: -15, y: -10 },  // 7: верх-лево
+      { x: 0, y: -15 }     // 8: около верха
+    ];
+    
+    const adjustment = adjustments[idx] || { x: 0, y: 0 };
+    const offsetX = Math.cos(angle) * radiusX + adjustment.x;
+    const offsetY = Math.sin(angle) * radiusY + adjustment.y;
+    
+    return {
+      left: `calc(50% + ${offsetX}px - 80px)`, // Увеличен отступ для больших карт
+      top: `calc(50% + ${offsetY}px - 80px)`,
+    };
+  }
+  
+  // Для других количеств игроков
   const offsetX = Math.cos(angle) * radiusX;
   const offsetY = Math.sin(angle) * radiusY;
   
   return {
-    left: `calc(50% + ${offsetX}px - 70px)`, // Увеличен отступ для новых размеров
-    top: `calc(50% + ${offsetY}px - 70px)`,
+    left: `calc(50% + ${offsetX}px - 80px)`, // Увеличен отступ для больших карт
+    top: `calc(50% + ${offsetY}px - 80px)`,
   };
 }
 
@@ -96,8 +126,8 @@ function Card({ image, draggable, onDragStart, onTouchStart, style }: {
       <Image
         src={'/img/cards/back@2x.png'}
         alt="back-underlay"
-        width={48}
-        height={72}
+        width={96}
+        height={144}
         className={styles.cardBackUnderlay}
         draggable={false}
         unoptimized
@@ -105,8 +135,8 @@ function Card({ image, draggable, onDragStart, onTouchStart, style }: {
       <Image
         src={`/img/cards/${image}`}
         alt="card"
-        width={42}
-        height={64}
+        width={84}
+        height={128}
         style={{ width: '100%', height: '100%' }}
         objectFit="contain"
         priority
@@ -323,8 +353,8 @@ export default function GamePageContent() {
                   <Image 
                     src={"/img/cards/" + CARD_BACK}
                     alt="table card" 
-                    width={42} 
-                    height={64}
+                    width={84} 
+                    height={128}
                     style={{
                       boxShadow: index === tableStack.length - 1 ? 
                         '0 0 12px #ffd700' : '0 0 8px rgba(0,0,0,0.5)'
@@ -385,8 +415,8 @@ export default function GamePageContent() {
             <Image 
               src={"/img/cards/" + CARD_BACK} 
               alt="deck" 
-              width={42} 
-              height={64} 
+              width={84} 
+              height={128} 
               style={{
                 boxShadow: turnPhase === 'showing_deck_hint' ? '0 0 16px #00ff00' : '0 0 16px #ffd700'
               }} 
@@ -441,8 +471,8 @@ export default function GamePageContent() {
             {/* Белый фон под картой */}
             <div style={{
               position: 'absolute',
-              width: '42px',
-              height: '64px',
+              width: '84px',
+              height: '128px',
               backgroundColor: '#ffffff',
               borderRadius: '6px',
               zIndex: -1
@@ -450,8 +480,8 @@ export default function GamePageContent() {
             <Image 
               src={`/img/cards/${revealedDeckCard.image}`} 
               alt="revealed card" 
-              width={42} 
-              height={64} 
+              width={84} 
+              height={128} 
               style={{
                 boxShadow: turnPhase === 'waiting_deck_action' ? '0 0 20px #00ff00' : '0 0 20px #ff6600',
                 border: turnPhase === 'waiting_deck_action' ? '2px solid #00ff00' : '2px solid #ff6600',
@@ -557,7 +587,7 @@ export default function GamePageContent() {
               style={getCirclePosition(i, players.length)}
             >
               <div className={styles.avatarWrap}>
-                <Image src={p.avatar || USER_AVATAR} alt="avatar" width={30} height={30} className={styles.avatar} />
+                <Image src={p.avatar || USER_AVATAR} alt="avatar" width={15} height={15} className={styles.avatar} />
                 <span className={styles.playerName}>{p.name}</span>
                 {isCurrentPlayer && <span style={{color:'#ffd700',marginLeft:4,fontWeight:700}}>⬤</span>}
                 {isTargetAvailable && <span style={{color:'#00ff00',marginLeft:4}}>🎯</span>}
@@ -566,7 +596,7 @@ export default function GamePageContent() {
               <AnimatePresence>
                 {p.cards.map((card, ci) => {
                   const isTopCard = ci === p.cards.length - 1;
-                  const cardOffset = ci * 8; // Смещение для нахлеста
+                  const cardOffset = ci * 16; // Увеличил смещение для больших карт
                   
                   return (
                     <motion.div
@@ -623,8 +653,8 @@ export default function GamePageContent() {
                             (card.open && card.image ? `/img/cards/${card.image}` : `/img/cards/back.png`)
                           }
                           alt={card.open ? 'card' : 'back'}
-                          width={42}
-                          height={66}
+                          width={84}
+                          height={132}
                           draggable={false}
                           priority
                         />
@@ -655,7 +685,7 @@ export default function GamePageContent() {
               Ваши карты ({currentPlayer.cards.length})
             </div>
             <div className={styles.handCards}>
-              <div style={{ position: 'relative', height: '75px', width: '120px', margin: '0 auto' }}>
+              <div style={{ position: 'relative', height: '150px', width: '240px', margin: '0 auto' }}>
                 {currentPlayer.cards.map((card, index) => {
                   const isTopCard = index === currentPlayer.cards.length - 1;
                   // Для 1-й стадии
@@ -663,7 +693,7 @@ export default function GamePageContent() {
                   // Для 2-й стадии - любая открытая карта может быть выбрана
                   const isSelectableStage2 = (gameStage as number) === 2 && card.open && stage2TurnPhase === 'selecting_card';
                   const isSelected = (gameStage as number) === 2 && selectedHandCard?.id === card.id;
-                  const cardOffset = index * 8; // Смещение для нахлеста
+                  const cardOffset = index * 16; // Увеличил смещение для больших карт
                   
                   return (
                     <div 
@@ -722,8 +752,8 @@ export default function GamePageContent() {
                         {/* Золотой фон под картой */}
                         <div style={{
                           position: 'absolute',
-                          width: '50px',
-                          height: '75px',
+                          width: '100px',
+                          height: '150px',
                           background: 'linear-gradient(145deg, #ffd700, #ffed4e)',
                           borderRadius: '8px',
                           zIndex: -1,
@@ -732,8 +762,8 @@ export default function GamePageContent() {
                         <Image
                           src={card.open && card.image ? `/img/cards/${card.image}` : `/img/cards/back.png`}
                           alt={card.open ? 'card' : 'back'}
-                          width={50}
-                          height={75}
+                          width={100}
+                          height={150}
                           draggable={false}
                           priority
                           style={{ 
@@ -849,11 +879,11 @@ export default function GamePageContent() {
               Ваши карты ({currentPlayer.cards.length})
             </div>
             <div className={styles.handCards}>
-              <div style={{ position: 'relative', height: '75px', width: '120px', margin: '0 auto' }}>
+              <div style={{ position: 'relative', height: '150px', width: '240px', margin: '0 auto' }}>
                 {currentPlayer.cards.map((card, index) => {
                   const isSelectableStage2 = card.open && stage2TurnPhase === 'selecting_card';
                   const isSelected = selectedHandCard?.id === card.id;
-                  const cardOffset = index * 8; // Смещение для нахлеста
+                  const cardOffset = index * 16; // Увеличил смещение для больших карт
                   
                   return (
                     <div 

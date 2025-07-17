@@ -105,7 +105,7 @@
 /* Улучшенное позиционирование игроков */
 .playerSeat {
   position: absolute;
-  width: 140px;
+  width: 160px; /* Увеличил для лучшего размещения больших карт */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -122,16 +122,16 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-  padding: 12px 16px;
+  gap: 4px; /* Уменьшил отступ */
+  margin-bottom: 8px; /* Уменьшил отступ */
+  padding: 8px 12px; /* Уменьшил padding */
   background: 
     linear-gradient(145deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%),
     rgba(255, 215, 0, 0.1);
-  border-radius: 20px;
+  border-radius: 15px; /* Уменьшил радиус */
   border: 2px solid rgba(255, 215, 0, 0.3);
   box-shadow: 
-    0 8px 25px rgba(0, 0, 0, 0.2),
+    0 6px 20px rgba(0, 0, 0, 0.2),
     inset 0 1px 2px rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
@@ -140,19 +140,19 @@
 .avatarWrap:hover {
   border-color: rgba(255, 215, 0, 0.6);
   box-shadow: 
-    0 12px 35px rgba(0, 0, 0, 0.25),
-    0 0 20px rgba(255, 215, 0, 0.3),
+    0 8px 25px rgba(0, 0, 0, 0.25),
+    0 0 15px rgba(255, 215, 0, 0.3),
     inset 0 1px 2px rgba(255, 255, 255, 0.2);
 }
 
 .avatar {
-  width: 50px;
-  height: 50px;
+  width: 25px; /* Уменьшил в 2 раза с 50px */
+  height: 25px; /* Уменьшил в 2 раза с 50px */
   border-radius: 50%;
-  border: 3px solid #ffd700;
+  border: 2px solid #ffd700; /* Уменьшил толщину */
   box-shadow: 
-    0 4px 15px rgba(0, 0, 0, 0.3),
-    0 0 0 2px rgba(255, 255, 255, 0.1);
+    0 2px 10px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
   transition: all 0.3s ease;
   background: linear-gradient(145deg, #ffd700, #ffed4e);
   position: relative;
@@ -161,10 +161,10 @@
 .avatar::after {
   content: '';
   position: absolute;
-  top: -3px;
-  left: -3px;
-  right: -3px;
-  bottom: -3px;
+  top: -2px; /* Уменьшил с -3px */
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
   border-radius: 50%;
   background: linear-gradient(45deg, #ffd700, transparent, #ffd700);
   z-index: -1;
@@ -179,16 +179,16 @@
 .playerName {
   color: #ffd700;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 13px; /* Уменьшил размер шрифта */
   text-shadow: 
     0 2px 8px rgba(0, 0, 0, 0.6),
     0 0 20px rgba(255, 215, 0, 0.3);
   letter-spacing: 0.5px;
   text-align: center;
-  min-width: 80px;
-  padding: 6px 12px;
+  min-width: 70px; /* Уменьшил */
+  padding: 4px 8px; /* Уменьшил padding */
   background: rgba(0, 0, 0, 0.2);
-  border-radius: 15px;
+  border-radius: 12px; /* Уменьшил радиус */
   border: 1px solid rgba(255, 215, 0, 0.2);
   backdrop-filter: blur(5px);
 }
@@ -199,15 +199,15 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 75px;
-  width: 120px;
+  height: 140px; /* Увеличил в 2 раза с 75px */
+  width: 220px; /* Увеличил для больших карт */
   perspective: 1000px;
 }
 
 .card {
   position: absolute;
-  width: 48px;
-  height: 72px;
+  width: 96px; /* Увеличил в 2 раза с 48px */
+  height: 144px; /* Увеличил в 2 раза с 72px */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -569,7 +569,7 @@
   backdrop-filter: blur(15px);
   position: relative;
   overflow: hidden;
-  max-height: 160px;
+  max-height: 220px; /* Увеличил для больших карт */
 }
 
 .playerHand::before {
@@ -609,15 +609,15 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 85px;
+  min-height: 150px; /* Увеличил для больших карт */
   z-index: 1;
   position: relative;
 }
 
 .handCard {
   position: relative;
-  width: 50px;
-  height: 75px;
+  width: 100px; /* Увеличил в 2 раза с 50px */
+  height: 150px; /* Увеличил в 2 раза с 75px */
   border-radius: 10px;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   cursor: pointer;
@@ -773,22 +773,27 @@
   }
   
   .playerSeat {
-    width: 110px;
+    width: 130px; /* Увеличил для больших карт */
   }
   
   .playerName {
-    font-size: 13px;
-    padding: 4px 8px;
+    font-size: 11px;
+    padding: 3px 6px;
   }
   
   .avatar {
-    width: 40px;
-    height: 40px;
+    width: 20px; /* Уменьшил в 2 раза с 40px */
+    height: 20px;
   }
   
   .card {
-    width: 40px;
-    height: 60px;
+    width: 80px; /* Увеличил в 2 раза с 40px */
+    height: 120px; /* Увеличил в 2 раза с 60px */
+  }
+  
+  .cardsRow {
+    height: 130px; /* Увеличил для больших карт */
+    width: 180px;
   }
   
   .gameInterface {
@@ -799,12 +804,12 @@
   
   .playerHand {
     padding: 12px;
-    max-height: 140px;
+    max-height: 200px; /* Увеличил для больших карт */
   }
   
   .handCard {
-    width: 45px;
-    height: 68px;
+    width: 90px; /* Увеличил в 2 раза с 45px */
+    height: 135px; /* Увеличил в 2 раза с 68px */
   }
   
   .handTitle {
@@ -813,7 +818,7 @@
   }
   
   .handCards {
-    min-height: 75px;
+    min-height: 140px; /* Увеличил для больших карт */
   }
   
   .firstMoveBanner {
@@ -833,8 +838,8 @@
   }
   
   .avatarWrap {
-    padding: 8px 12px;
-    gap: 6px;
+    padding: 6px 10px; /* Уменьшил padding */
+    gap: 3px;
   }
 }
 
@@ -851,32 +856,37 @@
   }
   
   .playerSeat {
-    width: 90px;
+    width: 110px;
   }
   
   .playerName {
-    font-size: 11px;
-    padding: 3px 6px;
+    font-size: 10px;
+    padding: 2px 4px;
   }
   
   .avatar {
-    width: 32px;
-    height: 32px;
+    width: 16px; /* Уменьшил в 2 раза с 32px */
+    height: 16px;
   }
   
   .card {
-    width: 32px;
-    height: 48px;
+    width: 64px; /* Увеличил в 2 раза с 32px */
+    height: 96px; /* Увеличил в 2 раза с 48px */
+  }
+  
+  .cardsRow {
+    height: 105px; /* Увеличил для больших карт */
+    width: 140px;
   }
   
   .handCard {
-    width: 40px;
-    height: 60px;
+    width: 80px; /* Увеличил в 2 раза с 40px */
+    height: 120px; /* Увеличил в 2 раза с 60px */
   }
   
   .playerHand {
     padding: 8px;
-    max-height: 120px;
+    max-height: 170px; /* Увеличил для больших карт */
   }
   
   .handTitle {
@@ -885,7 +895,7 @@
   }
   
   .handCards {
-    min-height: 65px;
+    min-height: 125px; /* Увеличил для больших карт */
   }
   
   .firstMoveBanner {
@@ -894,8 +904,8 @@
   }
   
   .avatarWrap {
-    padding: 6px 8px;
-    gap: 4px;
+    padding: 4px 6px;
+    gap: 2px;
   }
 }
 
