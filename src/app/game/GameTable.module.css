@@ -2,7 +2,9 @@
   height: 100vh;
   width: 100vw;
   overflow: hidden;
-  background: radial-gradient(ellipse at center, #1a2340 60%, #0a1833 100%);
+  background: 
+    radial-gradient(ellipse at center, #1a2340 60%, #0a1833 100%),
+    linear-gradient(45deg, rgba(255, 215, 0, 0.02) 0%, transparent 50%, rgba(255, 215, 0, 0.02) 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -17,44 +19,51 @@
 /* Заголовок игры */
 .gameHeader {
   position: fixed;
-  top: 10px;
+  top: 15px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 16px;
+  gap: 20px;
   z-index: 1100;
 }
 
 .stageInfo, .deckInfo, .targetInfo {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.95);
   color: #333;
-  padding: 8px 16px;
-  border-radius: 20px;
+  padding: 10px 20px;
+  border-radius: 25px;
   font-weight: bold;
-  font-size: 14px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-size: 15px;
+  box-shadow: 
+    0 4px 15px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
 }
 
 .stageInfo {
-  background: linear-gradient(45deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #fff;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
 .deckInfo {
-  background: linear-gradient(45deg, #ffd700, #ffed4e);
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
   color: #333;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
 }
 
 .targetInfo {
-  background: linear-gradient(45deg, #4ecdc4, #44a08d);
+  background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
   color: #fff;
+  box-shadow: 0 4px 15px rgba(78, 205, 196, 0.4);
 }
 
 .tableBg {
   position: relative;
-  width: 480px;
-  height: 400px; /* Уменьшена высота для мобильных */
-  margin: 40px auto 0 auto;
+  width: 500px;
+  height: 420px;
+  margin: 50px auto 0 auto;
   background: none;
 }
 
@@ -62,59 +71,143 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 380px; /* Увеличена ширина для овала */
-  height: 280px; /* Уменьшена высота для овала */
-  background: radial-gradient(ellipse, #22305a 70%, #0a1833 100%);
-  border-radius: 50%; /* Это создаст овал из-за разных width/height */
+  width: 400px;
+  height: 300px;
+  background: 
+    radial-gradient(ellipse, #22305a 70%, #1a2742 85%, #0a1833 100%),
+    linear-gradient(45deg, rgba(255, 215, 0, 0.05) 0%, transparent 50%);
+  border-radius: 50%;
   box-shadow: 
-    0 0 40px 8px rgba(255, 215, 0, 0.3), 
-    0 0 0 6px #ffd700,
-    inset 0 0 30px rgba(255, 215, 0, 0.1);
+    0 0 50px 12px rgba(255, 215, 0, 0.25), 
+    0 0 0 8px #ffd700,
+    inset 0 0 40px rgba(255, 215, 0, 0.1),
+    inset 0 0 80px rgba(34, 48, 90, 0.8);
   transform: translate(-50%, -50%);
   z-index: 1;
+  animation: tableGlow 4s ease-in-out infinite alternate;
 }
 
+@keyframes tableGlow {
+  0% {
+    box-shadow: 
+      0 0 50px 12px rgba(255, 215, 0, 0.25), 
+      0 0 0 8px #ffd700,
+      inset 0 0 40px rgba(255, 215, 0, 0.1);
+  }
+  100% {
+    box-shadow: 
+      0 0 60px 15px rgba(255, 215, 0, 0.35), 
+      0 0 0 8px #ffed4e,
+      inset 0 0 50px rgba(255, 215, 0, 0.15);
+  }
+}
+
+/* Улучшенное позиционирование игроков */
 .playerSeat {
   position: absolute;
-  width: 120px;
+  width: 140px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  z-index: 2;
+  z-index: 3;
+  transition: all 0.3s ease;
 }
 
+.playerSeat:hover {
+  transform: scale(1.02);
+}
+
+/* Красивый контейнер для аватара и имени */
 .avatarWrap {
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 8px;
-  margin-bottom: 4px;
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  background: 
+    linear-gradient(145deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%),
+    rgba(255, 215, 0, 0.1);
+  border-radius: 20px;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.2),
+    inset 0 1px 2px rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.avatarWrap:hover {
+  border-color: rgba(255, 215, 0, 0.6);
+  box-shadow: 
+    0 12px 35px rgba(0, 0, 0, 0.25),
+    0 0 20px rgba(255, 215, 0, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.2);
 }
 
 .avatar {
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  border: 2px solid #ffd700;
-  box-shadow: 0 2px 8px #000a;
+  border: 3px solid #ffd700;
+  box-shadow: 
+    0 4px 15px rgba(0, 0, 0, 0.3),
+    0 0 0 2px rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  background: linear-gradient(145deg, #ffd700, #ffed4e);
+  position: relative;
+}
+
+.avatar::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, #ffd700, transparent, #ffd700);
+  z-index: -1;
+  animation: avatarRotate 8s linear infinite;
+}
+
+@keyframes avatarRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .playerName {
   color: #ffd700;
-  font-weight: 600;
-  font-size: 15px;
-  text-shadow: 0 1px 4px #000;
+  font-weight: 700;
+  font-size: 16px;
+  text-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.6),
+    0 0 20px rgba(255, 215, 0, 0.3);
+  letter-spacing: 0.5px;
+  text-align: center;
+  min-width: 80px;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 15px;
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  backdrop-filter: blur(5px);
 }
 
+/* Улучшенное отображение карт игроков */
 .cardsRow {
   position: relative;
   display: flex;
   justify-content: center;
-  height: 66px;
-  width: 80px;
+  align-items: center;
+  height: 75px;
+  width: 120px;
+  perspective: 1000px;
 }
 
 .card {
   position: absolute;
-  width: 42px;
-  height: 66px;
+  width: 48px;
+  height: 72px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -122,30 +215,65 @@
   border: none;
   box-shadow: none;
   padding: 0;
-  transition: transform 0.2s ease;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   cursor: pointer;
+  transform-style: preserve-3d;
+}
+
+.card:hover {
+  transform: translateY(-8px) scale(1.1) rotateY(5deg);
+  z-index: 10 !important;
 }
 
 .card.open {
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px #0004, 0 0 0 2px #ffd700;
-  border: 1.5px solid #fff;
+  background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+  border-radius: 12px;
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.3),
+    0 0 0 3px #ffd700,
+    0 0 20px rgba(255, 215, 0, 0.4),
+    inset 0 1px 2px rgba(255, 255, 255, 0.8);
+  border: 2px solid #fff;
+}
+
+.card.open::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  right: -5px;
+  bottom: -5px;
+  background: linear-gradient(45deg, #ffd700, transparent, #ffd700);
+  border-radius: 15px;
+  z-index: -1;
+  animation: cardShine 3s ease-in-out infinite;
+}
+
+@keyframes cardShine {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
 }
 
 .card.closed {
-  background: #f5f5f5;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px #0002;
-  border: 1.5px solid #e0e0e0;
+  background: linear-gradient(145deg, #2c3e50 0%, #34495e 100%);
+  border-radius: 12px;
+  box-shadow: 
+    0 6px 20px rgba(0, 0, 0, 0.4),
+    0 0 0 2px rgba(255, 255, 255, 0.1);
+  border: 2px solid #4a5568;
 }
 
 .card img {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  border-radius: 8px;
+  border-radius: 10px;
   box-shadow: none;
+  transition: all 0.3s ease;
+}
+
+.card:hover img {
+  filter: brightness(1.1) contrast(1.05);
 }
 
 .cardBackUnderlay {
@@ -156,11 +284,11 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 120px;
-  height: 160px;
-  background: rgba(255, 215, 0, 0.12);
-  border: 2px dashed #ffd700;
-  border-radius: 16px;
+  width: 140px;
+  height: 180px;
+  background: rgba(255, 215, 0, 0.1);
+  border: 3px dashed #ffd700;
+  border-radius: 20px;
   transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
@@ -169,176 +297,279 @@
   font-weight: bold;
   font-size: 18px;
   z-index: 10;
-  box-shadow: 0 0 24px #ffd70044;
+  box-shadow: 
+    0 0 30px rgba(255, 215, 0, 0.3),
+    inset 0 0 30px rgba(255, 215, 0, 0.1);
+  backdrop-filter: blur(5px);
+  animation: dropZonePulse 2s ease-in-out infinite;
+}
+
+@keyframes dropZonePulse {
+  0%, 100% {
+    box-shadow: 
+      0 0 30px rgba(255, 215, 0, 0.3),
+      inset 0 0 30px rgba(255, 215, 0, 0.1);
+  }
+  50% {
+    box-shadow: 
+      0 0 40px rgba(255, 215, 0, 0.5),
+      inset 0 0 40px rgba(255, 215, 0, 0.2);
+  }
 }
 
 .drawButton {
   margin: 0 auto;
-  margin-top: 12px;
+  margin-top: 16px;
   display: block;
-  padding: 18px 48px;
-  font-size: 22px;
+  padding: 20px 50px;
+  font-size: 24px;
   font-weight: bold;
   color: #232b3e;
-  background: linear-gradient(90deg, #ffd700 60%, #fffbe6 100%);
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 50%, #fffbe6 100%);
   border: none;
-  border-radius: 32px;
-  box-shadow: 0 4px 24px #ffd70044;
+  border-radius: 35px;
+  box-shadow: 
+    0 6px 25px rgba(255, 215, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.2);
   cursor: pointer;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .drawButton:hover {
-  background: linear-gradient(90deg, #ffe066 60%, #fffbe6 100%);
-  box-shadow: 0 6px 32px #ffd70066;
+  background: linear-gradient(135deg, #ffe066 0%, #fff176 50%, #fffbe6 100%);
+  box-shadow: 
+    0 8px 35px rgba(255, 215, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.3);
+  transform: translateY(-3px);
+}
+
+.drawButton::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: buttonSweep 3s infinite;
+}
+
+@keyframes buttonSweep {
+  0% { transform: translateX(-100%) rotate(45deg); }
+  100% { transform: translateX(100%) rotate(45deg); }
 }
 
 .firstMoveBanner {
   position: fixed;
   left: 50%;
-  top: 18%;
+  top: 20%;
   transform: translate(-50%, -50%);
-  background: rgba(255, 255, 255, 0.95);
-  color: #ffd700;
-  font-size: 2.2rem;
+  background: 
+    linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%);
+  color: #333;
+  font-size: 2.4rem;
   font-weight: bold;
-  padding: 22px 48px;
-  border-radius: 24px;
-  box-shadow: 0 0 32px #ffd70088, 0 2px 16px #0002;
+  padding: 25px 50px;
+  border-radius: 30px;
+  box-shadow: 
+    0 0 40px rgba(255, 215, 0, 0.4),
+    0 10px 30px rgba(0, 0, 0, 0.2),
+    inset 0 1px 2px rgba(255, 255, 255, 0.8);
   z-index: 1000;
   text-align: center;
-  animation: fade-move-in 0.7s cubic-bezier(.22,1,.36,1), fade-move-out 0.7s 2.3s cubic-bezier(.22,1,.36,1) forwards;
+  border: 3px solid #ffd700;
+  backdrop-filter: blur(10px);
+  animation: bannerEntrance 0.8s cubic-bezier(.22,1,.36,1), bannerExit 0.8s 2.2s cubic-bezier(.22,1,.36,1) forwards;
 }
 
-@keyframes fade-move-in {
-  0% { opacity: 0; transform: translate(-50%, -80%) scale(0.95); }
-  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.firstMoveBanner::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  background: linear-gradient(45deg, #ffd700, #ff6b6b, #4ecdc4, #ffd700);
+  border-radius: 33px;
+  z-index: -1;
+  animation: bannerBorderRotate 2s linear infinite;
 }
 
-@keyframes fade-move-out {
-  0% { opacity: 1; }
-  100% { opacity: 0; transform: translate(-50%, -30%) scale(1.05); }
+@keyframes bannerBorderRotate {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
-/* Стили для P.I.D.R игры */
+@keyframes bannerEntrance {
+  0% { 
+    opacity: 0; 
+    transform: translate(-50%, -80%) scale(0.8) rotateX(-90deg); 
+  }
+  100% { 
+    opacity: 1; 
+    transform: translate(-50%, -50%) scale(1) rotateX(0deg); 
+  }
+}
+
+@keyframes bannerExit {
+  0% { 
+    opacity: 1; 
+    transform: translate(-50%, -50%) scale(1); 
+  }
+  100% { 
+    opacity: 0; 
+    transform: translate(-50%, -30%) scale(1.1) rotateX(90deg); 
+  }
+}
+
+/* Стили для P.I.D.R игры с улучшениями */
 .highlightedTarget {
-  animation: pulse-target 1.5s infinite;
+  animation: pulseTarget 2s ease-in-out infinite;
 }
 
 .highlightedTarget .avatarWrap {
-  background: rgba(0, 255, 0, 0.1);
-  border-radius: 12px;
-  padding: 4px 8px;
-  border: 2px solid #00ff00;
-  box-shadow: 0 0 16px rgba(0, 255, 0, 0.3);
+  background: 
+    linear-gradient(145deg, rgba(0, 255, 0, 0.2) 0%, rgba(0, 255, 0, 0.1) 100%),
+    rgba(0, 255, 0, 0.1);
+  border: 3px solid #00ff00;
+  box-shadow: 
+    0 0 25px rgba(0, 255, 0, 0.5),
+    0 8px 25px rgba(0, 0, 0, 0.2),
+    inset 0 1px 2px rgba(255, 255, 255, 0.1);
 }
 
 .targetCard {
-  animation: glow-card 1.2s infinite alternate;
-  transform: scale(1.05);
-  z-index: 10 !important;
+  animation: glowCard 1.5s ease-in-out infinite alternate;
+  transform: scale(1.1) translateY(-5px);
+  z-index: 15 !important;
 }
 
 .targetCard::after {
   content: '';
   position: absolute;
-  top: -4px;
-  left: -4px;
-  right: -4px;
-  bottom: -4px;
+  top: -6px;
+  left: -6px;
+  right: -6px;
+  bottom: -6px;
   background: linear-gradient(45deg, #00ff00, #00ffaa, #00ff00);
-  border-radius: 12px;
+  border-radius: 18px;
   z-index: -1;
-  animation: rotate-border 2s linear infinite;
+  animation: rotateBorder 3s linear infinite;
 }
 
-/* Новый компактный интерфейс игры */
+/* Новый компактный интерфейс игры с премиум дизайном */
 .gameInterface {
   position: fixed;
-  bottom: 10px;
+  bottom: 15px;
   left: 50%;
   transform: translateX(-50%);
   width: 95%;
-  max-width: 400px; /* Уменьшена максимальная ширина */
+  max-width: 420px;
   z-index: 1000;
 }
 
 .actionButtons {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 12px; /* Уменьшен отступ */
+  gap: 12px;
+  margin-bottom: 15px;
 }
 
 .gameButton {
   flex: 1;
-  padding: 10px 6px; /* Уменьшены отступы */
-  font-size: 12px; /* Уменьшен размер шрифта */
+  padding: 12px 8px;
+  font-size: 13px;
   font-weight: bold;
   color: #fff;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
-  border-radius: 10px; /* Уменьшен радиус */
+  border-radius: 15px;
   cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 
+    0 4px 15px rgba(102, 126, 234, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.gameButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
 }
 
 .gameButton:hover:not(:disabled) {
-  background: linear-gradient(135deg, #5a67d8, #6b46c1);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 
+    0 8px 25px rgba(102, 126, 234, 0.5),
+    inset 0 1px 2px rgba(255, 255, 255, 0.2);
+}
+
+.gameButton:hover:not(:disabled)::before {
+  left: 100%;
 }
 
 .gameButton:disabled {
-  background: #ccc;
+  background: linear-gradient(135deg, #a0aec0 0%, #718096 100%);
   cursor: not-allowed;
   transform: none;
-  box-shadow: none;
-}
-
-.gameButton.disabled {
-  background: linear-gradient(135deg, #999, #777) !important;
-  color: #ccc !important;
-  cursor: not-allowed !important;
-  opacity: 0.6;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .placeOnSelfButton {
   width: 100%;
-  padding: 10px 12px; /* Уменьшены отступы */
-  font-size: 14px; /* Уменьшен размер шрифта */
+  padding: 12px 16px;
+  font-size: 15px;
   font-weight: bold;
-  color: #232b3e;
-  background: linear-gradient(90deg, #ff6b6b 60%, #ffe6e6 100%);
+  color: #fff;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
   border: none;
-  border-radius: 12px; /* Уменьшен радиус */
-  box-shadow: 0 3px 12px rgba(255, 107, 107, 0.3);
+  border-radius: 18px;
+  box-shadow: 
+    0 6px 20px rgba(255, 107, 107, 0.4),
+    inset 0 1px 2px rgba(255, 255, 255, 0.1);
   cursor: pointer;
-  transition: all 0.2s;
-  margin-bottom: 12px; /* Уменьшен отступ */
+  transition: all 0.3s ease;
+  margin-bottom: 15px;
+  position: relative;
+  overflow: hidden;
 }
 
 .placeOnSelfButton:hover {
-  background: linear-gradient(90deg, #ff5252 60%, #ffe6e6 100%);
-  box-shadow: 0 5px 16px rgba(255, 107, 107, 0.5);
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, #ff5252 0%, #f44336 100%);
+  box-shadow: 
+    0 8px 30px rgba(255, 107, 107, 0.6),
+    inset 0 1px 2px rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
 }
 
-/* Компактный контейнер для карт игрока */
+/* Компактный контейнер для карт игрока с премиум дизайном */
 .playerHand {
-  background: linear-gradient(145deg, #2d3748 0%, #1a202c 100%);
-  border: 2px solid #ffd700;
-  border-radius: 16px; /* Уменьшен радиус */
-  padding: 12px; /* Значительно уменьшены отступы */
+  background: 
+    linear-gradient(145deg, #2d3748 0%, #1a202c 100%),
+    radial-gradient(circle at top right, rgba(255, 215, 0, 0.1), transparent);
+  border: 3px solid #ffd700;
+  border-radius: 25px;
+  padding: 16px;
   box-shadow: 
-    0 6px 20px rgba(0, 0, 0, 0.4),
+    0 10px 30px rgba(0, 0, 0, 0.4),
+    0 0 50px rgba(255, 215, 0, 0.2),
     inset 0 1px 2px rgba(255, 215, 0, 0.2),
-    0 0 0 1px rgba(255, 215, 0, 0.1);
-  backdrop-filter: blur(10px);
+    inset 0 0 60px rgba(255, 215, 0, 0.05);
+  backdrop-filter: blur(15px);
   position: relative;
   overflow: hidden;
-  max-height: 140px; /* Ограничиваем максимальную высоту */
+  max-height: 160px;
 }
 
 .playerHand::before {
@@ -349,78 +580,93 @@
   right: 0;
   bottom: 0;
   background: 
-    radial-gradient(circle at 20% 20%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(255, 215, 0, 0.05) 0%, transparent 50%);
-  z-index: -1;
+    radial-gradient(circle at 20% 20%, rgba(255, 215, 0, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(255, 215, 0, 0.1) 0%, transparent 50%);
+  z-index: 0;
+  animation: handGlow 4s ease-in-out infinite alternate;
+}
+
+@keyframes handGlow {
+  0% { opacity: 0.5; }
+  100% { opacity: 1; }
 }
 
 .handTitle {
   text-align: center;
-  font-weight: bold;
-  font-size: 14px; /* Уменьшен размер шрифта */
+  font-weight: 700;
+  font-size: 16px;
   color: #ffd700;
-  margin-bottom: 8px; /* Уменьшен отступ */
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+  text-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.6),
+    0 0 20px rgba(255, 215, 0, 0.4);
+  letter-spacing: 1px;
+  z-index: 1;
+  position: relative;
 }
 
 .handCards {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 75px; /* Уменьшена минимальная высота */
+  min-height: 85px;
+  z-index: 1;
+  position: relative;
 }
 
 .handCard {
   position: relative;
-  width: 44px; /* Немного уменьшена ширина */
-  height: 66px; /* Немного уменьшена высота */
-  border-radius: 6px; /* Уменьшен радиус */
-  transition: all 0.3s ease;
+  width: 50px;
+  height: 75px;
+  border-radius: 10px;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   cursor: pointer;
+  transform-style: preserve-3d;
 }
 
 .handCard:hover {
-  transform: translateY(-6px) scale(1.03); /* Уменьшено смещение */
+  transform: translateY(-10px) scale(1.08) rotateY(8deg);
   z-index: 100 !important;
 }
 
 .handCard.open {
-  border: 2px solid #ffd700;
+  border: 3px solid #ffd700;
   box-shadow: 
-    0 3px 10px rgba(255, 215, 0, 0.4),
+    0 6px 20px rgba(255, 215, 0, 0.5),
+    0 0 30px rgba(255, 215, 0, 0.3),
     0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .handCard.open:hover {
   box-shadow: 
-    0 6px 16px rgba(255, 215, 0, 0.6),
+    0 12px 35px rgba(255, 215, 0, 0.7),
+    0 0 40px rgba(255, 215, 0, 0.5),
     0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .handCard.closed {
-  border: 2px solid #718096;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border: 3px solid #718096;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .handCard.playable {
-  border: 3px solid #00ff00 !important;
+  border: 4px solid #00ff00 !important;
   box-shadow: 
-    0 0 20px rgba(0, 255, 0, 0.5),
-    0 4px 12px rgba(0, 255, 0, 0.3) !important;
-  animation: glow-green 2s ease-in-out infinite alternate;
+    0 0 30px rgba(0, 255, 0, 0.6),
+    0 8px 25px rgba(0, 255, 0, 0.4) !important;
+  animation: glowGreen 2s ease-in-out infinite alternate;
 }
 
-@keyframes glow-green {
+@keyframes glowGreen {
   from {
     box-shadow: 
-      0 0 20px rgba(0, 255, 0, 0.5),
-      0 4px 12px rgba(0, 255, 0, 0.3);
+      0 0 30px rgba(0, 255, 0, 0.6),
+      0 8px 25px rgba(0, 255, 0, 0.4);
   }
   to {
     box-shadow: 
-      0 0 30px rgba(0, 255, 0, 0.8),
-      0 6px 16px rgba(0, 255, 0, 0.5);
+      0 0 40px rgba(0, 255, 0, 0.9),
+      0 12px 35px rgba(0, 255, 0, 0.6);
   }
 }
 
@@ -428,68 +674,85 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  border-radius: 4px; /* Уменьшен радиус */
+  border-radius: 7px;
+  transition: all 0.3s ease;
+}
+
+.handCard:hover img {
+  filter: brightness(1.15) contrast(1.1) saturate(1.1);
 }
 
 .cardRank {
   position: absolute;
-  top: -6px; /* Немного подвинуто */
-  right: -6px; /* Немного подвинуто */
-  background: #ffd700;
+  top: -8px;
+  right: -8px;
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
   color: #333;
   border-radius: 50%;
-  width: 18px; /* Немного уменьшен */
-  height: 18px; /* Немного уменьшен */
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 9px; /* Уменьшен размер шрифта */
+  font-size: 11px;
   font-weight: bold;
-  border: 2px solid #fff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  border: 3px solid #fff;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    0 0 15px rgba(255, 215, 0, 0.4);
+  z-index: 2;
 }
 
 .deckInCenter {
   position: relative;
+  transition: all 0.3s ease;
+}
+
+.deckInCenter:hover {
+  transform: scale(1.05);
 }
 
 .deckCount {
   position: absolute;
-  top: -10px;
-  right: -10px;
-  background: #ffd700;
+  top: -12px;
+  right: -12px;
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
   color: #232b3e;
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: bold;
-  border: 2px solid #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border: 3px solid #fff;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(255, 215, 0, 0.4);
+  z-index: 2;
 }
 
-@keyframes pulse-target {
+/* Обновленные анимации */
+@keyframes pulseTarget {
   0%, 100% { 
-    box-shadow: 0 0 0 0 rgba(0, 255, 0, 0.4);
+    box-shadow: 0 0 0 0 rgba(0, 255, 0, 0.6);
   }
   50% { 
-    box-shadow: 0 0 0 10px rgba(0, 255, 0, 0);
+    box-shadow: 0 0 0 15px rgba(0, 255, 0, 0);
   }
 }
 
-@keyframes glow-card {
+@keyframes glowCard {
   0% { 
-    box-shadow: 0 0 8px rgba(0, 255, 0, 0.5);
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
   }
   100% { 
-    box-shadow: 0 0 24px rgba(0, 255, 0, 0.8);
+    box-shadow: 0 0 35px rgba(0, 255, 0, 0.9);
   }
 }
 
-@keyframes rotate-border {
+@keyframes rotateBorder {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
@@ -498,49 +761,122 @@
 @media (max-width: 768px) {
   .tableBg {
     width: 100vw;
-    height: 60vh; /* Уменьшена высота стола */
-    margin: 20px auto 0 auto;
+    height: 65vh;
+    margin: 25px auto 0 auto;
   }
   
   .tableCenter {
-    width: 85vw; /* Адаптивная ширина */
-    height: 45vh; /* Адаптивная высота */
-    max-width: 350px;
-    max-height: 250px;
+    width: 88vw;
+    height: 50vh;
+    max-width: 380px;
+    max-height: 280px;
   }
   
   .playerSeat {
-    width: 100px; /* Уменьшена ширина места игрока */
+    width: 110px;
   }
   
   .playerName {
-    font-size: 12px; /* Уменьшен размер шрифта имени */
+    font-size: 13px;
+    padding: 4px 8px;
   }
   
   .avatar {
-    width: 24px; /* Уменьшен размер аватара */
-    height: 24px;
+    width: 40px;
+    height: 40px;
   }
   
   .card {
-    width: 36px; /* Уменьшены карты игроков */
-    height: 54px;
+    width: 40px;
+    height: 60px;
   }
   
   .gameInterface {
     width: 98%;
-    max-width: 350px;
-    bottom: 5px;
+    max-width: 380px;
+    bottom: 8px;
   }
   
   .playerHand {
-    padding: 8px; /* Еще меньше отступы на мобильных */
-    max-height: 120px;
+    padding: 12px;
+    max-height: 140px;
   }
   
   .handCard {
-    width: 40px; /* Еще меньше карты в руке */
+    width: 45px;
+    height: 68px;
+  }
+  
+  .handTitle {
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  
+  .handCards {
+    min-height: 75px;
+  }
+  
+  .firstMoveBanner {
+    font-size: 1.8rem;
+    padding: 20px 30px;
+    top: 18%;
+  }
+  
+  .gameHeader {
+    top: 8px;
+    gap: 12px;
+  }
+  
+  .stageInfo, .deckInfo, .targetInfo {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+  
+  .avatarWrap {
+    padding: 8px 12px;
+    gap: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tableBg {
+    height: 60vh;
+  }
+  
+  .tableCenter {
+    width: 92vw;
+    height: 45vh;
+    max-width: 320px;
+    max-height: 220px;
+  }
+  
+  .playerSeat {
+    width: 90px;
+  }
+  
+  .playerName {
+    font-size: 11px;
+    padding: 3px 6px;
+  }
+  
+  .avatar {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .card {
+    width: 32px;
+    height: 48px;
+  }
+  
+  .handCard {
+    width: 40px;
     height: 60px;
+  }
+  
+  .playerHand {
+    padding: 8px;
+    max-height: 120px;
   }
   
   .handTitle {
@@ -553,78 +889,17 @@
   }
   
   .firstMoveBanner {
-    font-size: 1.5rem; /* Уменьшен баннер */
-    padding: 16px 24px;
-    top: 15%;
+    font-size: 1.4rem;
+    padding: 15px 20px;
   }
   
-  .gameHeader {
-    top: 5px;
-    gap: 8px;
-  }
-  
-  .stageInfo, .deckInfo, .targetInfo {
-    padding: 6px 12px;
-    font-size: 12px;
+  .avatarWrap {
+    padding: 6px 8px;
+    gap: 4px;
   }
 }
 
-@media (max-width: 480px) {
-  .tableBg {
-    height: 55vh; /* Еще меньше для маленьких экранов */
-  }
-  
-  .tableCenter {
-    width: 90vw;
-    height: 40vh;
-    max-width: 300px;
-    max-height: 200px;
-  }
-  
-  .playerSeat {
-    width: 80px;
-  }
-  
-  .playerName {
-    font-size: 10px;
-  }
-  
-  .avatar {
-    width: 20px;
-    height: 20px;
-  }
-  
-  .card {
-    width: 30px;
-    height: 45px;
-  }
-  
-  .handCard {
-    width: 36px;
-    height: 54px;
-  }
-  
-  .playerHand {
-    padding: 6px;
-    max-height: 100px;
-  }
-  
-  .handTitle {
-    font-size: 11px;
-    margin-bottom: 4px;
-  }
-  
-  .handCards {
-    min-height: 58px;
-  }
-  
-  .firstMoveBanner {
-    font-size: 1.2rem;
-    padding: 12px 18px;
-  }
-}
-
-/* Заглушка для 2-й стадии */
+/* Заглушка для 2-й стадии остается без изменений */
 .stage2Placeholder {
   position: fixed;
   top: 0;

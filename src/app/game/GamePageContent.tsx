@@ -44,14 +44,19 @@ function getPlayers(count: number, userName = 'Вы'): Player[] {
   }));
 }
 
-function getCirclePosition(idx: number, total: number, radius = 180) {
+function getCirclePosition(idx: number, total: number, radius = 200) {
   const angle = (2 * Math.PI * idx) / total - Math.PI / 2;
-  // Овальное позиционирование: увеличиваем радиус по горизонтали, уменьшаем по вертикали
-  const radiusX = radius * 1.2; // Больше по ширине для овала
-  const radiusY = radius * 0.8; // Меньше по высоте для овала
+  // Улучшенное овальное позиционирование с учетом нового дизайна
+  const radiusX = radius * 1.3; // Еще больше по ширине для красивого овала
+  const radiusY = radius * 0.75; // Компактнее по высоте
+  
+  // Дополнительные отступы для лучшего позиционирования
+  const offsetX = Math.cos(angle) * radiusX;
+  const offsetY = Math.sin(angle) * radiusY;
+  
   return {
-    left: `calc(50% + ${Math.cos(angle) * radiusX}px - 60px)` ,
-    top: `calc(50% + ${Math.sin(angle) * radiusY}px - 60px)` ,
+    left: `calc(50% + ${offsetX}px - 70px)`, // Увеличен отступ для новых размеров
+    top: `calc(50% + ${offsetY}px - 70px)`,
   };
 }
 
@@ -566,10 +571,31 @@ export default function GamePageContent() {
                   return (
                     <motion.div
                       key={card.id}
-                      initial={{ opacity: 0, y: -40 }}
-                      animate={{ opacity: dealt ? 1 : 0, y: 0 }}
-                      exit={{ opacity: 0, y: 40 }}
-                      transition={{ delay: (i * 0.3) + (ci * 0.1), duration: 0.4 }}
+                      initial={{ opacity: 0, y: -40, rotateY: -180, scale: 0.5 }}
+                      animate={{ 
+                        opacity: dealt ? 1 : 0, 
+                        y: 0, 
+                        rotateY: 0, 
+                        scale: 1,
+                        transition: {
+                          type: "spring",
+                          stiffness: 200,
+                          damping: 15
+                        }
+                      }}
+                      exit={{ opacity: 0, y: 40, rotateY: 180, scale: 0.5 }}
+                      transition={{ 
+                        delay: (i * 0.15) + (ci * 0.08), 
+                        duration: 0.6,
+                        type: "spring",
+                        stiffness: 150,
+                        damping: 12
+                      }}
+                      whileHover={{ 
+                        scale: isClickableTarget && isTopCard ? 1.15 : 1.05,
+                        rotateY: 5,
+                        z: 20
+                      }}
                       style={{ 
                         position: 'absolute',
                         left: `${cardOffset}px`,
@@ -662,38 +688,61 @@ export default function GamePageContent() {
                         }
                       }}
                     >
-                    <div 
+                    <motion.div 
                       style={{ width: '100%', height: '100%' }}
-                      {...(isPlayable && card.image ? {
-                        onDragStart: (e: React.DragEvent<HTMLDivElement>) => dragProps.onDragStart(card as any, index, e),
-                        onTouchStart: (e: React.TouchEvent<HTMLDivElement>) => dragProps.onTouchStart(card as any, index, e),
-                        onDragEnd: dragProps.onDragEnd,
-                        draggable: true
-                      } : {})}
+                      initial={{ opacity: 0, scale: 0.8, rotateY: 90 }}
+                      animate={{ 
+                        opacity: 1, 
+                        scale: 1, 
+                        rotateY: 0,
+                        transition: {
+                          type: "spring",
+                          stiffness: 200,
+                          damping: 20,
+                          delay: index * 0.1
+                        }
+                      }}
+                      whileHover={{ 
+                        scale: 1.05, 
+                        y: -5,
+                        rotateY: card.open ? 8 : 0,
+                        transition: { type: "spring", stiffness: 400, damping: 25 }
+                      }}
+                      whileTap={{ scale: 0.95 }}
                     >
-                      {/* Золотой фон под картой */}
-                      <div style={{
-                        position: 'absolute',
-                        width: '50px',
-                        height: '75px',
-                        background: 'linear-gradient(145deg, #ffd700, #ffed4e)',
-                        borderRadius: '8px',
-                        zIndex: -1,
-                        boxShadow: '0 2px 8px rgba(255, 215, 0, 0.3)'
-                      }}></div>
-                      <Image
-                        src={card.open && card.image ? `/img/cards/${card.image}` : `/img/cards/back.png`}
-                        alt={card.open ? 'card' : 'back'}
-                        width={50}
-                        height={75}
-                        draggable={false}
-                        priority
-                        style={{ 
-                          pointerEvents: 'none',
-                          borderRadius: '8px'
-                        }}
-                      />
-                    </div>
+                      <div
+                        style={{ width: '100%', height: '100%' }}
+                        {...(isPlayable && card.image ? {
+                          onDragStart: (e: React.DragEvent<HTMLDivElement>) => dragProps.onDragStart(card as any, index, e),
+                          onTouchStart: (e: React.TouchEvent<HTMLDivElement>) => dragProps.onTouchStart(card as any, index, e),
+                          onDragEnd: dragProps.onDragEnd,
+                          draggable: true
+                        } : {})}
+                      >
+                        {/* Золотой фон под картой */}
+                        <div style={{
+                          position: 'absolute',
+                          width: '50px',
+                          height: '75px',
+                          background: 'linear-gradient(145deg, #ffd700, #ffed4e)',
+                          borderRadius: '8px',
+                          zIndex: -1,
+                          boxShadow: '0 2px 8px rgba(255, 215, 0, 0.3)'
+                        }}></div>
+                        <Image
+                          src={card.open && card.image ? `/img/cards/${card.image}` : `/img/cards/back.png`}
+                          alt={card.open ? 'card' : 'back'}
+                          width={50}
+                          height={75}
+                          draggable={false}
+                          priority
+                          style={{ 
+                            pointerEvents: 'none',
+                            borderRadius: '8px'
+                          }}
+                        />
+                      </div>
+                    </motion.div>
                     {/* Показать ранг карты если открыта */}
                     {card.open && card.rank && (
                       <div className={styles.cardRank}>
