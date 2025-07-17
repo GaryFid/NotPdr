@@ -46,9 +46,12 @@ function getPlayers(count: number, userName = 'Вы'): Player[] {
 
 function getCirclePosition(idx: number, total: number, radius = 180) {
   const angle = (2 * Math.PI * idx) / total - Math.PI / 2;
+  // Овальное позиционирование: увеличиваем радиус по горизонтали, уменьшаем по вертикали
+  const radiusX = radius * 1.2; // Больше по ширине для овала
+  const radiusY = radius * 0.8; // Меньше по высоте для овала
   return {
-    left: `calc(50% + ${Math.cos(angle) * radius}px - 60px)` ,
-    top: `calc(50% + ${Math.sin(angle) * radius}px - 60px)` ,
+    left: `calc(50% + ${Math.cos(angle) * radiusX}px - 60px)` ,
+    top: `calc(50% + ${Math.sin(angle) * radiusY}px - 60px)` ,
   };
 }
 
