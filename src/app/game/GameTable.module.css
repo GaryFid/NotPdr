@@ -63,7 +63,7 @@
   position: relative;
   width: 500px;
   height: 420px;
-  margin: 50px auto 0 auto;
+  margin: 20px auto 0 auto; /* Поднял стол выше */
   background: none;
 }
 
@@ -199,15 +199,15 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 140px; /* Увеличил в 2 раза с 75px */
-  width: 220px; /* Увеличил для больших карт */
+  height: 105px; /* Уменьшил для компактности */
+  width: 150px; /* Уменьшил для компактности */
   perspective: 1000px;
 }
 
 .card {
   position: absolute;
-  width: 96px; /* Увеличил в 2 раза с 48px */
-  height: 144px; /* Увеличил в 2 раза с 72px */
+  width: 64px; /* Уменьшил для лучшего размещения */
+  height: 96px; /* Уменьшил для лучшего размещения */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -569,7 +569,7 @@
   backdrop-filter: blur(15px);
   position: relative;
   overflow: hidden;
-  max-height: 220px; /* Увеличил для больших карт */
+  max-height: 160px; /* Уменьшил для компактности */
 }
 
 .playerHand::before {
@@ -609,15 +609,15 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 150px; /* Увеличил для больших карт */
+  min-height: 105px; /* Уменьшил для компактности */
   z-index: 1;
   position: relative;
 }
 
 .handCard {
   position: relative;
-  width: 100px; /* Увеличил в 2 раза с 50px */
-  height: 150px; /* Увеличил в 2 раза с 75px */
+  width: 67px; /* Уменьшил для компактности */
+  height: 100px; /* Уменьшил для компактности */
   border-radius: 10px;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   cursor: pointer;
@@ -762,7 +762,7 @@
   .tableBg {
     width: 100vw;
     height: 65vh;
-    margin: 25px auto 0 auto;
+    margin: 10px auto 0 auto; /* Поднял еще выше для мобайла */
   }
   
   .tableCenter {
@@ -773,7 +773,7 @@
   }
   
   .playerSeat {
-    width: 130px; /* Увеличил для больших карт */
+    width: 110px; /* Уменьшил для компактности */
   }
   
   .playerName {
@@ -787,13 +787,13 @@
   }
   
   .card {
-    width: 80px; /* Увеличил в 2 раза с 40px */
-    height: 120px; /* Увеличил в 2 раза с 60px */
+    width: 54px; /* Уменьшил для компактности */
+    height: 80px; /* Уменьшил для компактности */
   }
   
   .cardsRow {
-    height: 130px; /* Увеличил для больших карт */
-    width: 180px;
+    height: 85px; /* Уменьшил для компактности */
+    width: 120px;
   }
   
   .gameInterface {
@@ -804,12 +804,12 @@
   
   .playerHand {
     padding: 12px;
-    max-height: 200px; /* Увеличил для больших карт */
+    max-height: 130px; /* Уменьшил для компактности */
   }
   
   .handCard {
-    width: 90px; /* Увеличил в 2 раза с 45px */
-    height: 135px; /* Увеличил в 2 раза с 68px */
+    width: 60px; /* Уменьшил для компактности */
+    height: 90px; /* Уменьшил для компактности */
   }
   
   .handTitle {
@@ -818,7 +818,7 @@
   }
   
   .handCards {
-    min-height: 140px; /* Увеличил для больших карт */
+    min-height: 95px; /* Уменьшил для компактности */
   }
   
   .firstMoveBanner {
@@ -856,7 +856,7 @@
   }
   
   .playerSeat {
-    width: 110px;
+    width: 90px; /* Еще меньше для маленьких экранов */
   }
   
   .playerName {
@@ -870,23 +870,23 @@
   }
   
   .card {
-    width: 64px; /* Увеличил в 2 раза с 32px */
-    height: 96px; /* Увеличил в 2 раза с 48px */
+    width: 43px; /* Уменьшил для компактности */
+    height: 64px; /* Уменьшил для компактности */
   }
   
   .cardsRow {
-    height: 105px; /* Увеличил для больших карт */
-    width: 140px;
+    height: 70px; /* Уменьшил для компактности */
+    width: 95px;
   }
   
   .handCard {
-    width: 80px; /* Увеличил в 2 раза с 40px */
-    height: 120px; /* Увеличил в 2 раза с 60px */
+    width: 53px; /* Уменьшил для компактности */
+    height: 80px; /* Уменьшил для компактности */
   }
   
   .playerHand {
     padding: 8px;
-    max-height: 170px; /* Увеличил для больших карт */
+    max-height: 110px; /* Уменьшил для компактности */
   }
   
   .handTitle {
@@ -895,7 +895,7 @@
   }
   
   .handCards {
-    min-height: 125px; /* Увеличил для больших карт */
+    min-height: 85px; /* Уменьшил для компактности */
   }
   
   .firstMoveBanner {

@@ -583,7 +583,7 @@ export default function GamePageContent() {
               <AnimatePresence>
                 {p.cards.map((card, ci) => {
                   const isTopCard = ci === p.cards.length - 1;
-                  const cardOffset = ci * 16; // Увеличил смещение для больших карт
+                  const cardOffset = ci * 10; // Уменьшил смещение для компактности
                   
                   return (
                     <motion.div
@@ -640,8 +640,8 @@ export default function GamePageContent() {
                             (card.open && card.image ? `/img/cards/${card.image}` : `/img/cards/back.png`)
                           }
                           alt={card.open ? 'card' : 'back'}
-                          width={84}
-                          height={132}
+                          width={56}
+                          height={88}
                           draggable={false}
                           priority
                         />
@@ -672,7 +672,7 @@ export default function GamePageContent() {
               Ваши карты ({currentPlayer.cards.length})
             </div>
             <div className={styles.handCards}>
-              <div style={{ position: 'relative', height: '150px', width: '240px', margin: '0 auto' }}>
+              <div style={{ position: 'relative', height: '100px', width: '160px', margin: '0 auto' }}>
                 {currentPlayer.cards.map((card, index) => {
                   const isTopCard = index === currentPlayer.cards.length - 1;
                   // Для 1-й стадии
@@ -680,7 +680,7 @@ export default function GamePageContent() {
                   // Для 2-й стадии - любая открытая карта может быть выбрана
                   const isSelectableStage2 = (gameStage as number) === 2 && card.open && stage2TurnPhase === 'selecting_card';
                   const isSelected = (gameStage as number) === 2 && selectedHandCard?.id === card.id;
-                  const cardOffset = index * 16; // Увеличил смещение для больших карт
+                  const cardOffset = index * 10; // Уменьшил смещение для компактности
                   
                   return (
                     <div 
@@ -739,8 +739,8 @@ export default function GamePageContent() {
                         {/* Золотой фон под картой */}
                         <div style={{
                           position: 'absolute',
-                          width: '100px',
-                          height: '150px',
+                          width: '67px',
+                          height: '100px',
                           background: 'linear-gradient(145deg, #ffd700, #ffed4e)',
                           borderRadius: '8px',
                           zIndex: -1,
@@ -749,8 +749,8 @@ export default function GamePageContent() {
                         <Image
                           src={card.open && card.image ? `/img/cards/${card.image}` : `/img/cards/back.png`}
                           alt={card.open ? 'card' : 'back'}
-                          width={100}
-                          height={150}
+                          width={67}
+                          height={100}
                           draggable={false}
                           priority
                           style={{ 
@@ -866,11 +866,11 @@ export default function GamePageContent() {
               Ваши карты ({currentPlayer.cards.length})
             </div>
             <div className={styles.handCards}>
-              <div style={{ position: 'relative', height: '150px', width: '240px', margin: '0 auto' }}>
+              <div style={{ position: 'relative', height: '100px', width: '160px', margin: '0 auto' }}>
                 {currentPlayer.cards.map((card, index) => {
                   const isSelectableStage2 = card.open && stage2TurnPhase === 'selecting_card';
                   const isSelected = selectedHandCard?.id === card.id;
-                  const cardOffset = index * 16; // Увеличил смещение для больших карт
+                  const cardOffset = index * 10; // Уменьшил смещение для компактности
                   
                   return (
                     <div 
