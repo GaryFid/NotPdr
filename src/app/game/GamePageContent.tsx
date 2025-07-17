@@ -45,47 +45,34 @@ function getPlayers(count: number, userName = 'Вы'): Player[] {
 }
 
 function getCirclePosition(idx: number, total: number, radius = 200) {
-  const angle = (2 * Math.PI * idx) / total - Math.PI / 2;
-  
-  // Улучшенное овальное позиционирование специально для 9 игроков
-  let radiusX = radius * 1.6; // Еще больше по ширине для лучшего размещения 9 игроков
-  let radiusY = radius * 0.85; // Чуть больше по высоте для комфортного размещения
-  
-  // Специальные корректировки для лучшего позиционирования на экране
+  // Специальное аккуратное размещение для 9 игроков
   if (total === 9) {
-    // Для 9 игроков делаем более растянутый овал
-    radiusX = radius * 1.8;
-    radiusY = radius * 0.9;
-    
-    // Дополнительные корректировки для проблемных позиций
-    const adjustments = [
-      { x: 0, y: 0 },      // 0: сверху
-      { x: 15, y: -10 },   // 1: верх-право 
-      { x: 25, y: 0 },     // 2: право
-      { x: 15, y: 15 },    // 3: низ-право
-      { x: 0, y: 20 },     // 4: снизу
-      { x: -15, y: 15 },   // 5: низ-лево
-      { x: -25, y: 0 },    // 6: лево (проблемная зона)
-      { x: -15, y: -10 },  // 7: верх-лево
-      { x: 0, y: -15 }     // 8: около верха
+    // Фиксированные позиции для каждого игрока, чтобы все были видны
+    const positions = [
+      { left: 'calc(50% - 80px)', top: 'calc(50% - 140px)' },   // 0: сверху по центру
+      { left: 'calc(50% + 80px)', top: 'calc(50% - 120px)' },   // 1: верх-право
+      { left: 'calc(50% + 140px)', top: 'calc(50% - 40px)' },   // 2: право-верх
+      { left: 'calc(50% + 140px)', top: 'calc(50% + 40px)' },   // 3: право-низ
+      { left: 'calc(50% + 80px)', top: 'calc(50% + 120px)' },   // 4: низ-право
+      { left: 'calc(50% - 80px)', top: 'calc(50% + 140px)' },   // 5: снизу по центру
+      { left: 'calc(50% - 160px)', top: 'calc(50% + 120px)' },  // 6: низ-лево
+      { left: 'calc(50% - 200px)', top: 'calc(50% + 40px)' },   // 7: лево-низ
+      { left: 'calc(50% - 200px)', top: 'calc(50% - 40px)' },   // 8: лево-верх
     ];
     
-    const adjustment = adjustments[idx] || { x: 0, y: 0 };
-    const offsetX = Math.cos(angle) * radiusX + adjustment.x;
-    const offsetY = Math.sin(angle) * radiusY + adjustment.y;
-    
-    return {
-      left: `calc(50% + ${offsetX}px - 80px)`, // Увеличен отступ для больших карт
-      top: `calc(50% + ${offsetY}px - 80px)`,
-    };
+    return positions[idx] || positions[0];
   }
   
-  // Для других количеств игроков
+  // Для других количеств игроков - компактное овальное размещение
+  const angle = (2 * Math.PI * idx) / total - Math.PI / 2;
+  const radiusX = radius * 1.2; // Более компактно
+  const radiusY = radius * 0.8;
+  
   const offsetX = Math.cos(angle) * radiusX;
   const offsetY = Math.sin(angle) * radiusY;
   
   return {
-    left: `calc(50% + ${offsetX}px - 80px)`, // Увеличен отступ для больших карт
+    left: `calc(50% + ${offsetX}px - 80px)`,
     top: `calc(50% + ${offsetY}px - 80px)`,
   };
 }
