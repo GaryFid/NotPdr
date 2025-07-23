@@ -20,7 +20,9 @@ export interface Player {
   name: string
   avatar?: string
   score: number
-  cards: Card[]
+  cards: Card[] // Открытые карты (доступные для игры)
+  penki: Card[] // Пеньки (2 закрытые карты, доступны в 3-й стадии)
+  playerStage: 1 | 2 | 3 // Индивидуальная стадия игрока
   isCurrentPlayer: boolean
 }
 
@@ -128,6 +130,11 @@ interface GameState {
   takeTableCards: () => void
   checkRoundComplete: () => boolean
   initializeStage2: () => void
+  
+  // Методы для 3-й стадии
+  checkStage3Transition: (playerId: string) => void
+  activatePenki: (playerId: string) => void
+  checkVictoryCondition: () => void
   
   // Управление картами
   selectCard: (card: Card | null) => void
@@ -283,14 +290,15 @@ export const useGameStore = create<GameState>()(
         
         // Создаем игроков и раздаем им карты
         for (let i = 0; i < playersCount; i++) {
-          const playerCards: Card[] = [];
+          const playerOpenCards: Card[] = []; // Открытые карты (для 1-й стадии)
+          const playerPenki: Card[] = []; // Пеньки (2 закрытые карты)
           
           // Раздаем 3 карты каждому игроку
           for (let j = 0; j < cardsPerPlayer; j++) {
             const cardIndex = i * cardsPerPlayer + j;
             const imageName = shuffledImages[cardIndex];
             
-            playerCards.push({
+            const card: Card = {
               id: `card_${i}_${j}`,
               type: 'normal',
               title: `Карта ${j + 1}`,
@@ -298,15 +306,26 @@ export const useGameStore = create<GameState>()(
               image: imageName,
               rarity: 'common',
               rank: get().getCardRank(imageName),
-              open: j === cardsPerPlayer - 1, // Только верхняя карта открыта
-            });
+              open: false, // Пока все закрыты
+            };
+            
+            if (j < 2) {
+              // Первые 2 карты = пеньки (закрытые)
+              playerPenki.push(card);
+            } else {
+              // Последняя карта = открытая карта для 1-й стадии
+              card.open = true;
+              playerOpenCards.push(card);
+            }
           }
           
           players.push({
             id: `player_${i + 1}`,
             name: i === 0 ? 'Вы' : `Игрок ${i + 1}`,
             score: 0,
-            cards: playerCards,
+            cards: playerOpenCards, // Только верхняя открытая карта
+            penki: playerPenki, // 2 закрытые карты
+            playerStage: 1, // Все начинают с 1-й стадии
             isCurrentPlayer: i === 0
           });
         }
@@ -468,8 +487,10 @@ export const useGameStore = create<GameState>()(
           newRound = currentRound + 1
         }
         
-        // Сбрасываем все состояния хода
-        get().resetTurnState();
+        // Сбрасываем состояния хода только для 1-й стадии
+        if (gameStage === 1) {
+          get().resetTurnState();
+        }
         
         set({
           players: [...players],
@@ -479,8 +500,12 @@ export const useGameStore = create<GameState>()(
         
         get().showNotification(`Ход переходит к ${nextPlayer.name}`, 'info')
         
-        // Для 1-й стадии запускаем обработку хода
+        // Запускаем обработку хода для соответствующей стадии
         if (gameStage === 1) {
+          setTimeout(() => get().processPlayerTurn(nextPlayerId), 1000)
+        } else if (gameStage === 2) {
+          // Для 2-й стадии устанавливаем фазу выбора карты
+          set({ stage2TurnPhase: 'selecting_card' });
           setTimeout(() => get().processPlayerTurn(nextPlayerId), 1000)
         }
         
@@ -524,6 +549,8 @@ export const useGameStore = create<GameState>()(
           name,
           score: 0,
           cards: [],
+          penki: [],
+          playerStage: 1,
           isCurrentPlayer: false
         }
         set({ players: [...players, newPlayer] })
@@ -782,8 +809,11 @@ export const useGameStore = create<GameState>()(
         let startingPlayerId = lastPlayerToDrawCard || players[0].id;
         console.log('🎮 Стартовый игрок второй стадии:', startingPlayerId);
         
-        // Обновляем текущего игрока
-        players.forEach(p => p.isCurrentPlayer = p.id === startingPlayerId);
+        // Обновляем текущего игрока и переводим всех во 2-ю стадию
+        players.forEach(p => {
+          p.isCurrentPlayer = p.id === startingPlayerId;
+          p.playerStage = 2; // Все переходят во 2-ю стадию
+        });
         
         set({ 
           gameStage: 2,
@@ -1160,6 +1190,21 @@ export const useGameStore = create<GameState>()(
            const currentPlayer = players.find(p => p.id === currentPlayerId);
            if (!currentPlayer) return;
            
+           // Проверяем лимит карт на столе ПЕРЕД добавлением
+           const maxCardsOnTable = players.length - 1;
+           if (tableStack.length >= maxCardsOnTable) {
+             get().showNotification(`Лимит карт на столе достигнут (${maxCardsOnTable}). Карты уходят в бито!`, 'warning', 5000);
+             // Все карты со стола уходят в бито
+             set({
+               tableStack: [],
+               roundInProgress: false,
+               currentRoundInitiator: null,
+               stage2TurnPhase: 'selecting_card'
+             });
+             get().showNotification(`${currentPlayer.name} начинает новый ход!`, 'info', 3000);
+             return;
+           }
+           
            // Убираем карту из руки игрока
            const cardIndex = currentPlayer.cards.findIndex(c => c.id === selectedHandCard.id);
            if (cardIndex === -1) return;
@@ -1179,7 +1224,10 @@ export const useGameStore = create<GameState>()(
              stage2TurnPhase: 'waiting_beat'
            });
            
-           get().showNotification(`${currentPlayer.name} сыграл карту`, 'info', 5000);
+           get().showNotification(`${currentPlayer.name} сыграл карту (на столе: ${tableStack.length + 1}/${maxCardsOnTable})`, 'info', 5000);
+           
+           // Проверяем переход в 3-ю стадию после розыгрыша карты
+           get().checkStage3Transition(currentPlayerId);
            
            // Переходим к следующему игроку
            get().nextTurn();
@@ -1212,7 +1260,7 @@ export const useGameStore = create<GameState>()(
            return false;
          },
          
-         // Побить карту на столе
+         // Побить карту на столе (ИСПРАВЛЕНО: ход к следующему игроку)
          beatCard: (defendCard: Card) => {
            const { currentPlayerId, players, tableStack, trumpSuit } = get();
            if (!currentPlayerId || tableStack.length === 0) return;
@@ -1234,7 +1282,7 @@ export const useGameStore = create<GameState>()(
            
            currentPlayer.cards.splice(cardIndex, 1);
            
-           // Добавляем карту на стол
+           // Добавляем карту на стол (поверх всех)
            const playedCard = { ...defendCard };
            playedCard.open = false; // Рубашкой вверх
            
@@ -1245,25 +1293,15 @@ export const useGameStore = create<GameState>()(
            
            get().showNotification(`${currentPlayer.name} побил карту!`, 'success', 5000);
            
-           // Проверяем завершение раунда
-           if (get().checkRoundComplete()) {
-             // Раунд завершен - карты в биту, текущий игрок ходит снова
-             setTimeout(() => {
-               set({
-                 tableStack: [],
-                 roundInProgress: false,
-                 currentRoundInitiator: null,
-                 stage2TurnPhase: 'selecting_card'
-               });
-               get().showNotification('Раунд завершен! Карты в биту', 'success', 5000);
-             }, 1000);
-           } else {
-             // Переходим к следующему игроку
-             get().nextTurn();
-           }
+           // Проверяем переход в 3-ю стадию после битья
+           get().checkStage3Transition(currentPlayerId);
+           
+           // ИСПРАВЛЕНО: Ход ВСЕГДА переходит к следующему игроку по кругу
+           // (а не к тому кто отбился)
+           get().nextTurn();
          },
          
-         // Взять карты со стола
+         // Взять карты со стола (ИСПРАВЛЕНО: берем только нижнюю карту)
          takeTableCards: () => {
            const { currentPlayerId, players, tableStack } = get();
            if (!currentPlayerId || tableStack.length === 0) return;
@@ -1271,30 +1309,36 @@ export const useGameStore = create<GameState>()(
            const currentPlayer = players.find(p => p.id === currentPlayerId);
            if (!currentPlayer) return;
            
-           // Берем нижнюю карту (первую в стопке)
+           // Берем ТОЛЬКО нижнюю карту (первую в стопке)
            const bottomCard = tableStack[0];
            bottomCard.open = true; // Открываем взятую карту
            
            currentPlayer.cards.push(bottomCard);
            
+           // Убираем только нижнюю карту, остальные остаются на столе
+           const newTableStack = tableStack.slice(1);
+           
            set({
              players: [...players],
-             tableStack: tableStack.slice(1) // Убираем нижнюю карту
+             tableStack: newTableStack
            });
            
-           get().showNotification(`${currentPlayer.name} взял карту со стола`, 'warning', 5000);
+           get().showNotification(`${currentPlayer.name} взял нижнюю карту (осталось на столе: ${newTableStack.length})`, 'warning', 5000);
            
-           // Если стол пуст - раунд завершен
-           if (tableStack.length === 1) { // Была только одна карта
+           // Если стол опустел - завершаем раунд
+           if (newTableStack.length === 0) {
              set({
-               tableStack: [],
                roundInProgress: false,
                currentRoundInitiator: null,
                stage2TurnPhase: 'selecting_card'
              });
+             get().showNotification('Стол очищен! Новый раунд', 'info', 3000);
            }
            
-           // Переходим к следующему игроку
+           // Проверяем переход в 3-ю стадию (игрок мог остаться без карт)
+           get().checkStage3Transition(currentPlayerId);
+           
+           // Переходим к следующему игроку по кругу
            get().nextTurn();
          },
          
@@ -1313,6 +1357,70 @@ export const useGameStore = create<GameState>()(
            const beforeInitiatorIndex = (initiatorIndex - 1 + players.length) % players.length;
            
            return currentIndex === beforeInitiatorIndex;
+         },
+         
+         // ===== МЕТОДЫ ДЛЯ 3-Й СТАДИИ =====
+         
+         // Проверка перехода в 3-ю стадию
+         checkStage3Transition: (playerId: string) => {
+           const { players, gameStage } = get();
+           if (gameStage !== 2) return; // Только во 2-й стадии можно перейти в 3-ю
+           
+           const player = players.find(p => p.id === playerId);
+           if (!player) return;
+           
+           // Проверяем есть ли у игрока открытые карты
+           const hasOpenCards = player.cards.some(card => card.open);
+           
+           if (!hasOpenCards && player.cards.length === 0 && player.playerStage === 2 && player.penki.length > 0) {
+             // У игрока нет открытых карт и он во 2-й стадии - переводим в 3-ю
+             get().activatePenki(playerId);
+           }
+         },
+         
+         // Активация пеньков (переход в 3-ю стадию)
+         activatePenki: (playerId: string) => {
+           const { players } = get();
+           const player = players.find(p => p.id === playerId);
+           if (!player || player.penki.length === 0) return;
+           
+           // Открываем пеньки и переносим их в активные карты
+           const activatedPenki = player.penki.map(card => ({
+             ...card,
+             open: true // Пеньки становятся открытыми когда переходят в руку
+           }));
+           
+           player.cards = activatedPenki;
+           player.penki = [];
+           player.playerStage = 3;
+           
+           set({ players: [...players] });
+           
+           get().showNotification(`${player.name} активировал пеньки - переход в 3-ю стадию!`, 'info', 5000);
+           
+           // Проверяем условия победы
+           get().checkVictoryCondition();
+         },
+         
+         // Проверка условий победы
+         checkVictoryCondition: () => {
+           const { players } = get();
+           
+           // Ищем игроков без карт (ни открытых, ни пеньков)
+           const winnersIds: string[] = [];
+           players.forEach(player => {
+             if (player.cards.length === 0 && player.penki.length === 0) {
+               winnersIds.push(player.id);
+             }
+           });
+           
+           if (winnersIds.length > 0) {
+             const winners = players.filter(p => winnersIds.includes(p.id));
+             const winnerNames = winners.map(w => w.name).join(', ');
+             
+             get().showNotification(`🎉 ПОБЕДА! ${winnerNames} выиграл(и)!`, 'success', 10000);
+             get().endGame();
+           }
          }
     }),
     {

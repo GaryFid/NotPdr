@@ -272,51 +272,7 @@ export default function GamePageContent() {
       )}
       <div className={styles.tableBg}>
         <div className={styles.tableCenter}>
-          {/* Компактные указатели для 2-й стадии */}
-          {(gameStage as number) === 2 && (
-            <>
-              {/* Красная стрелочка - кто ходит */}
-              <div style={{
-                position: 'absolute',
-                top: '60px',
-                left: '30%',
-                transform: 'translateX(-50%)',
-                color: '#ff4757',
-                fontSize: '14px',
-                fontWeight: 'bold',
-                textAlign: 'center',
-                textShadow: '0 0 8px rgba(0,0,0,0.8)',
-                zIndex: 10
-              }}>
-                <div style={{fontSize: '24px', marginBottom: '4px'}}>🔻</div>
-                <div style={{background: 'rgba(255, 71, 87, 0.9)', padding: '4px 8px', borderRadius: '6px', fontSize: '12px'}}>
-                  {players.find(p => p.id === currentPlayerId)?.name || 'Игрок'}
-                </div>
-              </div>
-              
-              {/* Желтая стрелочка - козырь */}
-              <div style={{
-                position: 'absolute',
-                top: '60px',
-                left: '70%',
-                transform: 'translateX(-50%)',
-                color: '#ffd700',
-                fontSize: '14px',
-                fontWeight: 'bold',
-                textAlign: 'center',
-                textShadow: '0 0 8px rgba(0,0,0,0.8)',
-                zIndex: 10
-              }}>
-                <div style={{fontSize: '24px', marginBottom: '4px'}}>🔻</div>
-                <div style={{background: 'rgba(255, 215, 0, 0.9)', color: '#000', padding: '4px 8px', borderRadius: '6px', fontSize: '12px'}}>
-                  {trumpSuit === 'clubs' ? '♣' : 
-                   trumpSuit === 'diamonds' ? '♦' :
-                   trumpSuit === 'hearts' ? '♥' : 
-                   trumpSuit === 'spades' ? '♠' : '?'}
-                </div>
-              </div>
-            </>
-          )}
+
           
           {/* Стопка карт на столе для 2-й стадии */}
           {gameStage === 2 && tableStack.length > 0 && (
@@ -350,32 +306,7 @@ export default function GamePageContent() {
                 </div>
               ))}
               
-              {/* Индикаторы для верхней/нижней карты */}
-              {tableStack.length > 1 && (
-                <>
-                  <div style={{
-                    position: 'absolute',
-                    left: '-60px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: '#ff6b35',
-                    fontSize: '12px',
-                    fontWeight: 'bold'
-                  }}>
-                    Бить ↗
-                  </div>
-                  <div style={{
-                    position: 'absolute',
-                    right: '-60px',
-                    bottom: '10px',
-                    color: '#70a1ff',
-                    fontSize: '12px',
-                    fontWeight: 'bold'
-                  }}>
-                    ↙ Брать
-                  </div>
-                </>
-              )}
+
             </div>
           )}
         </div>
