@@ -158,8 +158,8 @@
 }
 
 .avatar {
-  width: 30px;
-  height: 30px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   border: 2px solid rgba(99, 102, 241, 0.6);
   box-shadow: 
@@ -173,10 +173,10 @@
 .avatar::after {
   content: '';
   position: absolute;
-  top: -3px;
-  left: -3px;
-  right: -3px;
-  bottom: -3px;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
   border-radius: 50%;
   background: linear-gradient(45deg, #6366f1, transparent, #8b5cf6);
   z-index: -1;
@@ -211,15 +211,15 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 105px;
-  width: 150px;
+  height: 80px;
+  width: 120px;
   perspective: 1000px;
 }
 
 .card {
   position: absolute;
-  width: 64px;
-  height: 96px;
+  width: 45px;
+  height: 68px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -233,7 +233,7 @@
 }
 
 .card:hover {
-  transform: translateY(-8px) scale(1.1) rotateY(5deg);
+  transform: translateY(-6px) scale(1.08) rotateY(5deg);
   z-index: 10 !important;
 }
 
@@ -937,6 +937,36 @@
   100% { background-position: 0% 50%; }
 }
 
+/* Отображение пеньков (закрытых карт для 3-й стадии) */
+.penkiRow {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60px;
+  width: 100px;
+  perspective: 1000px;
+  margin-top: 4px;
+}
+
+.penkiCard {
+  position: absolute;
+  width: 35px;
+  height: 50px;
+  background: 
+    linear-gradient(145deg, #1e293b 0%, #334155 100%);
+  border-radius: 8px;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(99, 102, 241, 0.2);
+  border: 1px solid #64748b;
+  transition: all 0.3s ease;
+}
+
+.penkiCard:hover {
+  transform: translateY(-2px) scale(1.05);
+}
+
 /* Адаптивные стили для мобильных устройств */
 @media (max-width: 768px) {
   .tableWrapper {
@@ -968,30 +998,41 @@
   }
   
   .avatarWrap {
-    padding: 8px 10px;
-    gap: 4px;
-    border-radius: 15px;
+    padding: 6px 8px;
+    gap: 3px;
+    border-radius: 12px;
   }
   
   .playerName {
-    font-size: 12px;
-    padding: 4px 6px;
-    min-width: 60px;
+    font-size: 11px;
+    padding: 3px 5px;
+    min-width: 50px;
   }
   
   .avatar {
-    width: 24px;
-    height: 24px;
+    width: 18px;
+    height: 18px;
   }
   
   .card {
-    width: 50px;
-    height: 75px;
+    width: 38px;
+    height: 58px;
   }
   
   .cardsRow {
-    height: 80px;
-    width: 100px;
+    height: 65px;
+    width: 95px;
+  }
+  
+  .penkiRow {
+    height: 45px;
+    width: 80px;
+    margin-top: 2px;
+  }
+  
+  .penkiCard {
+    width: 28px;
+    height: 40px;
   }
   
   .gameInterface {
@@ -1001,51 +1042,51 @@
   }
   
   .playerHand {
-    padding: 12px;
-    max-height: 120px;
-    border-radius: 20px;
+    padding: 10px;
+    max-height: 110px;
+    border-radius: 18px;
   }
   
   .handCard {
-    width: 55px;
-    height: 85px;
+    width: 50px;
+    height: 75px;
   }
   
   .handTitle {
-    font-size: 14px;
-    margin-bottom: 8px;
+    font-size: 13px;
+    margin-bottom: 6px;
   }
   
   .handCards {
-    min-height: 90px;
+    min-height: 80px;
   }
   
   .firstMoveBanner {
-    font-size: 1.6rem;
-    padding: 15px 25px;
-    top: 15%;
-    border-radius: 20px;
+    font-size: 1.4rem;
+    padding: 12px 20px;
+    top: 12%;
+    border-radius: 18px;
   }
   
   .gameHeader {
-    top: 5px;
-    gap: 8px;
+    top: 3px;
+    gap: 6px;
     flex-wrap: wrap;
     justify-content: center;
   }
   
   .stageInfo, .deckInfo, .targetInfo {
-    padding: 6px 12px;
-    font-size: 12px;
-    border-radius: 15px;
+    padding: 5px 10px;
+    font-size: 11px;
+    border-radius: 12px;
   }
   
   /* Центральная кнопка на мобильных */
   .centralButton {
-    width: 80px !important;
-    height: 50px !important;
-    fontSize: 14px !important;
-    borderRadius: 15px !important;
+    width: 70px !important;
+    height: 45px !important;
+    fontSize: 12px !important;
+    borderRadius: 12px !important;
   }
 }
 
@@ -1062,92 +1103,103 @@
   }
   
   .playerSeat {
-    width: 85px;
+    width: 80px;
   }
   
   .playerName {
-    font-size: 10px;
-    padding: 3px 5px;
-    min-width: 50px;
+    font-size: 9px;
+    padding: 2px 4px;
+    min-width: 40px;
   }
   
   .avatar {
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
   }
   
   .card {
+    width: 32px;
+    height: 48px;
+  }
+  
+  .cardsRow {
+    height: 55px;
+    width: 75px;
+  }
+  
+  .penkiRow {
+    height: 35px;
+    width: 65px;
+    margin-top: 1px;
+  }
+  
+  .penkiCard {
+    width: 22px;
+    height: 32px;
+  }
+  
+  .handCard {
     width: 42px;
     height: 63px;
   }
   
-  .cardsRow {
-    height: 70px;
-    width: 85px;
-  }
-  
-  .handCard {
-    width: 48px;
-    height: 72px;
-  }
-  
   .playerHand {
-    padding: 8px;
-    max-height: 100px;
+    padding: 6px;
+    max-height: 90px;
   }
   
   .handTitle {
-    font-size: 12px;
-    margin-bottom: 6px;
+    font-size: 11px;
+    margin-bottom: 4px;
   }
   
   .handCards {
-    min-height: 75px;
+    min-height: 65px;
   }
   
   .firstMoveBanner {
-    font-size: 1.2rem;
-    padding: 12px 18px;
-    top: 12%;
+    font-size: 1.1rem;
+    padding: 8px 15px;
+    top: 10%;
   }
   
   .avatarWrap {
-    padding: 6px 8px;
-    gap: 3px;
+    padding: 4px 6px;
+    gap: 2px;
   }
   
   .gameHeader {
-    top: 3px;
-    gap: 6px;
+    top: 2px;
+    gap: 4px;
   }
   
   .stageInfo, .deckInfo, .targetInfo {
-    padding: 5px 10px;
-    font-size: 11px;
+    padding: 4px 8px;
+    font-size: 10px;
   }
   
   /* Еще более компактная центральная кнопка */
   .centralButton {
-    width: 70px !important;
-    height: 45px !important;
-    fontSize: 12px !important;
+    width: 60px !important;
+    height: 35px !important;
+    fontSize: 10px !important;
   }
   
   /* Улучшенная читаемость текста на малых экранах */
   .cardRank {
-    width: 20px;
-    height: 20px;
-    font-size: 10px;
-    top: -8px;
-    right: -8px;
+    width: 16px;
+    height: 16px;
+    font-size: 9px;
+    top: -6px;
+    right: -6px;
   }
   
   .deckCount {
-    width: 24px;
-    height: 24px;
-    font-size: 11px;
-    top: -12px;
-    right: -12px;
+    width: 20px;
+    height: 20px;
+    font-size: 9px;
+    top: -10px;
+    right: -10px;
   }
 }
 

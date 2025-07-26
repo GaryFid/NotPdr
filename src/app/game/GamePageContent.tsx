@@ -631,6 +631,34 @@ export default function GamePageContent() {
                 })}
               </AnimatePresence>
             </div>
+            
+            {/* Отображение пеньков (2 закрытые карты для 3-й стадии) */}
+            {p.penki && p.penki.length > 0 && (
+              <div className={styles.penkiRow}>
+                {p.penki.map((penkiCard, pi) => (
+                  <div
+                    key={penkiCard.id}
+                    className={styles.penkiCard}
+                    style={{ 
+                      left: `${pi * 8}px`,
+                      zIndex: pi + 1
+                    }}
+                    title={`Пенёк ${pi + 1} (активируется в 3-й стадии)`}
+                  >
+                    <Image
+                      src="/img/cards/back.png"
+                      alt="penki"
+                      width={35}
+                      height={50}
+                      style={{ 
+                        borderRadius: '6px',
+                        opacity: 0.8
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
             </div>
           );
         })}

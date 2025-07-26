@@ -644,18 +644,15 @@ export const useGameStore = create<GameState>()(
         // ПРАВИЛО: Ищем у соперников карты на 1 ранг НИЖЕ нашей карты
         // ИСКЛЮЧЕНИЯ: 
         // 1) Только двойка (2) может ложиться на Туз (14)!
-        // 2) Туз (14) НЕ может ложиться ни на что!
+        // 2) Туз (14) может ложиться на Короля (13)!
         let targetRank: number;
         
-        if (currentRank === 14) {
-          // Туз НЕ может ложиться ни на что - возвращаем пустой массив
-          return [];
-        } else if (currentRank === 2) {
+        if (currentRank === 2) {
           // Двойка может ложиться ТОЛЬКО на Туз (14) - ИСКЛЮЧЕНИЕ!
           targetRank = 14;
         } else {
           // Обычное правило: ищем карты на 1 ранг ниже
-          // Король(13) → Дама(12), Дама(12) → Валет(11), Валет(11) → 10, ..., 3 → 2
+          // Туз(14) → Король(13), Король(13) → Дама(12), Дама(12) → Валет(11), ..., 3 → 2
           targetRank = currentRank - 1;
         }
         
@@ -1036,12 +1033,10 @@ export const useGameStore = create<GameState>()(
          const playerRank = get().getCardRank(playerTopCard.image);
          
          // Логика как в findAvailableTargets: ищем цель на 1 ранг ниже
-         if (deckRank === 14) {
-           return false; // Туз НЕ может ложиться ни на что!
-         } else if (deckRank === 2) {
+         if (deckRank === 2) {
            return playerRank === 14; // Двойка только на туз
          } else {
-           return playerRank === (deckRank - 1); // Обычное правило
+           return playerRank === (deckRank - 1); // Обычное правило: Туз(14) → Король(13)
          }
        },
        
@@ -1127,15 +1122,12 @@ export const useGameStore = create<GameState>()(
            // Определяем целевой ранг (та же логика что в findAvailableTargets)
            let targetRank: number;
            
-           if (deckRank === 14) {
-             // Туз НЕ может ложиться ни на что
-             return [];
-           } else if (deckRank === 2) {
+           if (deckRank === 2) {
              // Двойка может ложиться ТОЛЬКО на Туз (14)
              targetRank = 14;
            } else {
              // Обычное правило: ищем карты на 1 ранг ниже
-             // Король(13) → Дама(12), Дама(12) → Валет(11), и т.д.
+             // Туз(14) → Король(13), Король(13) → Дама(12), и т.д.
              targetRank = deckRank - 1;
            }
            
