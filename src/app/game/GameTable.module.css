@@ -75,25 +75,30 @@
   background: none;
 }
 
+/* Вертикальный овальный стол */
 .tableCenter {
   position: absolute;
+  top: 45%;
   left: 50%;
-  top: 45%; /* Поднимаем центр стола выше */
-  width: 400px;
-  height: 300px;
-  background: 
-    radial-gradient(ellipse, #1e293b 30%, #334155 60%, #475569 85%, #64748b 100%),
-    linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
-  border-radius: 50%;
-  box-shadow: 
-    0 0 60px 15px rgba(99, 102, 241, 0.15),
-    0 0 0 3px #475569,
-    0 0 0 6px rgba(99, 102, 241, 0.3),
-    inset 0 0 50px rgba(99, 102, 241, 0.1),
-    inset 0 0 100px rgba(30, 41, 59, 0.8);
   transform: translate(-50%, -50%);
-  z-index: 1;
-  animation: tableGlow 6s ease-in-out infinite alternate;
+  width: 75vw;
+  height: 55vh;
+  max-width: 350px;
+  max-height: 450px;
+  min-width: 280px;
+  min-height: 350px;
+  border: 3px solid #4338ca;
+  border-radius: 50%;
+  background: 
+    radial-gradient(ellipse at center, 
+      rgba(30, 41, 59, 0.95) 0%, 
+      rgba(15, 23, 42, 0.98) 70%, 
+      rgba(6, 10, 20, 1) 100%);
+  box-shadow: 
+    0 0 80px rgba(99, 102, 241, 0.3),
+    inset 0 0 60px rgba(30, 41, 59, 0.8),
+    0 20px 60px rgba(0, 0, 0, 0.8);
+  animation: tableGlow 4s ease-in-out infinite alternate;
 }
 
 @keyframes tableGlow {
@@ -498,7 +503,7 @@
     radial-gradient(circle at top right, rgba(99, 102, 241, 0.1), transparent);
   border: 2px solid rgba(99, 102, 241, 0.3);
   border-radius: 20px;
-  padding: 8px 16px;
+  padding: 12px 18px;
   box-shadow: 
     0 15px 30px rgba(0, 0, 0, 0.6),
     0 0 40px rgba(99, 102, 241, 0.2),
@@ -508,7 +513,7 @@
   backdrop-filter: blur(20px);
   position: relative;
   overflow: hidden;
-  max-height: 80px;
+  max-height: 112px;
   width: 90%;
   max-width: 500px;
 }
@@ -535,9 +540,9 @@
 .handTitle {
   text-align: center;
   font-weight: 600;
-  font-size: 12px;
+  font-size: 14px;
   color: #e2e8f0;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   text-shadow: 
     0 1px 4px rgba(0, 0, 0, 0.8),
     0 0 15px rgba(99, 102, 241, 0.4);
@@ -550,16 +555,16 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 60px;
+  min-height: 84px;
   z-index: 1;
   position: relative;
 }
 
 .handCard {
   position: relative;
-  width: 50px;
-  height: 75px;
-  border-radius: 8px;
+  width: 70px;
+  height: 105px;
+  border-radius: 10px;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   cursor: pointer;
   transform-style: preserve-3d;
@@ -963,44 +968,26 @@
 
 /* Адаптивные стили для мобильных устройств */
 @media (max-width: 768px) {
-  .tableWrapper {
-    background: 
-      radial-gradient(ellipse at center, #0F172A 30%, #1E293B 60%, #020617 100%),
-      linear-gradient(45deg, rgba(99, 102, 241, 0.05) 0%, transparent 50%, rgba(139, 92, 246, 0.05) 100%);
-  }
-  
   .tableBg {
-    width: 100vw;
-    height: 65vh;
-    margin: -30px auto 0 auto; /* Еще выше на мобильных */
+    height: 70vh;
+    margin: -20px auto 0 auto; /* Поднимаем стол выше */
   }
   
   .tableCenter {
-    width: 88vw;
-    height: 50vh;
-    max-width: 380px;
-    max-height: 280px;
-    top: 40%; /* Выше на мобильных */
-    box-shadow: 
-      0 0 40px 10px rgba(99, 102, 241, 0.2),
-      0 0 0 2px #475569,
-      0 0 0 4px rgba(99, 102, 241, 0.4),
-      inset 0 0 40px rgba(99, 102, 241, 0.15);
+    width: 80vw;
+    height: 60vh;
+    max-width: 300px;
+    max-height: 400px;
+    top: 40%; /* Центрируем вертикальный овал */
   }
   
   .playerSeat {
-    width: 90px;
-  }
-  
-  .avatarWrap {
-    padding: 3px 4px;
-    gap: 1px;
-    border-radius: 8px;
+    width: 85px;
   }
   
   .playerName {
     font-size: 8px;
-    padding: 1px 3px;
+    padding: 2px 4px;
     min-width: 35px;
   }
   
@@ -1020,7 +1007,7 @@
   
   .penkiRow {
     height: 40px;
-    width: 65px;
+    width: 60px;
   }
   
   .penkiCard {
@@ -1028,74 +1015,40 @@
     height: 40px;
   }
   
-  .gameInterface {
-    width: 98%;
-    max-width: 450px;
-    bottom: 3px;
-  }
-  
   .playerHand {
-    padding: 6px 12px;
-    max-height: 60px;
-    border-radius: 15px;
+    padding: 8px 14px;
+    max-height: 84px;
+    border-radius: 18px;
     width: 95%;
   }
   
   .handCard {
-    width: 40px;
-    height: 60px;
+    width: 56px;
+    height: 84px;
   }
   
   .handTitle {
-    font-size: 10px;
-    margin-bottom: 4px;
+    font-size: 12px;
+    margin-bottom: 6px;
   }
   
   .handCards {
-    min-height: 45px;
-  }
-  
-  .firstMoveBanner {
-    font-size: 1.4rem;
-    padding: 12px 20px;
-    top: 12%;
-    border-radius: 18px;
-  }
-  
-  .gameHeader {
-    top: 3px;
-    gap: 6px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  
-  .stageInfo, .deckInfo, .targetInfo {
-    padding: 5px 10px;
-    font-size: 11px;
-    border-radius: 12px;
-  }
-  
-  /* Центральная кнопка на мобильных */
-  .centralButton {
-    width: 40px !important;
-    height: 25px !important;
-    fontSize: 8px !important;
-    borderRadius: 8px !important;
+    min-height: 63px;
   }
 }
 
 @media (max-width: 480px) {
   .tableBg {
-    height: 60vh;
-    margin: -40px auto 0 auto; /* Максимально высоко */
+    height: 65vh;
+    margin: -30px auto 0 auto; /* Максимально высоко для маленьких экранов */
   }
   
   .tableCenter {
-    width: 92vw;
-    height: 45vh;
-    max-width: 320px;
-    max-height: 220px;
-    top: 35%; /* Очень высоко */
+    width: 85vw;
+    height: 50vh;
+    max-width: 280px;
+    max-height: 320px;
+    top: 35%; /* Еще выше для маленьких экранов */
   }
   
   .playerSeat {
@@ -1133,34 +1086,23 @@
   }
   
   .handCard {
-    width: 35px;
-    height: 50px;
+    width: 49px;
+    height: 70px;
   }
   
   .playerHand {
-    padding: 4px 8px;
-    max-height: 50px;
+    padding: 6px 10px;
+    max-height: 70px;
     width: 98%;
   }
   
   .handTitle {
-    font-size: 9px;
-    margin-bottom: 3px;
+    font-size: 11px;
+    margin-bottom: 5px;
   }
   
   .handCards {
-    min-height: 35px;
-  }
-  
-  .firstMoveBanner {
-    font-size: 1.1rem;
-    padding: 8px 15px;
-    top: 10%;
-  }
-  
-  .avatarWrap {
-    padding: 2px 3px;
-    gap: 1px;
+    min-height: 49px;
   }
   
   .gameHeader {
@@ -1177,7 +1119,7 @@
   .centralButton {
     width: 35px !important;
     height: 20px !important;
-    fontSize: 7px !important;
+    font-size: 7px !important;
   }
   
   /* Улучшенная читаемость текста на малых экранах */
@@ -1198,31 +1140,68 @@
   }
 }
 
-/* Ландшафтная ориентация для мобильных */
-@media (max-width: 768px) and (orientation: landscape) {
+/* Ландшафтная ориентация */
+@media (orientation: landscape) and (max-height: 600px) {
   .tableBg {
-    height: 80vh;
-    width: 95vw;
+    height: 75vh;
+    margin: -10px auto 0 auto;
   }
   
   .tableCenter {
-    width: 70vw;
-    height: 60vh;
-    max-width: 500px;
-    max-height: 300px;
+    width: 45vw;
+    height: 65vh;
+    max-width: 250px;
+    max-height: 350px;
+    top: 42%;
   }
   
-  .gameInterface {
-    bottom: 2px;
+  .playerSeat {
+    width: 70px;
   }
   
-  .firstMoveBanner {
-    top: 10%;
-    font-size: 1.4rem;
+  .playerName {
+    font-size: 7px;
+    padding: 1px 3px;
+  }
+  
+  .avatar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .cardOnPenki {
+    width: 25px;
+    height: 35px;
+  }
+  
+  .penkiRow {
+    height: 35px;
+    width: 55px;
+  }
+  
+  .penkiCard {
+    width: 25px;
+    height: 35px;
+  }
+  
+  .playerHand {
+    max-height: 75px;
+    width: 85%;
+    padding: 6px 12px;
+  }
+  
+  .handCard {
+    width: 52px;
+    height: 78px;
   }
   
   .gameHeader {
-    top: 2px;
+    gap: 8px;
+  }
+  
+  .stageInfo, .deckInfo, .targetInfo {
+    padding: 4px 8px;
+    font-size: 10px;
   }
 }
 
