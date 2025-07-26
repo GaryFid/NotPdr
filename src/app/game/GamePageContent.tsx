@@ -382,26 +382,26 @@ export default function GamePageContent() {
           >
             <button
               style={{
-                width: '100px',
-                height: '60px',
+                width: '50px',
+                height: '30px',
                 background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
                 color: '#fff',
                 border: 'none',
-                borderRadius: '20px',
-                fontSize: '16px',
+                borderRadius: '10px',
+                fontSize: '10px',
                 fontWeight: '700',
                 cursor: 'pointer',
-                boxShadow: '0 8px 25px rgba(34, 197, 94, 0.5)',
+                boxShadow: '0 4px 15px rgba(34, 197, 94, 0.5)',
                 animation: 'pulse 2s infinite',
                 transition: 'all 0.3s ease'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'scale(1.05)';
-                e.currentTarget.style.boxShadow = '0 12px 35px rgba(34, 197, 94, 0.7)';
+                e.currentTarget.style.boxShadow = '0 6px 20px rgba(34, 197, 94, 0.7)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(34, 197, 94, 0.5)';
+                e.currentTarget.style.boxShadow = '0 4px 15px rgba(34, 197, 94, 0.5)';
               }}
             >
               КЛИКНИ!
@@ -555,7 +555,7 @@ export default function GamePageContent() {
             >
               {/* Аватар и имя по центру */}
               <div className={styles.avatarWrap}>
-                <Image src={p.avatar || USER_AVATAR} alt="avatar" width={15} height={15} className={styles.avatar} />
+                <Image src={p.avatar || USER_AVATAR} alt="avatar" width={9} height={9} className={styles.avatar} />
                 <span className={styles.playerName}>{p.name}</span>
                 {isCurrentPlayer && <span style={{color:'#6366f1',marginLeft:4,fontWeight:700}}>⬤</span>}
                 {isTargetAvailable && <span style={{color:'#22c55e',marginLeft:4}}>🎯</span>}
