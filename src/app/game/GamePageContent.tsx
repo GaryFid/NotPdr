@@ -45,28 +45,25 @@ function getPlayers(count: number, userName = 'Вы'): Player[] {
 }
 
 function getCirclePosition(idx: number, total: number, radius = 200) {
-  // Специальное аккуратное размещение для 9 игроков
-  if (total === 9) {
-    // Фиксированные позиции для каждого игрока, чтобы все были видны
-    const positions = [
-      { left: 'calc(50% - 80px)', top: 'calc(50% - 140px)' },   // 0: сверху по центру
-      { left: 'calc(50% + 80px)', top: 'calc(50% - 120px)' },   // 1: верх-право
-      { left: 'calc(50% + 140px)', top: 'calc(50% - 40px)' },   // 2: право-верх
-      { left: 'calc(50% + 140px)', top: 'calc(50% + 40px)' },   // 3: право-низ
-      { left: 'calc(50% + 80px)', top: 'calc(50% + 120px)' },   // 4: низ-право
-      { left: 'calc(50% - 80px)', top: 'calc(50% + 140px)' },   // 5: снизу по центру
-      { left: 'calc(50% - 160px)', top: 'calc(50% + 120px)' },  // 6: низ-лево
-      { left: 'calc(50% - 200px)', top: 'calc(50% + 40px)' },   // 7: лево-низ
-      { left: 'calc(50% - 200px)', top: 'calc(50% - 40px)' },   // 8: лево-верх
-    ];
-    
-    return positions[idx] || positions[0];
-  }
+  // Универсальное аккуратное размещение для любого количества игроков
+  const angle = (2 * Math.PI * idx) / total - Math.PI / 2; // Начинаем сверху
   
-  // Для других количеств игроков - компактное овальное размещение
-  const angle = (2 * Math.PI * idx) / total - Math.PI / 2;
-  const radiusX = radius * 1.2; // Более компактно
-  const radiusY = radius * 0.8;
+  // Адаптивные радиусы в зависимости от количества игроков
+  let radiusX: number, radiusY: number;
+  
+  if (total <= 4) {
+    radiusX = 180;
+    radiusY = 120;
+  } else if (total <= 6) {
+    radiusX = 200;
+    radiusY = 140;
+  } else if (total <= 8) {
+    radiusX = 220;
+    radiusY = 160;
+  } else {
+    radiusX = 240;
+    radiusY = 180;
+  }
   
   const offsetX = Math.cos(angle) * radiusX;
   const offsetY = Math.sin(angle) * radiusY;
@@ -322,7 +319,7 @@ export default function GamePageContent() {
               zIndex:5,
               cursor: turnPhase === 'showing_deck_hint' ? 'pointer' : 'default',
               opacity: turnPhase === 'showing_deck_hint' ? 1 : 0.8,
-              filter: turnPhase === 'showing_deck_hint' ? 'drop-shadow(0 0 12px #00ff00)' : 'none'
+              filter: turnPhase === 'showing_deck_hint' ? 'drop-shadow(0 0 12px #22c55e)' : 'none'
             }}
             onClick={() => {
               if (turnPhase === 'showing_deck_hint') {
@@ -336,7 +333,7 @@ export default function GamePageContent() {
               width={84} 
               height={128} 
               style={{
-                boxShadow: turnPhase === 'showing_deck_hint' ? '0 0 16px #00ff00' : '0 0 16px #ffd700'
+                boxShadow: turnPhase === 'showing_deck_hint' ? '0 0 16px #22c55e' : '0 0 16px rgba(99, 102, 241, 0.4)'
               }} 
             />
             <span className={styles.deckCount}>{deck.length}</span>
@@ -346,17 +343,69 @@ export default function GamePageContent() {
                 top: '-25px',
                 left: '50%',
                 transform: 'translateX(-50%)',
-                background: '#00ff00',
-                color: '#000',
+                background: '#22c55e',
+                color: '#fff',
                 padding: '2px 8px',
                 borderRadius: '8px',
                 fontSize: '12px',
                 fontWeight: 'bold',
-                whiteSpace: 'nowrap'
+                whiteSpace: 'nowrap',
+                boxShadow: '0 4px 15px rgba(34, 197, 94, 0.4)'
               }}>
                 КЛИКНИ!
               </div>
             )}
+          </div>
+        )}
+
+        {/* Центральная интерактивная кнопка для особых действий */}
+        {(gameStage as number) === 1 && (turnPhase === 'waiting_deck_action' || turnPhase === 'showing_card_actions' || (availableTargets.length > 0 && turnPhase === 'analyzing_hand')) && (
+          <div 
+            style={{
+              position: 'absolute',
+              left: '50%',
+              top: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 20
+            }}
+            onClick={() => {
+              if (turnPhase === 'waiting_deck_action') {
+                // При клике показываем действия для карты из колоды
+                const hasTargets = availableTargets.length > 0;
+                if (hasTargets || canPlaceOnSelfByRules) {
+                  useGameStore.setState({ turnPhase: 'showing_card_actions' });
+                } else {
+                  takeCardNotByRules();
+                }
+              }
+            }}
+          >
+            <button
+              style={{
+                width: '100px',
+                height: '60px',
+                background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '20px',
+                fontSize: '16px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                boxShadow: '0 8px 25px rgba(34, 197, 94, 0.5)',
+                animation: 'pulse 2s infinite',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.05)';
+                e.currentTarget.style.boxShadow = '0 12px 35px rgba(34, 197, 94, 0.7)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(34, 197, 94, 0.5)';
+              }}
+            >
+              КЛИКНИ!
+            </button>
           </div>
         )}
 
