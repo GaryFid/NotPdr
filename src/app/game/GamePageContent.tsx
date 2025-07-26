@@ -553,112 +553,118 @@ export default function GamePageContent() {
               className={`${styles.playerSeat} ${isTargetAvailable ? styles.highlightedTarget : ''}`}
               style={getCirclePosition(i, players.length)}
             >
+              {/* Аватар и имя по центру */}
               <div className={styles.avatarWrap}>
                 <Image src={p.avatar || USER_AVATAR} alt="avatar" width={15} height={15} className={styles.avatar} />
                 <span className={styles.playerName}>{p.name}</span>
-                {isCurrentPlayer && <span style={{color:'#ffd700',marginLeft:4,fontWeight:700}}>⬤</span>}
-                {isTargetAvailable && <span style={{color:'#00ff00',marginLeft:4}}>🎯</span>}
+                {isCurrentPlayer && <span style={{color:'#6366f1',marginLeft:4,fontWeight:700}}>⬤</span>}
+                {isTargetAvailable && <span style={{color:'#22c55e',marginLeft:4}}>🎯</span>}
               </div>
-                          <div className={styles.cardsRow}>
-              <AnimatePresence>
-                {p.cards.map((card, ci) => {
-                  const isTopCard = ci === p.cards.length - 1;
-                  const cardOffset = ci * 10; // Уменьшил смещение для компактности
-                  
-                  return (
-                    <motion.div
-                      key={card.id}
-                      initial={{ opacity: 0, y: -40, rotateY: -180, scale: 0.5 }}
-                      animate={{ 
-                        opacity: dealt ? 1 : 0, 
-                        y: 0, 
-                        rotateY: 0, 
-                        scale: 1,
-                        transition: {
-                          type: "spring",
-                          stiffness: 200,
-                          damping: 15
-                        }
-                      }}
-                      exit={{ opacity: 0, y: 40, rotateY: 180, scale: 0.5 }}
-                      transition={{ 
-                        delay: (i * 0.15) + (ci * 0.08), 
-                        duration: 0.6,
-                        type: "spring",
-                        stiffness: 150,
-                        damping: 12
-                      }}
-                      whileHover={{ 
-                        scale: isClickableTarget && isTopCard ? 1.15 : 1.05,
-                        rotateY: 5,
-                        z: 20
-                      }}
-                      style={{ 
-                        position: 'absolute',
-                        left: `${cardOffset}px`,
-                        zIndex: ci + 1
-                      }}
-                    >
+              
+              {/* Контейнер для пеньков и открытой карты */}
+              <div className={styles.cardsContainer}>
+                {/* Пеньки (подложка) */}
+                {p.penki && p.penki.length > 0 && (
+                  <div className={styles.penkiRow}>
+                    {p.penki.map((penkiCard, pi) => (
                       <div
-                        className={`${styles.card} ${card.open ? styles.open : styles.closed} ${isClickableTarget && isTopCard ? styles.targetCard : ''}`}
+                        key={penkiCard.id}
+                        className={styles.penkiCard}
                         style={{ 
-                          cursor: isClickableTarget && isTopCard ? 'pointer' : 'default',
-                          transform: isClickableTarget && isTopCard ? 'scale(1.05)' : 'scale(1)'
+                          left: `${pi * 8}px`,
+                          zIndex: pi + 1
                         }}
-                        onClick={() => {
-                          if (isClickableTarget && isTopCard) {
-                            makeMove(p.id);
-                          }
-                        }}
+                        title={`Пенёк ${pi + 1} (активируется в 3-й стадии)`}
                       >
                         <Image
-                          src={
-                            // Во 2-й стадии карты других игроков всегда скрыты
-                            (gameStage as number) === 2 && p.id !== currentPlayerId ? 
-                              `/img/cards/back.png` :
-                            // В 1-й стадии показываем как обычно
-                            (card.open && card.image ? `/img/cards/${card.image}` : `/img/cards/back.png`)
-                          }
-                          alt={card.open ? 'card' : 'back'}
-                          width={56}
-                          height={88}
-                          draggable={false}
-                          priority
+                          src="/img/cards/back.png"
+                          alt="penki"
+                          width={35}
+                          height={50}
+                          style={{ 
+                            borderRadius: '6px',
+                            opacity: 0.8
+                          }}
                         />
                       </div>
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
-            </div>
-            
-            {/* Отображение пеньков (2 закрытые карты для 3-й стадии) */}
-            {p.penki && p.penki.length > 0 && (
-              <div className={styles.penkiRow}>
-                {p.penki.map((penkiCard, pi) => (
-                  <div
-                    key={penkiCard.id}
-                    className={styles.penkiCard}
-                    style={{ 
-                      left: `${pi * 8}px`,
-                      zIndex: pi + 1
-                    }}
-                    title={`Пенёк ${pi + 1} (активируется в 3-й стадии)`}
-                  >
-                    <Image
-                      src="/img/cards/back.png"
-                      alt="penki"
-                      width={35}
-                      height={50}
-                      style={{ 
-                        borderRadius: '6px',
-                        opacity: 0.8
-                      }}
-                    />
+                    ))}
                   </div>
-                ))}
+                )}
+                
+                {/* Открытая карта поверх пеньков */}
+                {p.cards.length > 0 && (
+                  <div className={styles.activeCardContainer}>
+                    {p.cards.map((card, ci) => {
+                      const isTopCard = ci === p.cards.length - 1;
+                      
+                      return (
+                        <motion.div
+                          key={card.id}
+                          initial={{ opacity: 0, y: -40, rotateY: -180, scale: 0.5 }}
+                          animate={{ 
+                            opacity: dealt ? 1 : 0, 
+                            y: 0, 
+                            rotateY: 0, 
+                            scale: 1,
+                            transition: {
+                              type: "spring",
+                              stiffness: 200,
+                              damping: 15
+                            }
+                          }}
+                          exit={{ opacity: 0, y: 40, rotateY: 180, scale: 0.5 }}
+                          transition={{ 
+                            delay: (i * 0.15) + (ci * 0.08), 
+                            duration: 0.6,
+                            type: "spring",
+                            stiffness: 150,
+                            damping: 12
+                          }}
+                          whileHover={{ 
+                            scale: isClickableTarget && isTopCard ? 1.15 : 1.05,
+                            rotateY: 5,
+                            z: 20
+                          }}
+                          style={{ 
+                            position: 'absolute',
+                            left: `${ci * 6}px`,
+                            zIndex: ci + 10 // Поверх пеньков
+                          }}
+                        >
+                          <div
+                            className={`${styles.cardOnPenki} ${card.open ? styles.open : styles.closed} ${isClickableTarget && isTopCard ? styles.targetCard : ''}`}
+                            style={{ 
+                              cursor: isClickableTarget && isTopCard ? 'pointer' : 'default',
+                              transform: isClickableTarget && isTopCard ? 'scale(1.05)' : 'scale(1)'
+                            }}
+                            onClick={() => {
+                              if (isClickableTarget && isTopCard) {
+                                makeMove(p.id);
+                              }
+                            }}
+                          >
+                            <Image
+                              src={
+                                // Во 2-й стадии карты других игроков всегда скрыты
+                                (gameStage as number) === 2 && p.id !== currentPlayerId ? 
+                                  `/img/cards/back.png` :
+                                // В 1-й стадии показываем как обычно
+                                (card.open && card.image ? `/img/cards/${card.image}` : `/img/cards/back.png`)
+                              }
+                              alt={card.open ? 'card' : 'back'}
+                              width={35}
+                              height={50}
+                              draggable={false}
+                              priority
+                              style={{ borderRadius: '6px' }}
+                            />
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            )}
             </div>
           );
         })}
