@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Play, User, Star, Book, Wallet, UserPlus, Store, Menu } from 'lucide-react'
+import { Play, User, Star, Book, Wallet, UserPlus, Store, Menu, Sparkles } from 'lucide-react'
 import { useGameStore } from '../store/gameStore'
 import { useTelegram } from '../hooks/useTelegram'
 import { useState } from 'react'
@@ -34,61 +34,243 @@ export function MainMenu({ onNavigate, balance = 1000 }: MainMenuProps) {
   }
 
   return (
-    <div className="main-menu-container">
-      <div className="main-menu-inner">
-        {/* Верхний бар */}
-        <div className="menu-header" style={{ position: 'relative' }}>
-          <button onClick={() => window.history.back()} className="px-3 py-1 rounded-lg border border-red-400 text-red-200 font-semibold text-base hover:bg-red-400/10 transition-all">Назад</button>
-          <span className="menu-title">P.I.D.R.</span>
-          <button
-            className="wallet-btn"
+    <div className="neon-main-container">
+      {/* Floating Particles Background */}
+      <div className="floating-particles">
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="particle"
+            animate={{
+              y: [-20, -100, -20],
+              x: [0, Math.random() * 100 - 50, 0],
+              opacity: [0, 1, 0],
+            }}
+            transition={{
+              duration: 3 + Math.random() * 2,
+              repeat: Infinity,
+              delay: Math.random() * 2,
+            }}
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="neon-main-inner">
+        {/* Верхний бар с неоновым эффектом */}
+        <motion.div 
+          className="neon-header"
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+        >
+          <motion.button 
+            onClick={() => window.history.back()} 
+            className="neon-back-btn"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Назад
+          </motion.button>
+          
+          <motion.span 
+            className="neon-title"
+            animate={{
+              textShadow: [
+                "0 0 20px #ff0080, 0 0 40px #ff0080, 0 0 60px #ff0080",
+                "0 0 20px #00ffff, 0 0 40px #00ffff, 0 0 60px #00ffff",
+                "0 0 20px #39ff14, 0 0 40px #39ff14, 0 0 60px #39ff14",
+                "0 0 20px #ff0080, 0 0 40px #ff0080, 0 0 60px #ff0080"
+              ]
+            }}
+            transition={{ duration: 3, repeat: Infinity }}
+          >
+            P.I.D.R.
+          </motion.span>
+          
+          <motion.button
+            className="neon-wallet-btn"
             onClick={() => setWalletOpen((v) => !v)}
-            style={{ position: 'relative' }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            animate={{
+              boxShadow: [
+                "0 0 20px #ffd700, 0 0 40px #ffd700",
+                "0 0 20px #ff0080, 0 0 40px #ff0080",
+                "0 0 20px #00ffff, 0 0 40px #00ffff",
+                "0 0 20px #ffd700, 0 0 40px #ffd700"
+              ]
+            }}
+            transition={{ duration: 2, repeat: Infinity }}
           >
             <Wallet className="wallet-icon" />
             <img src="/img/ton-icon.svg" alt="TON" className="w-6 h-6" />
-          </button>
+          </motion.button>
+          
           {walletOpen && (
-            <div className="wallet-dropdown fade-in">
-              {coins.map((coin) => (
-                <div className="wallet-coin" key={coin.name}>
+            <motion.div 
+              className="neon-wallet-dropdown"
+              initial={{ opacity: 0, scale: 0.8, y: -20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              {coins.map((coin, index) => (
+                <motion.div 
+                  className="neon-wallet-coin" 
+                  key={coin.name}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
                   <img src={coin.icon} alt={coin.name} className="wallet-coin-icon" />
-                  <span className="wallet-coin-value">{coin.value}</span>
-                  <span className="wallet-coin-name">{coin.name}</span>
-                </div>
+                  <span className="neon-coin-value">{coin.value}</span>
+                  <span className="neon-coin-name">{coin.name}</span>
+                </motion.div>
               ))}
-              <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-                <button className="wallet-action-btn wallet-action-btn--deposit">Пополнить</button>
-                <button className="wallet-action-btn wallet-action-btn--withdraw">Вывод</button>
-              </div>
-            </div>
+              <motion.div 
+                style={{ display: 'flex', gap: 10, marginTop: 16 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+              >
+                <motion.button 
+                  className="neon-wallet-action neon-wallet-deposit"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Пополнить
+                </motion.button>
+                <motion.button 
+                  className="neon-wallet-action neon-wallet-withdraw"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Вывод
+                </motion.button>
+              </motion.div>
+            </motion.div>
           )}
-        </div>
-        {/* Баланс */}
-        <div className="menu-balance-card">
-          <div className="menu-balance-amount">{balance}</div>
-          <div className="menu-balance-label">монет</div>
-        </div>
-        {/* Быстрые действия */}
-        <div className="menu-actions-title">БЫСТРЫЕ ДЕЙСТВИЯ</div>
-        <div className="menu-actions-grid">
-          <button onClick={() => onNavigate('game')} className="menu-action-card">
-            <Play className="menu-action-icon" />
-            <span className="menu-action-label">ИГРАТЬ</span>
-          </button>
-          <button onClick={() => onNavigate('invite')} className="menu-action-card">
-            <UserPlus className="menu-action-icon" />
-            <span className="menu-action-label">ПРИГЛАСИТЬ</span>
-          </button>
-          <button onClick={() => onNavigate('shop')} className="menu-action-card">
-            <Store className="menu-action-icon" />
-            <span className="menu-action-label">МАГАЗИН</span>
-          </button>
-          <button onClick={() => onNavigate('profile')} className="menu-action-card">
-            <User className="menu-action-icon" />
-            <span className="menu-action-label">ПРОФИЛЬ</span>
-          </button>
-        </div>
+        </motion.div>
+
+        {/* Баланс с пульсирующим эффектом */}
+        <motion.div 
+          className="neon-balance-card"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+        >
+          <motion.div 
+            className="neon-balance-amount"
+            animate={{
+              textShadow: [
+                "0 0 20px #ffd700, 0 0 40px #ffd700",
+                "0 0 30px #ffd700, 0 0 60px #ffd700",
+                "0 0 20px #ffd700, 0 0 40px #ffd700"
+              ]
+            }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            {balance}
+          </motion.div>
+          <div className="neon-balance-label">
+            <Sparkles className="inline w-5 h-5 mr-2" />
+            МОНЕТ
+          </div>
+        </motion.div>
+
+        {/* Заголовок действий */}
+        <motion.div 
+          className="neon-actions-title"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
+        >
+          БЫСТРЫЕ ДЕЙСТВИЯ
+        </motion.div>
+
+        {/* Сетка действий с неоновыми эффектами */}
+        <motion.div 
+          className="neon-actions-grid"
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.8 }}
+        >
+          <motion.button 
+            onClick={() => onNavigate('game')} 
+            className="neon-action-card neon-play"
+            whileHover={{ scale: 1.05, rotate: 2 }}
+            whileTap={{ scale: 0.95 }}
+            animate={{
+              boxShadow: [
+                "0 0 20px #ff0080, 0 0 40px #ff0080",
+                "0 0 30px #ff0080, 0 0 60px #ff0080",
+                "0 0 20px #ff0080, 0 0 40px #ff0080"
+              ]
+            }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            <Play className="neon-action-icon" />
+            <span className="neon-action-label">ИГРАТЬ</span>
+          </motion.button>
+
+          <motion.button 
+            onClick={() => onNavigate('invite')} 
+            className="neon-action-card neon-invite"
+            whileHover={{ scale: 1.05, rotate: -2 }}
+            whileTap={{ scale: 0.95 }}
+            animate={{
+              boxShadow: [
+                "0 0 20px #00ffff, 0 0 40px #00ffff",
+                "0 0 30px #00ffff, 0 0 60px #00ffff",
+                "0 0 20px #00ffff, 0 0 40px #00ffff"
+              ]
+            }}
+            transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+          >
+            <UserPlus className="neon-action-icon" />
+            <span className="neon-action-label">ПРИГЛАСИТЬ</span>
+          </motion.button>
+
+          <motion.button 
+            onClick={() => onNavigate('shop')} 
+            className="neon-action-card neon-shop"
+            whileHover={{ scale: 1.05, rotate: 2 }}
+            whileTap={{ scale: 0.95 }}
+            animate={{
+              boxShadow: [
+                "0 0 20px #39ff14, 0 0 40px #39ff14",
+                "0 0 30px #39ff14, 0 0 60px #39ff14",
+                "0 0 20px #39ff14, 0 0 40px #39ff14"
+              ]
+            }}
+            transition={{ duration: 2, repeat: Infinity, delay: 1 }}
+          >
+            <Store className="neon-action-icon" />
+            <span className="neon-action-label">МАГАЗИН</span>
+          </motion.button>
+
+          <motion.button 
+            onClick={() => onNavigate('profile')} 
+            className="neon-action-card neon-profile"
+            whileHover={{ scale: 1.05, rotate: -2 }}
+            whileTap={{ scale: 0.95 }}
+            animate={{
+              boxShadow: [
+                "0 0 20px #ff6600, 0 0 40px #ff6600",
+                "0 0 30px #ff6600, 0 0 60px #ff6600",
+                "0 0 20px #ff6600, 0 0 40px #ff6600"
+              ]
+            }}
+            transition={{ duration: 2, repeat: Infinity, delay: 1.5 }}
+          >
+            <User className="neon-action-icon" />
+            <span className="neon-action-label">ПРОФИЛЬ</span>
+          </motion.button>
+        </motion.div>
       </div>
     </div>
   )
