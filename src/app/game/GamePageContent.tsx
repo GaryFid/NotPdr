@@ -223,12 +223,6 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                   <button 
                     className={styles.centralButton}
                     onClick={() => drawCard()}
-                    style={{
-                      width: '50px',
-                      height: '30px',
-                      borderRadius: '10px',
-                      fontSize: '10px'
-                    }}
                   >
                     КЛИКНИ!
                   </button>

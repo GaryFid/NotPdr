@@ -1,3 +1,22 @@
+/* Базовые стили игрового контейнера */
+.gameContainer {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background: 
+    radial-gradient(ellipse at center, #0F172A 40%, #1E293B 70%, #020617 100%),
+    linear-gradient(45deg, rgba(99, 102, 241, 0.03) 0%, transparent 50%, rgba(139, 92, 246, 0.03) 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
 .tableWrapper {
   height: 100vh;
   width: 100vw;
@@ -219,14 +238,15 @@
   display: none;
 }
 
+/* Убираем загораживающий фон колоды */
 .dropZone {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 140px;
-  height: 180px;
-  background: rgba(99, 102, 241, 0.1);
-  border: 3px dashed rgba(99, 102, 241, 0.5);
+  width: 60px;
+  height: 90px;
+  background: transparent;
+  border: none;
   border-radius: 20px;
   transform: translate(-50%, -50%);
   display: flex;
@@ -236,24 +256,31 @@
   font-weight: bold;
   font-size: 18px;
   z-index: 10;
-  box-shadow: 
-    0 0 40px rgba(99, 102, 241, 0.3),
-    inset 0 0 40px rgba(99, 102, 241, 0.1);
-  backdrop-filter: blur(10px);
-  animation: dropZonePulse 2s ease-in-out infinite;
+  box-shadow: none;
+  backdrop-filter: none;
+  animation: none;
 }
 
-@keyframes dropZonePulse {
-  0%, 100% {
-    box-shadow: 
-      0 0 40px rgba(99, 102, 241, 0.3),
-      inset 0 0 40px rgba(99, 102, 241, 0.1);
-  }
-  50% {
-    box-shadow: 
-      0 0 60px rgba(99, 102, 241, 0.5),
-      inset 0 0 60px rgba(99, 102, 241, 0.2);
-  }
+/* Стили колоды в центре */
+.deckStack {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  border-radius: 8px;
+}
+
+.deckStack:hover {
+  transform: scale(1.05);
+}
+
+.deckCard {
+  border-radius: 8px;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(99, 102, 241, 0.2);
+  transition: all 0.3s ease;
 }
 
 .drawButton {
@@ -504,7 +531,7 @@
     radial-gradient(circle at top right, rgba(99, 102, 241, 0.1), transparent);
   border: 2px solid rgba(99, 102, 241, 0.3);
   border-radius: 20px;
-  padding: 12px 18px;
+  padding: 16px 20px;
   box-shadow: 
     0 15px 30px rgba(0, 0, 0, 0.6),
     0 0 40px rgba(99, 102, 241, 0.2),
@@ -513,13 +540,13 @@
     inset 0 0 60px rgba(99, 102, 241, 0.05);
   backdrop-filter: blur(20px);
   position: fixed;
-  bottom: 80px;
+  bottom: 90px;
   left: 50%;
   transform: translateX(-50%);
-  overflow: hidden;
-  max-height: 140px;
+  overflow: visible;
+  min-height: 140px;
   width: 90%;
-  max-width: 500px;
+  max-width: 600px;
   z-index: 100;
 }
 
@@ -560,9 +587,10 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 84px;
+  min-height: 110px;
   z-index: 1;
   position: relative;
+  padding: 10px 0;
 }
 
 .handCard {
@@ -573,11 +601,13 @@
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   cursor: pointer;
   transform-style: preserve-3d;
+  margin: 0 -10px;
 }
 
 .handCard:hover {
-  transform: translateY(-10px) scale(1.08) rotateY(8deg);
+  transform: translateY(-15px) scale(1.1) rotateY(8deg);
   z-index: 100 !important;
+  margin: 0 10px;
 }
 
 .handCard.open {
@@ -708,7 +738,7 @@
   100% { transform: rotate(360deg); }
 }
 
-/* Анимация для центральной кнопки КЛИКНИ! */
+/* Уменьшенная анимация для центральной кнопки КЛИКНИ! */
 @keyframes pulse {
   0% {
     transform: scale(1);
@@ -722,6 +752,39 @@
     transform: scale(1);
     box-shadow: 0 4px 15px rgba(34, 197, 94, 0.5);
   }
+}
+
+/* Центральная кнопка "КЛИКНИ!" для тестирования - уменьшенная */
+.centralButtonContainer {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.centralButton {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  animation: pulse 2s infinite;
+  font-size: 8px;
+  padding: 4px 8px;
+  width: 40px;
+  height: 25px;
+}
+
+.centralButton:hover {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  transform: scale(1.1);
 }
 
 /* Современная анимация появления стадии */
@@ -1349,5 +1412,469 @@
 @keyframes rainbow-text {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  100% { background-position: 0% 50%;   }
+}
+
+/* Стили экрана настройки игры */
+.setupScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #e2e8f0;
+  padding: 40px 20px;
+  background: rgba(15, 23, 42, 0.95);
+  border-radius: 20px;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(99, 102, 241, 0.3);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  max-width: 400px;
+  width: 90%;
+}
+
+.setupScreen h2 {
+  margin: 0 0 30px 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #e2e8f0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.playerCountSelector {
+  margin: 20px 0;
+  width: 100%;
+}
+
+.playerCountSelector label {
+  display: block;
+  margin-bottom: 15px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.rangeSlider {
+  width: 100%;
+  height: 8px;
+  border-radius: 5px;
+  background: #334155;
+  outline: none;
+  -webkit-appearance: none;
+  margin: 10px 0;
+}
+
+.rangeSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+}
+
+.rangeSlider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+}
+
+.startButton {
+  margin-top: 30px;
+  padding: 16px 40px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border: none;
+  border-radius: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 8px 25px rgba(99, 102, 241, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.startButton:hover {
+  background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 12px 35px rgba(99, 102, 241, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.gameArea {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.gameControls {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  z-index: 1100;
+}
+
+.resetButton {
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 4px 15px rgba(239, 68, 68, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.resetButton:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: translateY(-1px);
+  box-shadow: 
+    0 6px 20px rgba(239, 68, 68, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+/* DESKTOP АДАПТИВНЫЕ СТИЛИ */
+
+/* Средние экраны (планшеты и маленькие ноутбуки) */
+@media (min-width: 768px) {
+  .tableBg {
+    width: 600px;
+    height: 500px;
+    margin: 0 auto;
+  }
+  
+  .tableCenter {
+    width: 450px;
+    height: 350px;
+    max-width: none;
+    max-height: none;
+  }
+  
+  .playerSeat {
+    width: 120px;
+  }
+  
+  .playerName {
+    font-size: 11px;
+    padding: 3px 6px;
+    min-width: 50px;
+  }
+  
+  .avatar {
+    width: 26px;
+    height: 26px;
+  }
+  
+  .cardOnPenki {
+    width: 65px;
+    height: 90px;
+  }
+  
+  .penkiRow {
+    height: 90px;
+    width: 120px;
+  }
+  
+  .penkiCard {
+    width: 60px;
+    height: 85px;
+  }
+  
+  .playerHand {
+    max-width: 700px;
+    padding: 18px 25px;
+    min-height: 150px;
+    bottom: 100px;
+  }
+  
+  .handCard {
+    width: 75px;
+    height: 110px;
+    margin: 0 -8px;
+  }
+  
+  .handCard:hover {
+    margin: 0 15px;
+  }
+  
+  .handCards {
+    min-height: 120px;
+    padding: 12px 0;
+  }
+  
+  .gameHeader {
+    top: 20px;
+    gap: 25px;
+  }
+  
+  .stageInfo, .deckInfo, .targetInfo {
+    padding: 12px 24px;
+    font-size: 16px;
+  }
+  
+  .centralButton {
+    width: 50px;
+    height: 30px;
+    font-size: 9px;
+    padding: 5px 10px;
+  }
+  
+  .deckCount {
+    width: 35px;
+    height: 35px;
+    font-size: 16px;
+  }
+  
+  /* Адаптивные стили экрана настройки для планшетов */
+  .setupScreen {
+    max-width: 500px;
+    padding: 50px 30px;
+  }
+  
+  .setupScreen h2 {
+    font-size: 28px;
+    margin-bottom: 35px;
+  }
+  
+  .startButton {
+    padding: 18px 50px;
+    font-size: 20px;
+  }
+}
+
+/* Большие экраны (ноутбуки и десктопы) */
+@media (min-width: 1024px) {
+  .gameContainer {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .tableBg {
+    width: 700px;
+    height: 600px;
+  }
+  
+  .tableCenter {
+    width: 500px;
+    height: 400px;
+  }
+  
+  .playerSeat {
+    width: 140px;
+  }
+  
+  .playerName {
+    font-size: 12px;
+    padding: 4px 8px;
+    min-width: 60px;
+  }
+  
+  .avatar {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .cardOnPenki {
+    width: 70px;
+    height: 100px;
+  }
+  
+  .penkiRow {
+    height: 100px;
+    width: 140px;
+  }
+  
+  .penkiCard {
+    width: 65px;
+    height: 95px;
+  }
+  
+  .playerHand {
+    max-width: 800px;
+    padding: 20px 30px;
+    min-height: 160px;
+    bottom: 120px;
+  }
+  
+  .handCard {
+    width: 80px;
+    height: 120px;
+    margin: 0 -6px;
+  }
+  
+  .handCard:hover {
+    margin: 0 20px;
+    transform: translateY(-20px) scale(1.15) rotateY(8deg);
+  }
+  
+  .handCards {
+    min-height: 130px;
+    padding: 15px 0;
+  }
+  
+  .gameHeader {
+    top: 25px;
+    gap: 30px;
+  }
+  
+  .stageInfo, .deckInfo, .targetInfo {
+    padding: 14px 28px;
+    font-size: 18px;
+  }
+  
+  .centralButton {
+    width: 60px;
+    height: 35px;
+    font-size: 10px;
+    padding: 6px 12px;
+  }
+  
+  .deckCount {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+  
+  /* Адаптивные стили экрана настройки для ноутбуков */
+  .setupScreen {
+    max-width: 600px;
+    padding: 60px 40px;
+  }
+  
+  .setupScreen h2 {
+    font-size: 32px;
+    margin-bottom: 40px;
+  }
+  
+  .startButton {
+    padding: 20px 60px;
+    font-size: 22px;
+  }
+}
+
+/* Очень большие экраны (широкие мониторы) */
+@media (min-width: 1440px) {
+  .gameContainer {
+    max-width: 1400px;
+  }
+  
+  .tableBg {
+    width: 800px;
+    height: 650px;
+  }
+  
+  .tableCenter {
+    width: 550px;
+    height: 450px;
+  }
+  
+  .playerSeat {
+    width: 160px;
+  }
+  
+  .playerName {
+    font-size: 13px;
+    padding: 5px 10px;
+    min-width: 70px;
+  }
+  
+  .avatar {
+    width: 34px;
+    height: 34px;
+  }
+  
+  .cardOnPenki {
+    width: 75px;
+    height: 110px;
+  }
+  
+  .penkiRow {
+    height: 110px;
+    width: 160px;
+  }
+  
+  .penkiCard {
+    width: 70px;
+    height: 105px;
+  }
+  
+  .playerHand {
+    max-width: 900px;
+    padding: 22px 35px;
+    min-height: 170px;
+    bottom: 140px;
+  }
+  
+  .handCard {
+    width: 85px;
+    height: 130px;
+    margin: 0 -4px;
+  }
+  
+  .handCard:hover {
+    margin: 0 25px;
+    transform: translateY(-25px) scale(1.2) rotateY(8deg);
+  }
+  
+  .handCards {
+    min-height: 140px;
+    padding: 18px 0;
+  }
+  
+  .gameHeader {
+    top: 30px;
+    gap: 35px;
+  }
+  
+  .stageInfo, .deckInfo, .targetInfo {
+    padding: 16px 32px;
+    font-size: 20px;
+  }
+  
+  .centralButton {
+    width: 70px;
+    height: 40px;
+    font-size: 11px;
+    padding: 7px 14px;
+  }
+  
+  .deckCount {
+    width: 45px;
+    height: 45px;
+    font-size: 20px;
+  }
+  
+  /* Адаптивные стили экрана настройки для больших мониторов */
+  .setupScreen {
+    max-width: 700px;
+    padding: 70px 50px;
+  }
+  
+  .setupScreen h2 {
+    font-size: 36px;
+    margin-bottom: 45px;
+  }
+  
+  .startButton {
+    padding: 22px 70px;
+    font-size: 24px;
+  }
 } 
