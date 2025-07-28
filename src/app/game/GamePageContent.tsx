@@ -44,24 +44,44 @@ function getPlayers(count: number, userName = 'Вы'): Player[] {
   }));
 }
 
-// Универсальная функция для позиционирования игроков по вертикальному овалу
+// Универсальная функция для позиционирования игроков по овалу стола
 const getCirclePosition = (index: number, total: number): { top: string; left: string } => {
-  // Угол для каждого игрока (начинаем сверху и идем по часовой стрелке)
-  const angle = (index * 360) / total - 90; // -90 чтобы первый игрок был сверху
-  const radians = (angle * Math.PI) / 180;
-  
-  // Для вертикального овала увеличиваем вертикальный радиус
-  const horizontalRadius = 42; // Процент от ширины стола
-  const verticalRadius = 35;   // Процент от высоты стола
-  
-  // Вычисляем позицию относительно центра стола
-  const x = 50 + horizontalRadius * Math.cos(radians); // 50% это центр
-  const y = 50 + verticalRadius * Math.sin(radians);
-  
-  return {
-    left: `${Math.max(5, Math.min(95, x))}%`, // Ограничиваем чтобы не выходили за края
-    top: `${Math.max(8, Math.min(92, y))}%`
+  // Фиксированные позиции для разного количества игроков
+  const positions = {
+    2: [
+      { left: '50%', top: '15%' }, // Верх
+      { left: '50%', top: '75%' }  // Низ
+    ],
+    3: [
+      { left: '50%', top: '12%' }, // Верх
+      { left: '75%', top: '60%' }, // Право
+      { left: '25%', top: '60%' }  // Лево
+    ],
+    4: [
+      { left: '50%', top: '10%' }, // Верх
+      { left: '80%', top: '50%' }, // Право
+      { left: '50%', top: '75%' }, // Низ (пользователь)
+      { left: '20%', top: '50%' }  // Лево
+    ],
+    5: [
+      { left: '50%', top: '8%' },  // Верх
+      { left: '78%', top: '35%' }, // Право-верх
+      { left: '70%', top: '70%' }, // Право-низ
+      { left: '30%', top: '70%' }, // Лево-низ
+      { left: '22%', top: '35%' }  // Лево-верх
+    ],
+    6: [
+      { left: '50%', top: '6%' },  // Верх
+      { left: '82%', top: '30%' }, // Право-верх
+      { left: '82%', top: '70%' }, // Право-низ
+      { left: '50%', top: '80%' }, // Низ
+      { left: '18%', top: '70%' }, // Лево-низ
+      { left: '18%', top: '30%' }  // Лево-верх
+    ]
   };
+
+  const totalPositions = positions[total as keyof typeof positions] || positions[4];
+  return totalPositions[index] || { left: '50%', top: '50%' };
 };
 
 function getFirstPlayerIdx(players: Player[]): number {
@@ -221,7 +241,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                   >
                     {/* Аватар и имя по центру */}
                     <div className={styles.avatarWrap}>
-                      <Image src={p.avatar || USER_AVATAR} alt="avatar" width={9} height={9} className={styles.avatar} />
+                      <Image src={p.avatar || USER_AVATAR} alt="avatar" width={45} height={45} className={styles.avatar} />
                       <span className={styles.playerName}>{p.name}</span>
                       {isCurrentPlayer && <span style={{color:'#6366f1',marginLeft:4,fontWeight:700}}>⬤</span>}
                       {isTargetAvailable && <span style={{color:'#22c55e',marginLeft:4}}>🎯</span>}
@@ -237,7 +257,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                               key={penkiCard.id}
                               className={styles.penkiCard}
                               style={{ 
-                                left: `${pi * 8}px`,
+                                left: `${pi * 10}px`,
                                 zIndex: pi + 1
                               }}
                               title={`Пенёк ${pi + 1} (активируется в 3-й стадии)`}
@@ -245,10 +265,10 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                               <Image
                                 src="/img/cards/back.png"
                                 alt="penki"
-                                width={35}
-                                height={50}
+                                width={45}
+                                height={65}
                                 style={{ 
-                                  borderRadius: '6px',
+                                  borderRadius: '8px',
                                   opacity: 0.8
                                 }}
                               />
@@ -318,11 +338,11 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                                       (card.open && card.image ? `/img/cards/${card.image}` : `/img/cards/back.png`)
                                     }
                                     alt={card.open ? 'card' : 'back'}
-                                    width={35}
-                                    height={50}
+                                    width={45}
+                                    height={65}
                                     draggable={false}
                                     style={{
-                                      borderRadius: '6px',
+                                      borderRadius: '8px',
                                       transition: 'all 0.3s ease-in-out'
                                     }}
                                   />
