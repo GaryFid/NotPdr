@@ -118,20 +118,19 @@
   }
 }
 
-/* Компактное позиционирование игроков */
+/* Правильное позиционирование игроков */
 .playerSeat {
   position: absolute;
-  width: 120px;
+  width: 100px;
   display: flex;
   flex-direction: column;
   align-items: center;
   z-index: 3;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  transform: translateX(-50%);
 }
 
 .playerSeat:hover {
-  transform: translateX(-50%) scale(1.02);
+  transform: scale(1.05);
 }
 
 /* Компактный контейнер для аватара и имени */
@@ -890,8 +889,8 @@
 
 /* Карта игрока хорошо видимого размера */
 .cardOnPenki {
-  width: 50px;
-  height: 70px;
+  width: 60px;
+  height: 85px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -938,15 +937,15 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 65px;
-  width: 100px;
+  height: 80px;
+  width: 110px;
   perspective: 1000px;
 }
 
 .penkiCard {
   position: absolute;
-  width: 45px;
-  height: 65px;
+  width: 55px;
+  height: 80px;
   background: 
     linear-gradient(145deg, #1e293b 0%, #334155 100%);
   border-radius: 8px;

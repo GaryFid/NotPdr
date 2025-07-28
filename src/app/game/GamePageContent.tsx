@@ -44,74 +44,24 @@ function getPlayers(count: number, userName = 'Вы'): Player[] {
   }));
 }
 
-// Универсальная функция для позиционирования игроков по овалу стола
+// Простое и аккуратное позиционирование игроков по кругу стола
 const getCirclePosition = (index: number, total: number): { top: string; left: string } => {
-  // Фиксированные позиции для разного количества игроков
-  const positions = {
-    2: [
-      { left: '50%', top: '15%' }, // Верх
-      { left: '50%', top: '75%' }  // Низ
-    ],
-    3: [
-      { left: '50%', top: '12%' }, // Верх
-      { left: '75%', top: '60%' }, // Право
-      { left: '25%', top: '60%' }  // Лево
-    ],
-    4: [
-      { left: '50%', top: '10%' }, // Верх
-      { left: '80%', top: '50%' }, // Право
-      { left: '50%', top: '75%' }, // Низ (пользователь)
-      { left: '20%', top: '50%' }  // Лево
-    ],
-    5: [
-      { left: '50%', top: '8%' },  // Верх
-      { left: '78%', top: '35%' }, // Право-верх
-      { left: '70%', top: '70%' }, // Право-низ
-      { left: '30%', top: '70%' }, // Лево-низ
-      { left: '22%', top: '35%' }  // Лево-верх
-    ],
-    6: [
-      { left: '50%', top: '6%' },  // Верх
-      { left: '82%', top: '30%' }, // Право-верх
-      { left: '82%', top: '70%' }, // Право-низ
-      { left: '50%', top: '80%' }, // Низ
-      { left: '18%', top: '70%' }, // Лево-низ
-      { left: '18%', top: '30%' }  // Лево-верх
-    ],
-    7: [
-      { left: '50%', top: '5%' },  // Верх
-      { left: '85%', top: '25%' }, // Право-верх
-      { left: '85%', top: '55%' }, // Право-центр
-      { left: '70%', top: '78%' }, // Право-низ
-      { left: '30%', top: '78%' }, // Лево-низ
-      { left: '15%', top: '55%' }, // Лево-центр
-      { left: '15%', top: '25%' }  // Лево-верх
-    ],
-    8: [
-      { left: '50%', top: '4%' },  // Верх
-      { left: '80%', top: '18%' }, // Право-верх
-      { left: '88%', top: '45%' }, // Право-центр
-      { left: '80%', top: '72%' }, // Право-низ
-      { left: '50%', top: '82%' }, // Низ
-      { left: '20%', top: '72%' }, // Лево-низ
-      { left: '12%', top: '45%' }, // Лево-центр
-      { left: '20%', top: '18%' }  // Лево-верх
-    ],
-    9: [
-      { left: '50%', top: '3%' },  // Верх
-      { left: '78%', top: '15%' }, // Право-верх
-      { left: '90%', top: '35%' }, // Право-верх-центр
-      { left: '90%', top: '55%' }, // Право-низ-центр
-      { left: '78%', top: '75%' }, // Право-низ
-      { left: '50%', top: '85%' }, // Низ
-      { left: '22%', top: '75%' }, // Лево-низ
-      { left: '10%', top: '55%' }, // Лево-низ-центр
-      { left: '10%', top: '35%' }  // Лево-верх-центр
-    ]
+  // Угол для каждого игрока (начинаем снизу и идем по часовой стрелке)
+  const angle = (index * 360) / total + 270; // +270 чтобы первый игрок был внизу
+  const radians = (angle * Math.PI) / 180;
+  
+  // Радиусы для овального стола
+  const horizontalRadius = 35; // Процент от ширины
+  const verticalRadius = 30;   // Процент от высоты
+  
+  // Вычисляем позицию относительно центра стола
+  const x = 50 + horizontalRadius * Math.cos(radians); // 50% это центр
+  const y = 50 + verticalRadius * Math.sin(radians);
+  
+  return {
+    left: `${Math.max(8, Math.min(92, x))}%`, // Ограничиваем чтобы не выходили за края
+    top: `${Math.max(8, Math.min(85, y))}%`
   };
-
-  const totalPositions = positions[total as keyof typeof positions] || positions[4];
-  return totalPositions[index] || { left: '50%', top: '50%' };
 };
 
 function getFirstPlayerIdx(players: Player[]): number {
@@ -135,12 +85,38 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
     selectHandCard, playSelectedCard
   } = useGameStore();
 
+  const searchParams = useSearchParams();
   const [playerCount, setPlayerCount] = useState(initialPlayerCount);
   const [dealt, setDealt] = useState(false);
+  const [gameInitialized, setGameInitialized] = useState(false);
 
   // Получаем текущего игрока (пользователя)
   const currentPlayer = players.find(p => p.id === currentPlayerId);
   const currentPlayerIndex = players.findIndex(p => p.id === currentPlayerId);
+
+  // Автоматический запуск игры при загрузке страницы
+  useEffect(() => {
+    if (!gameInitialized) {
+      const tableParam = searchParams.get('table');
+      const aiParam = searchParams.get('ai');
+      const modeParam = searchParams.get('mode');
+      
+      if (tableParam) {
+        // Если есть параметры URL - автозапуск
+        const playerCount = parseInt(tableParam);
+        const withAI = aiParam === '1';
+        const gameMode = modeParam || 'classic';
+        
+        setPlayerCount(playerCount);
+        startGame('multiplayer', playerCount);
+        setGameInitialized(true);
+        setDealt(false);
+      } else {
+        // Если нет параметров - просто инициализируем
+        setGameInitialized(true);
+      }
+    }
+  }, [searchParams, gameInitialized, startGame]);
 
   // Эффект для автоматической раздачи карт при старте игры
   useEffect(() => {
@@ -153,11 +129,13 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
   const handleStartGame = () => {
     startGame('multiplayer', playerCount);
     setDealt(false);
+    setGameInitialized(true);
   };
 
   const handleResetGame = () => {
     endGame();
     setDealt(false);
+    setGameInitialized(false);
   };
 
   const canDrawCard = turnPhase === 'deck_card_revealed' && currentPlayer?.id === currentPlayerId;
@@ -165,17 +143,20 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
 
   return (
     <div className={styles.gameContainer}>
-      <div className={styles.gameHeader}>
-        <div className={styles.stageInfo}>
-          Стадия {gameStage}
+      {/* Заголовок игры - только во время игры */}
+      {isGameActive && (
+        <div className={styles.gameHeader}>
+          <div className={styles.stageInfo}>
+            Стадия {gameStage}
+          </div>
+          <div className={styles.deckInfo}>
+            Колода: {deck.length}
+          </div>
+          <div className={styles.targetInfo}>
+            Ходов: {players.length - currentPlayerIndex}
+          </div>
         </div>
-        <div className={styles.deckInfo}>
-          Колода: {deck.length}
-        </div>
-        <div className={styles.targetInfo}>
-          Ходов: {players.length - currentPlayerIndex}
-        </div>
-      </div>
+      )}
 
       {!isGameActive ? (
         <div className={styles.setupScreen}>
@@ -267,6 +248,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                       position: 'absolute',
                       left: position.left,
                       top: position.top,
+                      transform: 'translateX(-50%)', // Центрируем горизонтально
                     }}
                   >
                     {/* Аватар и имя по центру */}
@@ -295,8 +277,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                               <Image
                                 src="/img/cards/back.png"
                                 alt="penki"
-                                width={45}
-                                height={65}
+                                width={55}
+                                height={80}
                                 style={{ 
                                   borderRadius: '8px',
                                   opacity: 0.8
@@ -368,8 +350,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                                       (card.open && card.image ? `/img/cards/${card.image}` : `/img/cards/back.png`)
                                     }
                                     alt={card.open ? 'card' : 'back'}
-                                    width={50}
-                                    height={70}
+                                    width={60}
+                                    height={85}
                                     draggable={false}
                                     style={{
                                       borderRadius: '8px',
@@ -396,8 +378,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
             </div>
           </div>
 
-          {/* Контейнер карт игрока внизу */}
-          {currentPlayer && currentPlayer.cards.length > 0 && (
+          {/* Контейнер карт игрока внизу - только во время игры */}
+          {isGameActive && currentPlayer && currentPlayer.cards.length > 0 && (
             <div className={styles.playerHand}>
               <div className={styles.handTitle}>
                 {stage2TurnPhase === 'selecting_card' ? '🎯 ВЫБЕРИТЕ КАРТУ' : '🎴 Ваши карты'} ({currentPlayer.cards.length})

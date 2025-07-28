@@ -14,7 +14,7 @@ export default function Home() {
     } else if (page === 'rules') {
       window.location.href = '/rules';
     } else if (page === 'game') {
-      window.location.href = '/game-setup';
+      window.location.href = '/game?ai=1&table=4&mode=classic';
     } else if (page === 'invite') {
       window.location.href = '/invite';
     } else if (page === 'shop') {
