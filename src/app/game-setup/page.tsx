@@ -19,7 +19,26 @@ export default function GameSetupPage() {
   const [testMode, setTestMode] = useState(false);
 
   return (
-    <Box minH="100vh" className="main-menu-container" pb={20}>
+    <Box 
+      minH="100vh" 
+      className="main-menu-container" 
+      pb={20} 
+      style={{
+        position: 'relative',
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 30%, #0f172a 60%, #064e3b 100%)',
+        overflow: 'hidden'
+      }}
+    >
+      {/* Эффект свечения как в главном меню */}
+      <Box
+        position="absolute"
+        top={0}
+        left={0}
+        width="100%"
+        height="100%"
+        background="radial-gradient(circle at 20% 20%, rgba(34, 197, 94, 0.08) 0%, transparent 50%), radial-gradient(circle at 80% 60%, rgba(255, 215, 0, 0.05) 0%, transparent 50%), radial-gradient(circle at 40% 80%, rgba(59, 130, 246, 0.06) 0%, transparent 50%)"
+        pointerEvents="none"
+      />
       <Flex as="header" align="center" justify="space-between" px={4} py={3} className="menu-header" position="sticky" top={0} zIndex={20} boxShadow="md">
         <Button variant="ghost" color="white" _hover={{ color: '#ffd700' }} onClick={() => history.back()}><FaArrowLeft /></Button>
         <Text fontSize="lg" fontWeight="bold" className="menu-title">Настройка игры</Text>
