@@ -44,23 +44,23 @@ function getPlayers(count: number, userName = 'Вы'): Player[] {
   }));
 }
 
-// Простое и аккуратное позиционирование игроков по кругу стола
+// Правильное позиционирование игроков вокруг овального стола
 const getCirclePosition = (index: number, total: number): { top: string; left: string } => {
   // Угол для каждого игрока (начинаем снизу и идем по часовой стрелке)
   const angle = (index * 360) / total + 270; // +270 чтобы первый игрок был внизу
   const radians = (angle * Math.PI) / 180;
   
-  // Радиусы для овального стола
-  const horizontalRadius = 35; // Процент от ширины
-  const verticalRadius = 30;   // Процент от высоты
+  // Увеличенные радиусы чтобы игроки были вокруг стола, а не на нем
+  const horizontalRadius = 48; // Процент от ширины (увеличено с 35 до 48)
+  const verticalRadius = 40;   // Процент от высоты (увеличено с 30 до 40)
   
   // Вычисляем позицию относительно центра стола
   const x = 50 + horizontalRadius * Math.cos(radians); // 50% это центр
   const y = 50 + verticalRadius * Math.sin(radians);
   
   return {
-    left: `${Math.max(8, Math.min(92, x))}%`, // Ограничиваем чтобы не выходили за края
-    top: `${Math.max(8, Math.min(85, y))}%`
+    left: `${Math.max(5, Math.min(95, x))}%`, // Расширили границы с 8-92 до 5-95
+    top: `${Math.max(5, Math.min(90, y))}%`   // Расширили границы с 8-85 до 5-90
   };
 };
 

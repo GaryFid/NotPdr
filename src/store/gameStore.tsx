@@ -117,7 +117,7 @@ interface GameState {
   revealDeckCard: () => boolean
   canPlaceCardOnSelf: (deckCard: Card, playerTopCard: Card) => boolean  
   placeCardOnSelfByRules: () => void
-  takeCardNotByRules: () => void
+  takeCardNotByRules: () => void // Положить карту поверх своих карт (если нет ходов)
   resetTurnState: () => void
   onDeckClick: () => void
   findAvailableTargetsForDeckCard: (deckCard: Card) => number[]
@@ -965,10 +965,10 @@ export const useGameStore = create<GameState>()(
         if (canMoveToOpponents) {
           get().showNotification('Выберите: сходить на соперника или положить на себя', 'info');
         } else if (canPlaceOnSelfByRules) {
-          get().showNotification('Можете положить карту на себя по правилам или взять просто так', 'warning');
+          get().showNotification('Можете положить карту на себя по правилам', 'info');
         } else {
-          get().showNotification('Нет доступных ходов - карта будет взята', 'warning');
-          // Автоматически берем через 2 секунды
+          get().showNotification('Нет доступных ходов - карта ложится поверх ваших карт', 'warning');
+          // Автоматически кладем карту поверх через 2 секунды
           setTimeout(() => {
             get().takeCardNotByRules();
           }, 2000);
@@ -1071,34 +1071,35 @@ export const useGameStore = create<GameState>()(
          }, 1000);
        },
        
-       // Взять карту не по правилам (завершение хода)
-       takeCardNotByRules: () => {
-         const { players, currentPlayerId, revealedDeckCard, deck } = get();
-         if (!currentPlayerId || !revealedDeckCard) return;
-         
-         const currentPlayer = players.find(p => p.id === currentPlayerId);
-         if (!currentPlayer) return;
-         
-         // Добавляем карту игроку
-         currentPlayer.cards.push(revealedDeckCard);
-         
-         // Отслеживаем для второй стадии
-         set({
-           players: [...players],
-           deck: deck.slice(1),
-           lastDrawnCard: revealedDeckCard,
-           lastPlayerToDrawCard: currentPlayerId,
-           turnPhase: 'turn_ended'
-         });
-         
-         get().showNotification(`${currentPlayer.name} взял карту и пропускает ход`, 'warning');
-         get().resetTurnState();
-         
-         // Переход к следующему игроку
-         setTimeout(() => {
-           get().nextTurn();
-         }, 1500);
-       },
+             // Положить карту поверх своих карт (завершение хода)
+      takeCardNotByRules: () => {
+        const { players, currentPlayerId, revealedDeckCard, deck } = get();
+        if (!currentPlayerId || !revealedDeckCard) return;
+        
+        const currentPlayer = players.find(p => p.id === currentPlayerId);
+        if (!currentPlayer) return;
+        
+        // Карта ложится ПОВЕРХ открытых карт игрока (становится новой верхней картой)
+        revealedDeckCard.open = true; // Карта остается открытой
+        currentPlayer.cards.push(revealedDeckCard);
+        
+        // Отслеживаем для второй стадии
+        set({
+          players: [...players],
+          deck: deck.slice(1),
+          lastDrawnCard: revealedDeckCard,
+          lastPlayerToDrawCard: currentPlayerId,
+          turnPhase: 'turn_ended'
+        });
+        
+        get().showNotification(`${currentPlayer.name} положил карту поверх своих карт и передает ход`, 'info');
+        get().resetTurnState();
+        
+        // Переход к следующему игроку
+        setTimeout(() => {
+          get().nextTurn();
+        }, 1500);
+      },
        
                 // Сброс состояния хода
          resetTurnState: () => {

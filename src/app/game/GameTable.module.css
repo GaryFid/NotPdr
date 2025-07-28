@@ -950,10 +950,10 @@
   z-index: 10;
 }
 
-/* Карта игрока хорошо видимого размера */
+/* Карта игрока увеличенного размера (1.5x) */
 .cardOnPenki {
-  width: 60px;
-  height: 85px;
+  width: 90px;
+  height: 128px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -994,21 +994,21 @@
   border: 1px solid #64748b;
 }
 
-/* Обновленное позиционирование пеньков */
+/* Обновленное позиционирование пеньков (увеличено для больших карт) */
 .penkiRow {
   position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 80px;
-  width: 110px;
+  height: 120px;
+  width: 165px;
   perspective: 1000px;
 }
 
 .penkiCard {
   position: absolute;
-  width: 55px;
-  height: 80px;
+  width: 83px;
+  height: 120px;
   background: 
     linear-gradient(145deg, #1e293b 0%, #334155 100%);
   border-radius: 8px;
@@ -1069,18 +1069,18 @@
   }
   
   .cardOnPenki {
-    width: 28px;
-    height: 40px;
+    width: 42px;
+    height: 60px;
   }
   
   .penkiRow {
-    height: 40px;
-    width: 60px;
+    height: 60px;
+    width: 90px;
   }
   
   .penkiCard {
-    width: 28px;
-    height: 40px;
+    width: 42px;
+    height: 60px;
   }
   
   .playerHand {
@@ -1139,18 +1139,18 @@
   }
   
   .cardOnPenki {
-    width: 22px;
-    height: 32px;
+    width: 33px;
+    height: 48px;
   }
   
   .penkiRow {
-    height: 32px;
-    width: 50px;
+    height: 48px;
+    width: 75px;
   }
   
   .penkiCard {
-    width: 22px;
-    height: 32px;
+    width: 33px;
+    height: 48px;
   }
   
   .handCard {
@@ -1238,18 +1238,18 @@
   }
   
   .cardOnPenki {
-    width: 25px;
-    height: 35px;
+    width: 38px;
+    height: 53px;
   }
   
   .penkiRow {
-    height: 35px;
-    width: 55px;
+    height: 53px;
+    width: 83px;
   }
   
   .penkiCard {
-    width: 25px;
-    height: 35px;
+    width: 38px;
+    height: 53px;
   }
   
   .playerHand {
@@ -1584,18 +1584,18 @@
   }
   
   .cardOnPenki {
-    width: 65px;
-    height: 90px;
+    width: 98px;
+    height: 135px;
   }
   
   .penkiRow {
-    height: 90px;
-    width: 120px;
+    height: 135px;
+    width: 180px;
   }
   
   .penkiCard {
-    width: 60px;
-    height: 85px;
+    width: 90px;
+    height: 128px;
   }
   
   .playerHand {
@@ -1693,18 +1693,18 @@
   }
   
   .cardOnPenki {
-    width: 70px;
-    height: 100px;
+    width: 105px;
+    height: 150px;
   }
   
   .penkiRow {
-    height: 100px;
-    width: 140px;
+    height: 150px;
+    width: 210px;
   }
   
   .penkiCard {
-    width: 65px;
-    height: 95px;
+    width: 98px;
+    height: 143px;
   }
   
   .playerHand {
@@ -1802,18 +1802,18 @@
   }
   
   .cardOnPenki {
-    width: 75px;
-    height: 110px;
+    width: 113px;
+    height: 165px;
   }
   
   .penkiRow {
-    height: 110px;
-    width: 160px;
+    height: 165px;
+    width: 240px;
   }
   
   .penkiCard {
-    width: 70px;
-    height: 105px;
+    width: 105px;
+    height: 158px;
   }
   
   .playerHand {
