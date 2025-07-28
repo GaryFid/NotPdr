@@ -79,9 +79,10 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
   const { 
     isGameActive, gameStage, turnPhase, stage2TurnPhase,
     players, currentPlayerId, deck, availableTargets,
-    selectedHandCard, 
+    selectedHandCard, revealedDeckCard, canPlaceOnSelfByRules,
     startGame, endGame, 
-    drawCard, makeMove,
+    drawCard, makeMove, onDeckClick,
+    placeCardOnSelfByRules, takeCardNotByRules,
     selectHandCard, playSelectedCard
   } = useGameStore();
 
@@ -143,6 +144,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
   };
 
   const canDrawCard = turnPhase === 'deck_card_revealed' && currentPlayer?.id === currentPlayerId;
+  const canClickDeck = (turnPhase === 'showing_deck_hint' || turnPhase === 'analyzing_hand') && gameStage === 1 && currentPlayer?.id === currentPlayerId;
   const waitingForTarget = turnPhase === 'waiting_target_selection';
 
   return (
@@ -189,10 +191,16 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
               <div className={styles.dropZone}>
                 <div 
                   className={styles.deckStack}
-                  onClick={() => canDrawCard && drawCard()}
+                  onClick={() => {
+                    if (gameStage === 1 && canClickDeck) {
+                      onDeckClick();
+                    } else if (canDrawCard) {
+                      drawCard();
+                    }
+                  }}
                   style={{
-                    cursor: canDrawCard ? 'pointer' : 'default',
-                    opacity: canDrawCard ? 1 : 0.7
+                    cursor: (canClickDeck || canDrawCard) ? 'pointer' : 'default',
+                    opacity: (canClickDeck || canDrawCard) ? 1 : 0.7
                   }}
                 >
                   {deck.length > 0 && (
@@ -217,16 +225,51 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                 )}
               </div>
 
-              {/* Центральная кнопка "КЛИКНИ!" для 1-й стадии */}
-              {gameStage === 1 && canDrawCard && (
+                            {/* Центральная кнопка "КЛИКНИ!" для 1-й стадии */}
+              {gameStage === 1 && canClickDeck && (
                 <div className={styles.centralButtonContainer}>
                   <button 
                     className={styles.centralButton}
-                    onClick={() => drawCard()}
+                    onClick={() => onDeckClick()}
                   >
                     КЛИКНИ!
                   </button>
                   <div className={styles.deckCount}>{deck.length}</div>
+                </div>
+              )}
+
+              {/* Выбор действий с открытой картой из колоды */}
+              {gameStage === 1 && turnPhase === 'waiting_deck_action' && revealedDeckCard && (
+                <div className={styles.deckActionButtons}>
+                  {availableTargets.length > 0 && (
+                    <div>
+                      <div style={{ 
+                        color: '#22c55e', 
+                        fontSize: '12px', 
+                        textAlign: 'center', 
+                        marginBottom: '5px',
+                        fontWeight: 'bold'
+                      }}>
+                        Выберите игрока 🎯
+                      </div>
+                    </div>
+                  )}
+                  {canPlaceOnSelfByRules && (
+                    <button 
+                      className={styles.deckActionButton}
+                      onClick={() => placeCardOnSelfByRules()}
+                    >
+                      Положить на себя
+                    </button>
+                  )}
+                  {!availableTargets.length && !canPlaceOnSelfByRules && (
+                    <button 
+                      className={styles.deckActionButton}
+                      onClick={() => takeCardNotByRules()}
+                    >
+                      Взять карту
+                    </button>
+                  )}
                 </div>
               )}
 

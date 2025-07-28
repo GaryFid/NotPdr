@@ -787,6 +787,47 @@
   transform: scale(1.1);
 }
 
+/* Кнопки действий с картой из колоды */
+.deckActionButtons {
+  position: absolute;
+  left: 50%;
+  top: 70%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 20;
+}
+
+.deckActionButton {
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 4px 15px rgba(99, 102, 241, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+}
+
+.deckActionButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 6px 20px rgba(99, 102, 241, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.deckActionButton:disabled {
+  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 /* Современная анимация появления стадии */
 @keyframes stageTransition {
   0% {
@@ -1190,6 +1231,20 @@
     font-size: 7px !important;
   }
   
+  /* Компактные кнопки действий для маленьких экранов */
+  .deckActionButtons {
+    top: 75%;
+    gap: 4px;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .deckActionButton {
+    padding: 6px 12px;
+    font-size: 10px;
+    border-radius: 8px;
+  }
+  
   /* Улучшенная читаемость текста на малых экранах */
   .cardRank {
     width: 16px;
@@ -1205,6 +1260,17 @@
     font-size: 9px;
     top: -10px;
     right: -10px;
+  }
+  
+  /* Мобильные кнопки действий */
+  .deckActionButtons {
+    top: 70%;
+    gap: 6px;
+  }
+  
+  .deckActionButton {
+    padding: 8px 14px;
+    font-size: 11px;
   }
 }
 
@@ -1643,6 +1709,16 @@
     font-size: 16px;
   }
   
+  .deckActionButtons {
+    top: 65%;
+    gap: 8px;
+  }
+  
+  .deckActionButton {
+    padding: 10px 18px;
+    font-size: 13px;
+  }
+  
   /* Адаптивные стили экрана настройки для планшетов */
   .setupScreen {
     max-width: 500px;
@@ -1753,6 +1829,16 @@
     font-size: 18px;
   }
   
+  .deckActionButtons {
+    top: 60%;
+    gap: 12px;
+  }
+  
+  .deckActionButton {
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+  
   /* Адаптивные стили экрана настройки для ноутбуков */
   .setupScreen {
     max-width: 600px;
@@ -1860,6 +1946,16 @@
     width: 45px;
     height: 45px;
     font-size: 20px;
+  }
+  
+  .deckActionButtons {
+    top: 58%;
+    gap: 15px;
+  }
+  
+  .deckActionButton {
+    padding: 14px 24px;
+    font-size: 15px;
   }
   
   /* Адаптивные стили экрана настройки для больших мониторов */
