@@ -100,12 +100,16 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
       const tableParam = searchParams.get('table');
       const aiParam = searchParams.get('ai');
       const modeParam = searchParams.get('mode');
+      const testParam = searchParams.get('test');
       
       if (tableParam) {
         // Если есть параметры URL - автозапуск
         const playerCount = parseInt(tableParam);
         const withAI = aiParam === '1';
         const gameMode = modeParam || 'classic';
+        const testMode = testParam === '1';
+        
+        console.log(`🎮 Автозапуск игры: ${playerCount} игроков, ИИ: ${withAI}, режим: ${gameMode}, тест: ${testMode}`);
         
         setPlayerCount(playerCount);
         startGame('multiplayer', playerCount);
