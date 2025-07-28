@@ -77,6 +77,36 @@ const getCirclePosition = (index: number, total: number): { top: string; left: s
       { left: '50%', top: '80%' }, // Низ
       { left: '18%', top: '70%' }, // Лево-низ
       { left: '18%', top: '30%' }  // Лево-верх
+    ],
+    7: [
+      { left: '50%', top: '5%' },  // Верх
+      { left: '85%', top: '25%' }, // Право-верх
+      { left: '85%', top: '55%' }, // Право-центр
+      { left: '70%', top: '78%' }, // Право-низ
+      { left: '30%', top: '78%' }, // Лево-низ
+      { left: '15%', top: '55%' }, // Лево-центр
+      { left: '15%', top: '25%' }  // Лево-верх
+    ],
+    8: [
+      { left: '50%', top: '4%' },  // Верх
+      { left: '80%', top: '18%' }, // Право-верх
+      { left: '88%', top: '45%' }, // Право-центр
+      { left: '80%', top: '72%' }, // Право-низ
+      { left: '50%', top: '82%' }, // Низ
+      { left: '20%', top: '72%' }, // Лево-низ
+      { left: '12%', top: '45%' }, // Лево-центр
+      { left: '20%', top: '18%' }  // Лево-верх
+    ],
+    9: [
+      { left: '50%', top: '3%' },  // Верх
+      { left: '78%', top: '15%' }, // Право-верх
+      { left: '90%', top: '35%' }, // Право-верх-центр
+      { left: '90%', top: '55%' }, // Право-низ-центр
+      { left: '78%', top: '75%' }, // Право-низ
+      { left: '50%', top: '85%' }, // Низ
+      { left: '22%', top: '75%' }, // Лево-низ
+      { left: '10%', top: '55%' }, // Лево-низ-центр
+      { left: '10%', top: '35%' }  // Лево-верх-центр
     ]
   };
 
@@ -241,7 +271,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                   >
                     {/* Аватар и имя по центру */}
                     <div className={styles.avatarWrap}>
-                      <Image src={p.avatar || USER_AVATAR} alt="avatar" width={45} height={45} className={styles.avatar} />
+                      <Image src={p.avatar || USER_AVATAR} alt="avatar" width={22} height={22} className={styles.avatar} />
                       <span className={styles.playerName}>{p.name}</span>
                       {isCurrentPlayer && <span style={{color:'#6366f1',marginLeft:4,fontWeight:700}}>⬤</span>}
                       {isTargetAvailable && <span style={{color:'#22c55e',marginLeft:4}}>🎯</span>}
@@ -338,8 +368,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                                       (card.open && card.image ? `/img/cards/${card.image}` : `/img/cards/back.png`)
                                     }
                                     alt={card.open ? 'card' : 'back'}
-                                    width={45}
-                                    height={65}
+                                    width={50}
+                                    height={70}
                                     draggable={false}
                                     style={{
                                       borderRadius: '8px',

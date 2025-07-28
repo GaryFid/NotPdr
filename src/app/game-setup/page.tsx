@@ -1,0 +1,274 @@
+'use client'
+import { useState } from 'react';
+import { ArrowLeft, Play, Users, Zap, Settings } from 'lucide-react';
+
+export default function GameSetupPage() {
+  const [selectedPlayers, setSelectedPlayers] = useState(4);
+  const [selectedMode, setSelectedMode] = useState('classic');
+  const [addBots, setAddBots] = useState(true);
+  const [testMode, setTestMode] = useState(false);
+
+  const playerOptions = [4, 5, 6, 7, 8, 9];
+  const modes = [
+    { key: 'classic', icon: Users, label: 'Классический' },
+    { key: 'quick', icon: Zap, label: 'Быстрый' },
+    { key: 'custom', icon: Settings, label: 'Свой' },
+  ];
+
+  const startGame = () => {
+    window.location.href = `/game?ai=${addBots ? 1 : 0}&table=${selectedPlayers}&mode=${selectedMode}&test=${testMode ? 1 : 0}`;
+  };
+
+  return (
+    <div className="main-menu-container">
+      {/* Эффект свечения как в главном меню */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'radial-gradient(circle at 20% 20%, rgba(34, 197, 94, 0.08) 0%, transparent 50%), radial-gradient(circle at 80% 60%, rgba(255, 215, 0, 0.05) 0%, transparent 50%), radial-gradient(circle at 40% 80%, rgba(59, 130, 246, 0.06) 0%, transparent 50%)',
+          pointerEvents: 'none'
+        }}
+      />
+
+      <div className="main-menu-inner">
+        {/* Верхний бар */}
+        <div className="menu-header">
+          <button 
+            onClick={() => window.history.back()} 
+            className="wallet-btn"
+            style={{ padding: '8px 12px' }}
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <span className="menu-title">Настройка игры</span>
+          <div style={{ width: '50px' }} />
+        </div>
+
+        {/* Выбор количества игроков */}
+        <div style={{ marginTop: '32px', marginBottom: '24px' }}>
+          <div className="menu-actions-title">ВЫБЕРИТЕ СТОЛ</div>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(3, 1fr)', 
+            gap: '16px', 
+            marginTop: '12px' 
+          }}>
+            {playerOptions.map(count => (
+              <button 
+                key={count}
+                onClick={() => setSelectedPlayers(count)}
+                className={selectedPlayers === count ? 'menu-balance-card' : 'menu-action-card'}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '20px 12px',
+                  aspectRatio: '1',
+                  fontSize: '1.8rem',
+                  fontWeight: '700',
+                  position: 'relative',
+                  transform: selectedPlayers === count ? 'scale(1.05)' : 'scale(1)',
+                  color: selectedPlayers === count ? '#0f172a' : '#e2e8f0'
+                }}
+              >
+                <div style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '4px' }}>
+                  {count}
+                </div>
+                <div style={{ fontSize: '0.75rem', fontWeight: '600', opacity: 0.8 }}>
+                  игроков
+                </div>
+                {selectedPlayers === count && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '8px',
+                    right: '8px',
+                    width: '20px',
+                    height: '20px',
+                    background: '#22c55e',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#fff',
+                    fontSize: '12px'
+                  }}>
+                    ✓
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Режим игры */}
+        <div style={{ marginBottom: '24px' }}>
+          <div className="menu-actions-title">РЕЖИМ ИГРЫ</div>
+          <div style={{ 
+            display: 'flex', 
+            gap: '12px', 
+            marginTop: '12px' 
+          }}>
+            {modes.map(mode => {
+              const IconComponent = mode.icon;
+              return (
+                <button 
+                  key={mode.key}
+                  onClick={() => setSelectedMode(mode.key)}
+                  className={selectedMode === mode.key ? 'menu-balance-card' : 'menu-action-card'}
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '16px 12px',
+                    fontSize: '1rem',
+                    fontWeight: '600',
+                    transform: selectedMode === mode.key ? 'scale(1.05)' : 'scale(1)',
+                    color: selectedMode === mode.key ? '#0f172a' : '#e2e8f0'
+                  }}
+                >
+                  <IconComponent size={24} style={{ marginBottom: '8px' }} />
+                  <span style={{ fontSize: '0.9rem' }}>{mode.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Дополнительные настройки */}
+        <div style={{ marginBottom: '32px' }}>
+          <div className="menu-actions-title">ДОПОЛНИТЕЛЬНЫЕ НАСТРОЙКИ</div>
+          <div style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: '12px',
+            marginTop: '12px'
+          }}>
+            <label style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              color: '#e2e8f0',
+              fontSize: '1rem',
+              fontWeight: '500',
+              cursor: 'pointer'
+            }}>
+              <input 
+                type="checkbox" 
+                checked={addBots} 
+                onChange={(e) => setAddBots(e.target.checked)}
+                style={{ 
+                  width: '18px', 
+                  height: '18px',
+                  accentColor: '#22c55e',
+                  cursor: 'pointer'
+                }} 
+              />
+              Добавить ботов
+            </label>
+            <label style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              color: '#e2e8f0',
+              fontSize: '1rem',
+              fontWeight: '500',
+              cursor: 'pointer'
+            }}>
+              <input 
+                type="checkbox" 
+                checked={testMode} 
+                onChange={(e) => setTestMode(e.target.checked)}
+                style={{ 
+                  width: '18px', 
+                  height: '18px',
+                  accentColor: '#22c55e',
+                  cursor: 'pointer'
+                }} 
+              />
+              Тестовый режим
+            </label>
+          </div>
+        </div>
+
+        {/* Кнопки */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <button
+            onClick={startGame}
+            style={{
+              background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+              color: '#ffffff',
+              border: '1px solid rgba(34, 197, 94, 0.3)',
+              borderRadius: '16px',
+              padding: '16px 24px',
+              fontSize: '1.1rem',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 20px rgba(34, 197, 94, 0.3)'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 6px 28px rgba(34, 197, 94, 0.4)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)';
+              e.currentTarget.style.transform = 'translateY(0px)';
+              e.currentTarget.style.boxShadow = '0 4px 20px rgba(34, 197, 94, 0.3)';
+            }}
+          >
+            <Play size={20} />
+            Играть с ботами
+          </button>
+
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+              style={{
+                flex: 1,
+                background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(30, 41, 59, 0.8) 100%)',
+                color: '#ffd700',
+                border: '1px solid rgba(255, 215, 0, 0.4)',
+                borderRadius: '16px',
+                padding: '14px 20px',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              + Создать стол
+            </button>
+            <button
+              onClick={() => window.history.back()}
+              style={{
+                flex: 1,
+                background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%)',
+                color: '#e2e8f0',
+                border: '1px solid rgba(99, 102, 241, 0.4)',
+                borderRadius: '16px',
+                padding: '14px 20px',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              ← Назад
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+} 
