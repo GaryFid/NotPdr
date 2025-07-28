@@ -4,18 +4,18 @@
   /* Цвета по умолчанию */
   --game-bg: #0c0c0c;
   --card-bg: #ffffff;
-  --text-color: #1e293b;
+  --text-color: #e2e8f0;
   --accent-color: #0ea5e9;
   --success-color: #10b981;
   --warning-color: #f59e0b;
   --error-color: #ef4444;
   
-  /* Telegram цвета (будут переопределены в providers) */
-  --tg-theme-bg-color: #ffffff;
-  --tg-theme-text-color: #000000;
-  --tg-theme-hint-color: #999999;
-  --tg-theme-link-color: #0ea5e9;
-  --tg-theme-button-color: #0ea5e9;
+  /* Telegram цвета (переопределены для темной темы) */
+  --tg-theme-bg-color: #0f172a;
+  --tg-theme-text-color: #e2e8f0;
+  --tg-theme-hint-color: #64748b;
+  --tg-theme-link-color: #22c55e;
+  --tg-theme-button-color: #22c55e;
   --tg-theme-button-text-color: #ffffff;
 
   /* Основные цвета в стиле Dota 2 */
@@ -25,7 +25,7 @@
   --text-secondary: #8a8a8a;
   --gold-color: #ffd700;
   --blue-accent: #4b69ff;
-  --background-color: #f5f7fa;
+  --background-color: #0f172a;
   --card-width: 70px;
   --card-height: 100px;
   /* Градиенты */
@@ -875,11 +875,26 @@ input:focus, textarea:focus, select:focus {
 
 .main-menu-container {
   min-height: 100vh;
-  background: radial-gradient(ellipse at 60% 0%, #1e3c72 0%, #0a1833 80%);
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 30%, #0f172a 60%, #064e3b 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
+  position: relative;
+  overflow: hidden;
+}
+
+.main-menu-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 20% 20%, rgba(34, 197, 94, 0.08) 0%, transparent 50%),
+              radial-gradient(circle at 80% 60%, rgba(255, 215, 0, 0.05) 0%, transparent 50%),
+              radial-gradient(circle at 40% 80%, rgba(59, 130, 246, 0.06) 0%, transparent 50%);
+  pointer-events: none;
 }
 
 .main-menu-inner {
@@ -897,9 +912,10 @@ input:focus, textarea:focus, select:focus {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(10,24,51,0.95);
-  box-shadow: 0 2px 12px #0006;
-  border-bottom: 2px solid #222b3e;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(34, 197, 94, 0.2);
   padding: 16px 0 12px 0;
   position: sticky;
   top: 0;
@@ -916,14 +932,29 @@ input:focus, textarea:focus, select:focus {
 }
 
 .menu-balance-card {
-  background: linear-gradient(135deg, #ffd700 80%, #fffbe6 100%);
-  color: #222;
-  border-radius: 18px;
-  box-shadow: 0 4px 24px #ffd70044;
-  padding: 28px 0 18px 0;
-  margin: 32px 0 18px 0;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(34, 197, 94, 0.08) 100%);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  color: #ffd700;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  padding: 32px 24px 24px 24px;
+  margin: 32px 0 24px 0;
   width: 100%;
   text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.menu-balance-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, transparent 30%, rgba(255, 215, 0, 0.03) 50%, transparent 70%);
+  pointer-events: none;
 }
 
 .menu-balance-amount {
@@ -954,51 +985,111 @@ input:focus, textarea:focus, select:focus {
 }
 
 .menu-action-card {
-  background: #101c33;
-  border: 2px solid #ff3b3b;
-  border-radius: 18px;
-  box-shadow: 0 2px 12px #0004;
-  padding: 28px 0 18px 0;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  padding: 28px 16px 20px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  transition: box-shadow .18s, border-color .18s, background .18s;
+  transition: all 0.3s ease;
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
 }
+
+.menu-action-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, transparent 30%, rgba(34, 197, 94, 0.05) 50%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
 .menu-action-card:hover {
-  border-color: #ffd700;
-  background: #182a4d;
-  box-shadow: 0 4px 24px #ffd70044;
+  border-color: rgba(255, 215, 0, 0.6);
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.8) 100%);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.1);
+  transform: translateY(-2px);
 }
+
+.menu-action-card:hover::before {
+  opacity: 1;
+}
+
 .menu-action-icon {
   font-size: 2rem;
-  color: #ff3b3b;
-  margin-bottom: 8px;
+  color: #22c55e;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+  filter: drop-shadow(0 2px 4px rgba(34, 197, 94, 0.3));
 }
+
+.menu-action-card:hover .menu-action-icon {
+  color: #ffd700;
+  transform: scale(1.1);
+  filter: drop-shadow(0 4px 8px rgba(255, 215, 0, 0.4));
+}
+
 .menu-action-label {
-  color: #fff;
-  font-size: 1.1rem;
-  font-weight: 700;
-  letter-spacing: 1px;
+  color: #e2e8f0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: color 0.3s ease;
+}
+
+.menu-action-card:hover .menu-action-label {
+  color: #ffd700;
 }
 
 .wallet-btn {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
-  background: linear-gradient(90deg, #232b3e 60%, #1e3c72 100%);
-  border: 2px solid #ffd700;
-  border-radius: 14px;
-  box-shadow: 0 2px 12px #0006;
+  padding: 10px 18px;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
   color: #ffd700;
-  font-weight: 700;
-  font-size: 1.1rem;
-  transition: background 0.18s, box-shadow 0.18s;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
+
+.wallet-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, transparent 30%, rgba(255, 215, 0, 0.05) 50%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
 .wallet-btn:hover {
-  background: #2d3e5e;
-  box-shadow: 0 4px 24px #ffd70044;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(30, 41, 59, 0.9) 100%);
+  border-color: rgba(34, 197, 94, 0.6);
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.3), 0 0 20px rgba(34, 197, 94, 0.1);
+  transform: translateY(-1px);
+}
+
+.wallet-btn:hover::before {
+  opacity: 1;
 }
 .wallet-icon {
   color: #ffd700;
@@ -1007,16 +1098,17 @@ input:focus, textarea:focus, select:focus {
 }
 .wallet-dropdown {
   position: absolute;
-  top: 60px;
+  top: 65px;
   right: 0;
-  background: #101c33;
-  border: 2px solid #ffd700;
-  border-radius: 18px;
-  box-shadow: 0 8px 32px #000a;
-  padding: 18px 24px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.90) 100%);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 20px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(15px);
+  padding: 20px 24px;
   z-index: 100;
-  min-width: 220px;
-  animation: fadeIn 0.2s;
+  min-width: 240px;
+  animation: fadeIn 0.3s ease;
 }
 .wallet-coin {
   display: flex;
@@ -1033,19 +1125,19 @@ input:focus, textarea:focus, select:focus {
   height: 28px;
 }
 .wallet-coin-value {
-  color: #fff;
-  font-weight: 700;
-  min-width: 40px;
+  color: #e2e8f0;
+  font-weight: 600;
+  min-width: 50px;
   text-align: left;
-  font-size: 0.7rem;
-  margin-left: 6px;
+  font-size: 0.75rem;
+  margin-left: 8px;
 }
 .wallet-coin-name {
-  color: #ffd700;
-  font-weight: 700;
-  margin-left: 8px;
-  font-size: 1.08rem;
-  letter-spacing: 1px;
+  color: #22c55e;
+  font-weight: 600;
+  margin-left: 10px;
+  font-size: 1.05rem;
+  letter-spacing: 0.5px;
 }
 .wallet-action-btn {
   flex: 1;
@@ -1058,18 +1150,21 @@ input:focus, textarea:focus, select:focus {
   transition: background 0.18s, color 0.18s;
 }
 .wallet-action-btn--deposit {
-  background: #ffd700;
-  color: #222;
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: #ffffff;
+  border: 1px solid rgba(34, 197, 94, 0.3);
 }
 .wallet-action-btn--deposit:hover {
-  background: #ffe066;
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  box-shadow: 0 4px 20px rgba(34, 197, 94, 0.3);
 }
 .wallet-action-btn--withdraw {
-  background: #232b3e;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(30, 41, 59, 0.8) 100%);
   color: #ffd700;
-  border: 1.5px solid #ffd700;
+  border: 1px solid rgba(255, 215, 0, 0.4);
 }
 .wallet-action-btn--withdraw:hover {
-  background: #ffd700;
-  color: #232b3e;
+  background: linear-gradient(135deg, #ffd700 0%, #f59e0b 100%);
+  color: #0f172a;
+  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);
 }
