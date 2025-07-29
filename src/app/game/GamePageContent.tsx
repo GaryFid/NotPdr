@@ -44,23 +44,23 @@ function getPlayers(count: number, userName = 'Вы'): Player[] {
   }));
 }
 
-// Правильное позиционирование игроков вокруг овального стола
+// Гармоничное позиционирование игроков вокруг овального стола
 const getCirclePosition = (index: number, total: number): { top: string; left: string } => {
   // Угол для каждого игрока (начинаем снизу и идем по часовой стрелке)
   const angle = (index * 360) / total + 270; // +270 чтобы первый игрок был внизу
   const radians = (angle * Math.PI) / 180;
   
-  // Максимально широкое расположение игроков для идеальной видимости
-  const horizontalRadius = 75; // Процент от ширины (увеличено с 65 до 75)
-  const verticalRadius = 60;   // Процент от высоты (увеличено с 52 до 60)
+  // Оптимальные радиусы для гармоничного расположения
+  const horizontalRadius = 42; // Процент от ширины (уменьшено с 75 до 42 для компактности)
+  const verticalRadius = 35;   // Процент от высоты (уменьшено с 60 до 35 для компактности)
   
   // Вычисляем позицию относительно центра стола
   const x = 50 + horizontalRadius * Math.cos(radians); // 50% это центр
   const y = 50 + verticalRadius * Math.sin(radians);
   
   return {
-    left: `${Math.max(5, Math.min(95, x))}%`, // Расширили границы с 8-92 до 5-95
-    top: `${Math.max(5, Math.min(90, y))}%`   // Расширили границы с 8-85 до 5-90
+    left: `${Math.max(8, Math.min(92, x))}%`, // Безопасные границы для всех устройств
+    top: `${Math.max(10, Math.min(85, y))}%`   // Безопасные границы для всех устройств
   };
 };
 
@@ -461,16 +461,6 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                       }}
                     >
                       <div style={{ width: '100%', height: '100%' }}>
-                        <div style={{
-                          position: 'absolute',
-                          width: '70px',
-                          height: '105px',
-                          background: 'linear-gradient(145deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.8))',
-                          borderRadius: '10px',
-                          zIndex: -1,
-                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
-                          border: '1px solid rgba(99, 102, 241, 0.3)'
-                        }}></div>
                         <Image
                           src={card.open && card.image ? `/img/cards/${card.image}` : `/img/cards/back.png`}
                           alt={card.open ? 'card' : 'back'}
@@ -484,24 +474,6 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                           }}
                         />
                       </div>
-                      
-                      {isSelectableStage2 && !isSelected && (
-                        <div style={{
-                          position: 'absolute',
-                          top: '-20px',
-                          left: '50%',
-                          transform: 'translateX(-50%)',
-                          background: '#00ff00',
-                          color: '#000',
-                          padding: '2px 6px',
-                          borderRadius: '6px',
-                          fontSize: '10px',
-                          fontWeight: 'bold',
-                          whiteSpace: 'nowrap'
-                        }}>
-                          КЛИКНИ!
-                        </div>
-                      )}
                     </div>
                   );
                 })}
