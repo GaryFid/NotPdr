@@ -50,9 +50,9 @@ const getCirclePosition = (index: number, total: number): { top: string; left: s
   const angle = (index * 360) / total + 270; // +270 чтобы первый игрок был внизу
   const radians = (angle * Math.PI) / 180;
   
-  // Максимально увеличенные радиусы для лучшей видимости игроков
-  const horizontalRadius = 65; // Процент от ширины (увеличено с 55 до 65)
-  const verticalRadius = 52;   // Процент от высоты (увеличено с 45 до 52)
+  // Максимально широкое расположение игроков для идеальной видимости
+  const horizontalRadius = 75; // Процент от ширины (увеличено с 65 до 75)
+  const verticalRadius = 60;   // Процент от высоты (увеличено с 52 до 60)
   
   // Вычисляем позицию относительно центра стола
   const x = 50 + horizontalRadius * Math.cos(radians); // 50% это центр
@@ -465,10 +465,11 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                           position: 'absolute',
                           width: '70px',
                           height: '105px',
-                          background: 'linear-gradient(145deg, #ffd700, #ffed4e)',
+                          background: 'linear-gradient(145deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.8))',
                           borderRadius: '10px',
                           zIndex: -1,
-                          boxShadow: '0 2px 8px rgba(255, 215, 0, 0.3)'
+                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                          border: '1px solid rgba(99, 102, 241, 0.3)'
                         }}></div>
                         <Image
                           src={card.open && card.image ? `/img/cards/${card.image}` : `/img/cards/back.png`}

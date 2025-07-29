@@ -1037,20 +1037,23 @@ export const useGameStore = create<GameState>()(
          return true;
        },
        
-       // Проверка возможности положить карту из колоды на себя по правилам
-       canPlaceCardOnSelf: (deckCard: Card, playerTopCard: Card) => {
-         if (!deckCard.image || !playerTopCard.image) return false;
-         
-         const deckRank = get().getCardRank(deckCard.image);
-         const playerRank = get().getCardRank(playerTopCard.image);
-         
-         // Логика как в findAvailableTargets: ищем цель на 1 ранг ниже
-         if (deckRank === 2) {
-           return playerRank === 14; // Двойка только на туз
-         } else {
-           return playerRank === (deckRank - 1); // Обычное правило: Туз(14) → Король(13)
-         }
-       },
+             // Проверка возможности положить карту из колоды на себя по правилам
+      canPlaceCardOnSelf: (deckCard: Card, playerTopCard: Card) => {
+        if (!deckCard.image || !playerTopCard.image) return false;
+        
+        const deckRank = get().getCardRank(deckCard.image);
+        const playerRank = get().getCardRank(playerTopCard.image);
+        
+        console.log(`🃏 Проверка canPlaceCardOnSelf: колода ${deckRank} → игрок ${playerRank}`);
+        
+        // ПРАВИЛЬНАЯ ЛОГИКА: Карта из колоды может лечь на карту игрока, если она на 1 ранг БОЛЬШЕ
+        // Пример: 5♠ (deckRank=5) может лечь на 4♣ (playerRank=4)
+        if (deckRank === 2) {
+          return playerRank === 14; // Двойка только на туз
+        } else {
+          return deckRank === (playerRank + 1); // ПРАВИЛЬНО: 5 ложится на 4
+        }
+      },
        
        // Положить карту из колоды на себя по правилам
        placeCardOnSelfByRules: () => {

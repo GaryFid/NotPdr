@@ -1067,12 +1067,11 @@
 /* Контейнер для активных карт поверх пеньков */
 .activeCardContainer {
   position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  top: -8px; /* Немного выше для создания нахлеста */
+  left: 15px; /* Смещение влево для нахлеста как у пеньков */
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start; /* Выравнивание по левому краю */
   z-index: 10;
 }
 
@@ -1207,6 +1206,11 @@
   .penkiCard {
     width: 42px;
     height: 60px;
+  }
+  
+  .activeCardContainer {
+    top: -6px; /* Меньшее смещение для мобильных */
+    left: 8px; /* Меньшее смещение для мобильных */
   }
   
   .playerHand {
