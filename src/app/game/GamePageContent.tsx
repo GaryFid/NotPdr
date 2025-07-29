@@ -79,10 +79,9 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
   const { 
     isGameActive, gameStage, turnPhase, stage2TurnPhase,
     players, currentPlayerId, deck, availableTargets,
-    selectedHandCard, revealedDeckCard, canPlaceOnSelfByRules,
+    selectedHandCard, 
     startGame, endGame, 
     drawCard, makeMove, onDeckClick,
-    placeCardOnSelfByRules, takeCardNotByRules,
     selectHandCard, playSelectedCard
   } = useGameStore();
 
@@ -144,7 +143,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
   };
 
   const canDrawCard = turnPhase === 'deck_card_revealed' && currentPlayer?.id === currentPlayerId;
-  const canClickDeck = (turnPhase === 'showing_deck_hint' || turnPhase === 'analyzing_hand') && gameStage === 1 && currentPlayer?.id === currentPlayerId;
+  const canClickDeck = turnPhase === 'showing_deck_hint' && currentPlayer?.id === currentPlayerId;
   const waitingForTarget = turnPhase === 'waiting_target_selection';
 
   return (
@@ -192,15 +191,15 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                 <div 
                   className={styles.deckStack}
                   onClick={() => {
-                    if (gameStage === 1 && canClickDeck) {
+                    if (canClickDeck) {
                       onDeckClick();
                     } else if (canDrawCard) {
                       drawCard();
                     }
                   }}
                   style={{
-                    cursor: (canClickDeck || canDrawCard) ? 'pointer' : 'default',
-                    opacity: (canClickDeck || canDrawCard) ? 1 : 0.7
+                    cursor: (canDrawCard || canClickDeck) ? 'pointer' : 'default',
+                    opacity: (canDrawCard || canClickDeck) ? 1 : 0.7
                   }}
                 >
                   {deck.length > 0 && (
@@ -238,40 +237,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                 </div>
               )}
 
-              {/* Выбор действий с открытой картой из колоды */}
-              {gameStage === 1 && turnPhase === 'waiting_deck_action' && revealedDeckCard && (
-                <div className={styles.deckActionButtons}>
-                  {availableTargets.length > 0 && (
-                    <div>
-                      <div style={{ 
-                        color: '#22c55e', 
-                        fontSize: '12px', 
-                        textAlign: 'center', 
-                        marginBottom: '5px',
-                        fontWeight: 'bold'
-                      }}>
-                        Выберите игрока 🎯
-                      </div>
-                    </div>
-                  )}
-                  {canPlaceOnSelfByRules && (
-                    <button 
-                      className={styles.deckActionButton}
-                      onClick={() => placeCardOnSelfByRules()}
-                    >
-                      Положить на себя
-                    </button>
-                  )}
-                  {!availableTargets.length && !canPlaceOnSelfByRules && (
-                    <button 
-                      className={styles.deckActionButton}
-                      onClick={() => takeCardNotByRules()}
-                    >
-                      Взять карту
-                    </button>
-                  )}
-                </div>
-              )}
+
 
               {/* Игроки по кругу */}
               {players.map((p, playerIndex) => {
