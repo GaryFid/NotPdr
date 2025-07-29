@@ -245,7 +245,9 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                 const isCurrentPlayer = p.id === currentPlayer?.id;
                 const isCurrentTurn = p.id === players[currentPlayerIndex]?.id;
                 const isTargetAvailable = availableTargets.includes(playerIndex);
-                const isClickableTarget = isTargetAvailable && (turnPhase === 'waiting_target_selection');
+                const isCurrentPlayerCard = p.id === currentPlayerId && turnPhase === 'analyzing_hand' && availableTargets.length > 0;
+                const isClickableTarget = isTargetAvailable && (turnPhase === 'waiting_target_selection' || turnPhase === 'waiting_deck_action');
+                const isClickableOwnCard = isCurrentPlayerCard;
 
                 return (
                   <div
@@ -337,14 +339,21 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                                 }}
                               >
                                 <div
-                                  className={`${styles.cardOnPenki} ${card.open ? styles.open : styles.closed} ${isClickableTarget && isTopCard ? styles.targetCard : ''}`}
+                                  className={`${styles.cardOnPenki} ${card.open ? styles.open : styles.closed} ${(isClickableTarget || isClickableOwnCard) && isTopCard ? styles.targetCard : ''}`}
                                   style={{ 
-                                    cursor: isClickableTarget && isTopCard ? 'pointer' : 'default',
-                                    transform: isClickableTarget && isTopCard ? 'scale(1.05)' : 'scale(1)'
+                                    cursor: (isClickableTarget || isClickableOwnCard) && isTopCard ? 'pointer' : 'default',
+                                    transform: (isClickableTarget || isClickableOwnCard) && isTopCard ? 'scale(1.05)' : 'scale(1)'
                                   }}
                                   onClick={() => {
-                                    if (isClickableTarget && isTopCard) {
-                                      makeMove(p.id);
+                                    if (isTopCard) {
+                                      if (isClickableOwnCard) {
+                                        // Клик по своей карте - переключаемся в режим выбора цели
+                                        // Добавим новый метод в gameStore
+                                        makeMove('initiate_move');
+                                      } else if (isClickableTarget) {
+                                        // Клик по карте соперника - делаем ход
+                                        makeMove(p.id);
+                                      }
                                     }
                                   }}
                                 >

@@ -684,6 +684,18 @@ export const useGameStore = create<GameState>()(
         const { players, currentPlayerId, revealedDeckCard, turnPhase } = get();
         if (!currentPlayerId) return;
         
+        // Специальная обработка инициации хода
+        if (targetPlayerId === 'initiate_move') {
+          // Игрок кликнул по своей карте - переключаем в режим выбора цели
+          const targets = get().findAvailableTargets(currentPlayerId);
+          set({ 
+            turnPhase: 'waiting_target_selection',
+            availableTargets: targets
+          });
+          get().showNotification('Выберите цель для хода', 'info');
+          return;
+        }
+        
         const currentPlayer = players.find(p => p.id === currentPlayerId);
         const targetPlayer = players.find(p => p.id === targetPlayerId);
         
