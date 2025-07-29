@@ -51,8 +51,8 @@ const getCirclePosition = (index: number, total: number): { top: string; left: s
   const radians = (angle * Math.PI) / 180;
   
   // Увеличенные радиусы чтобы игроки были вокруг стола, а не на нем
-  const horizontalRadius = 48; // Процент от ширины (увеличено с 35 до 48)
-  const verticalRadius = 40;   // Процент от высоты (увеличено с 30 до 40)
+  const horizontalRadius = 55; // Процент от ширины (увеличено с 48 до 55)
+  const verticalRadius = 45;   // Процент от высоты (увеличено с 40 до 45)
   
   // Вычисляем позицию относительно центра стола
   const x = 50 + horizontalRadius * Math.cos(radians); // 50% это центр
@@ -79,7 +79,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
   const { 
     isGameActive, gameStage, turnPhase, stage2TurnPhase,
     players, currentPlayerId, deck, availableTargets,
-    selectedHandCard, 
+    selectedHandCard, revealedDeckCard,
     startGame, endGame, 
     drawCard, makeMove, onDeckClick,
     selectHandCard, playSelectedCard
@@ -186,6 +186,29 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
           <div className={styles.tableBg}>
             <div className={styles.tableCenter}>
               
+              {/* Открытая карта из колоды (слева от колоды) */}
+              {revealedDeckCard && (
+                <div className={styles.revealedCardContainer}>
+                  <div className={styles.revealedCard}>
+                    <Image 
+                      src={revealedDeckCard.image ? `/img/cards/${revealedDeckCard.image}` : '/img/cards/back.png'} 
+                      alt="revealed card" 
+                      width={60} 
+                      height={90}
+                      className={styles.revealedCardImage}
+                    />
+                  </div>
+                  {turnPhase === 'waiting_deck_action' && (
+                    <div className={styles.deckActions}>
+                      <div className={styles.actionHint}>Выберите действие:</div>
+                      {availableTargets.length > 0 && (
+                        <div className={styles.targetHint}>🎯 Выберите игрока</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Колода и кнопка добора */}
               <div className={styles.dropZone}>
                 <div 
@@ -420,7 +443,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                         transition: 'all 0.2s ease-in-out'
                       }}
                       onClick={() => {
-                        if (isSelectableStage2) {
+                        // Разрешаем клики только во 2-й стадии
+                        if (isSelectableStage2 && gameStage === 2) {
                           selectHandCard(card);
                         }
                       }}
