@@ -71,10 +71,10 @@
 }
 
 .deckInfo {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
   color: #fff;
   box-shadow: 
-    0 10px 25px rgba(16, 185, 129, 0.4),
+    0 10px 25px rgba(99, 102, 241, 0.4),
     0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
@@ -400,10 +400,10 @@
 
 .highlightedTarget .avatarWrap {
   background: 
-    linear-gradient(145deg, rgba(34, 197, 94, 0.2) 0%, rgba(21, 128, 61, 0.2) 100%);
-  border: 3px solid #22c55e;
+    linear-gradient(145deg, rgba(99, 102, 241, 0.2) 0%, rgba(79, 70, 229, 0.2) 100%);
+  border: 3px solid #6366f1;
   box-shadow: 
-    0 0 30px rgba(34, 197, 94, 0.5),
+    0 0 30px rgba(99, 102, 241, 0.5),
     0 15px 35px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
@@ -421,7 +421,7 @@
   left: -8px;
   right: -8px;
   bottom: -8px;
-  background: linear-gradient(45deg, #22c55e, #10b981, #22c55e);
+  background: linear-gradient(45deg, #6366f1, #4f46e5, #6366f1);
   border-radius: 20px;
   z-index: -1;
   animation: rotateBorder 3s linear infinite;
@@ -630,23 +630,23 @@
 }
 
 .handCard.playable {
-  border: 3px solid #22c55e !important;
+  border: 3px solid #6366f1 !important;
   box-shadow: 
-    0 0 40px rgba(34, 197, 94, 0.6),
-    0 10px 30px rgba(34, 197, 94, 0.4) !important;
-  animation: glowGreen 2s ease-in-out infinite alternate;
+    0 0 40px rgba(99, 102, 241, 0.6),
+    0 10px 30px rgba(99, 102, 241, 0.4) !important;
+  animation: glowBlue 2s ease-in-out infinite alternate;
 }
 
-@keyframes glowGreen {
+@keyframes glowBlue {
   from {
     box-shadow: 
-      0 0 40px rgba(34, 197, 94, 0.6),
-      0 10px 30px rgba(34, 197, 94, 0.4);
+      0 0 40px rgba(99, 102, 241, 0.6),
+      0 10px 30px rgba(99, 102, 241, 0.4);
   }
   to {
     box-shadow: 
-      0 0 60px rgba(34, 197, 94, 0.9),
-      0 15px 40px rgba(34, 197, 94, 0.6);
+      0 0 60px rgba(99, 102, 241, 0.9),
+      0 15px 40px rgba(99, 102, 241, 0.6);
   }
 }
 
@@ -668,12 +668,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 12px;
-  padding: 6px;
-  box-shadow: 
-    0 4px 12px rgba(0, 0, 0, 0.3),
-    0 0 0 2px rgba(99, 102, 241, 0.4);
+  background: transparent;
+  border-radius: 8px;
+  padding: 0;
+  box-shadow: none;
 }
 
 .revealedCardImage {
@@ -724,7 +722,7 @@
 }
 
 .targetHint {
-  color: #10b981;
+  color: #6366f1;
   font-size: 9px;
   font-weight: 500;
   text-align: center;
@@ -782,7 +780,7 @@
   position: absolute;
   top: -15px;
   right: -15px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
   color: #fff;
   border-radius: 50%;
   width: 30px;
@@ -853,7 +851,7 @@
 }
 
 .centralButton {
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -865,11 +863,13 @@
   padding: 4px 8px;
   width: 40px;
   height: 25px;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 
 .centralButton:hover {
-  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
   transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
 }
 
 /* Кнопки действий с картой из колоды */
