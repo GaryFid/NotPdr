@@ -50,9 +50,9 @@ const getCirclePosition = (index: number, total: number): { top: string; left: s
   const angle = (index * 360) / total + 270; // +270 чтобы первый игрок был внизу
   const radians = (angle * Math.PI) / 180;
   
-  // Увеличенные радиусы чтобы игроки были вокруг стола, а не на нем
-  const horizontalRadius = 55; // Процент от ширины (увеличено с 48 до 55)
-  const verticalRadius = 45;   // Процент от высоты (увеличено с 40 до 45)
+  // Максимально увеличенные радиусы для лучшей видимости игроков
+  const horizontalRadius = 65; // Процент от ширины (увеличено с 55 до 65)
+  const verticalRadius = 52;   // Процент от высоты (увеличено с 45 до 52)
   
   // Вычисляем позицию относительно центра стола
   const x = 50 + horizontalRadius * Math.cos(radians); // 50% это центр
@@ -296,12 +296,18 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                       {/* Пеньки (подложка) */}
                       {p.penki && p.penki.length > 0 && (
                         <div className={styles.penkiRow}>
-                          {p.penki.map((penkiCard, pi) => (
+                          {p.penki.map((penkiCard, pi) => {
+                            // Определяем направление для пеньков тоже
+                            const playerPosition = getCirclePosition(playerIndex, players.length);
+                            const isLeftSide = parseFloat(playerPosition.left) < 50;
+                            const penkiOffset = isLeftSide ? pi * 10 : -pi * 10;
+                            
+                            return (
                             <div
                               key={penkiCard.id}
                               className={styles.penkiCard}
                               style={{ 
-                                left: `${pi * 10}px`,
+                                left: `${penkiOffset}px`,
                                 zIndex: pi + 1
                               }}
                               title={`Пенёк ${pi + 1} (активируется в 3-й стадии)`}
@@ -317,7 +323,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                                 }}
                               />
                             </div>
-                          ))}
+                          );
+                          })}
                         </div>
                       )}
                       
@@ -326,6 +333,10 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                         <div className={styles.activeCardContainer}>
                           {p.cards.map((card, ci) => {
                             const isTopCard = ci === p.cards.length - 1;
+                            // Определяем направление стекинга карт в зависимости от позиции игрока
+                            const playerPosition = getCirclePosition(playerIndex, players.length);
+                            const isLeftSide = parseFloat(playerPosition.left) < 50; // Левая половина экрана
+                            const cardOffset = isLeftSide ? ci * 6 : -ci * 6; // Левые игроки - вправо, правые - влево
                             
                             return (
                               <motion.div
@@ -357,7 +368,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                                 }}
                                 style={{ 
                                   position: 'absolute',
-                                  left: `${ci * 6}px`,
+                                  left: `${cardOffset}px`,
                                   zIndex: ci + 10 // Поверх пеньков
                                 }}
                               >
