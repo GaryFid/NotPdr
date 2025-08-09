@@ -20,6 +20,30 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Environment
+Create a `.env.local` file with the following variables:
+
+```
+# Required
+JWT_SECRET=change_me_to_a_strong_secret
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
+UPSTASH_REDIS_REST_URL=your_upstash_url
+UPSTASH_REDIS_REST_TOKEN=your_upstash_token
+
+# Telegram bot
+BOT_TOKEN=your_telegram_bot_token
+BOT_USERNAME=your_bot_username
+
+# Optional
+APP_URL=https://your-app-url
+BASE_URL=https://your-base-url
+SESSION_SECRET=another_strong_secret
+```
+
+- JWT/SESSION secrets must be strong and rotated.
+- Telegram WebApp auth requires valid `initData` verification; ensure `BOT_TOKEN` is set.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

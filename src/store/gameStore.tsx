@@ -71,6 +71,7 @@ interface GameState {
   lastDrawnCard: Card | null // Последняя взятая карта из колоды
   lastPlayerToDrawCard: string | null // ID игрока, который последним взял карту
   trumpSuit: 'clubs' | 'diamonds' | 'hearts' | 'spades' | null // Козырь второй стадии
+  drawnHistory: Card[] // История добранных/положенных из колоды карт (для определения козыря)
   
   // Состояние 2-й стадии (дурак)
   tableStack: Card[] // Стопка карт на столе (нижняя = первая, верхняя = последняя)
@@ -211,6 +212,7 @@ export const useGameStore = create<GameState>()(
       lastDrawnCard: null,
       lastPlayerToDrawCard: null,
       trumpSuit: null,
+      drawnHistory: [],
       
       // Состояние 2-й стадии (дурак)
       tableStack: [],
@@ -374,7 +376,8 @@ export const useGameStore = create<GameState>()(
           // Сбрасываем данные второй стадии
           lastDrawnCard: null,
           lastPlayerToDrawCard: null,
-          trumpSuit: null
+          trumpSuit: null,
+          drawnHistory: []
         });
         
         get().showNotification(`Игра начата! Ходит первым: ${players[firstPlayerIndex].name}`, 'success');
@@ -774,6 +777,8 @@ export const useGameStore = create<GameState>()(
           lastDrawnCard: drawnCard,
           lastPlayerToDrawCard: currentPlayerId
         });
+        // фиксируем историю
+        set({ drawnHistory: [...get().drawnHistory, drawnCard] });
         
         get().showNotification(`${currentPlayer.name} взял карту из колоды (осталось: ${deck.length - 1})`, 'info');
         return true;
@@ -989,22 +994,23 @@ export const useGameStore = create<GameState>()(
       
       // Определение козыря для второй стадии
       determineTrumpSuit: () => {
-        const { lastDrawnCard } = get();
-        
-        if (!lastDrawnCard || !lastDrawnCard.image) return null;
-        
-        // Определяем масть последней взятой карты
-        const lastSuit = get().getCardSuit(lastDrawnCard.image);
-        
-        // Если не пики - это козырь
-        if (lastSuit !== 'spades' && lastSuit !== 'unknown') {
-          return lastSuit as 'clubs' | 'diamonds' | 'hearts' | 'spades';
+        const { lastDrawnCard, drawnHistory } = get();
+        const pickSuit = (card?: Card | null) => {
+          if (!card || !card.image) return 'unknown' as const;
+          return get().getCardSuit(card.image);
+        };
+        let suit = pickSuit(lastDrawnCard);
+        if (suit && suit !== 'spades' && suit !== 'unknown') {
+          return suit as 'clubs' | 'diamonds' | 'hearts' | 'spades';
         }
-        
-        // Если пики или неизвестно - ищем в истории взятых карт
-        // TODO: Реализовать поиск предпоследней не-пиковой карты
-        // Пока возвращаем червы как дефолт
-        console.log('🃏 Последняя карта была пики, нужно найти предпоследнюю не-пиковую');
+        // ищем последнюю непиковую в истории
+        for (let i = drawnHistory.length - 1; i >= 0; i--) {
+          const s = pickSuit(drawnHistory[i]);
+          if (s !== 'spades' && s !== 'unknown') {
+            return s as 'clubs' | 'diamonds' | 'hearts' | 'spades';
+          }
+        }
+        // запасной вариант — червы
         return 'hearts';
       },
       
@@ -1077,6 +1083,7 @@ export const useGameStore = create<GameState>()(
            skipHandAnalysis: true, // ⭐ Пропускаем анализ руки!
            turnPhase: 'analyzing_hand' // Возвращаемся к началу (но с пропуском)
          });
+         set({ drawnHistory: [...get().drawnHistory, revealedDeckCard] });
          
          get().showNotification(`${currentPlayer.name} положил карту на себя по правилам - ходит снова!`, 'success');
          
@@ -1106,6 +1113,7 @@ export const useGameStore = create<GameState>()(
           lastPlayerToDrawCard: currentPlayerId,
           turnPhase: 'turn_ended'
         });
+        set({ drawnHistory: [...get().drawnHistory, revealedDeckCard] });
         
         get().showNotification(`${currentPlayer.name} положил карту поверх своих карт и передает ход`, 'info');
         get().resetTurnState();

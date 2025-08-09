@@ -108,7 +108,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
   const { 
     isGameActive, gameStage, turnPhase, stage2TurnPhase,
     players, currentPlayerId, deck, availableTargets,
-    selectedHandCard, revealedDeckCard,
+    selectedHandCard, revealedDeckCard, tableStack,
     startGame, endGame, 
     drawCard, makeMove, onDeckClick,
     selectHandCard, playSelectedCard
@@ -222,8 +222,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                     <Image 
                       src={revealedDeckCard.image ? `/img/cards/${revealedDeckCard.image}` : '/img/cards/back.png'} 
                       alt="revealed card" 
-                      width={60} 
-                      height={90}
+                      width={80} 
+                      height={120}
                       className={styles.revealedCardImage}
                     />
                   </div>
@@ -258,8 +258,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                     <Image 
                       src="/img/cards/back.png" 
                       alt="deck" 
-                      width={50} 
-                      height={75}
+                      width={70} 
+                      height={100}
                       className={styles.deckCard}
                     />
                   )}
@@ -276,7 +276,36 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                 )}
               </div>
 
-                            {/* Центральная кнопка "КЛИКНИ!" для 1-й стадии */}
+              {/* Стопка карт на столе (Stage 2) */}
+              {Array.isArray(tableStack) && tableStack.length > 0 && (
+                <div className={styles.tableStack}>
+                  <div className={styles.tableLabel}>Стол: {tableStack.length}</div>
+                  {tableStack.map((c, idx) => {
+                    const isTop = idx === tableStack.length - 1;
+                    return (
+                      <div
+                        key={c.id ?? idx}
+                        className={`${styles.tableCard} ${isTop ? styles.tableCardTop : ''}`}
+                        style={{
+                          transform: `translate(${idx * 8}px, ${-idx * 2}px) rotate(${(idx % 5) - 2}deg)`
+                        }}
+                        title={c.open && c.image ? c.image : 'Карта на столе'}
+                      >
+                        <Image
+                          src={c.open && c.image ? `/img/cards/${c.image}` : '/img/cards/back.png'}
+                          alt={c.open ? 'table card' : 'back'}
+                          width={90}
+                          height={128}
+                          className={styles.tableCardImage}
+                          draggable={false}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Центральная кнопка "КЛИКНИ!" для 1-й стадии */}
               {gameStage === 1 && canClickDeck && (
                 <div className={styles.centralButtonContainer}>
                   <button 
