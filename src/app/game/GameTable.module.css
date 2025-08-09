@@ -409,9 +409,10 @@
 }
 
 .targetCard {
-  animation: glowCard 1.5s ease-in-out infinite alternate;
-  transform: scale(1.1) translateY(-5px);
-  z-index: 15 !important;
+  animation: none;
+  transform: scale(1.04) translateY(-3px);
+  outline: 2px solid rgba(99,102,241,0.6);
+  box-shadow: none !important;
 }
 
 .targetCard::after {
@@ -586,7 +587,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 130px;
+  min-height: 140px;
   z-index: 1;
   position: relative;
   padding: 14px 0;
@@ -610,11 +611,8 @@
 }
 
 .handCard.open {
-  border: 2px solid rgba(99, 102, 241, 0.6);
-  box-shadow: 
-    0 8px 25px rgba(99, 102, 241, 0.5),
-    0 0 40px rgba(99, 102, 241, 0.3),
-    0 4px 8px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(99,102,241,0.3);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.25);
 }
 
 .handCard.open:hover {
@@ -625,29 +623,14 @@
 }
 
 .handCard.closed {
-  border: 2px solid #64748b;
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+  border: 1px solid #64748b;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.35);
 }
 
 .handCard.playable {
-  border: 3px solid #6366f1 !important;
-  box-shadow: 
-    0 0 40px rgba(99, 102, 241, 0.6),
-    0 10px 30px rgba(99, 102, 241, 0.4) !important;
-  animation: glowBlue 2s ease-in-out infinite alternate;
-}
-
-@keyframes glowBlue {
-  from {
-    box-shadow: 
-      0 0 40px rgba(99, 102, 241, 0.6),
-      0 10px 30px rgba(99, 102, 241, 0.4);
-  }
-  to {
-    box-shadow: 
-      0 0 60px rgba(99, 102, 241, 0.9),
-      0 15px 40px rgba(99, 102, 241, 0.6);
-  }
+  box-shadow: 0 0 0 2px rgba(99,102,241,0.5) inset;
+  border: 1px solid rgba(99,102,241,0.5);
+  animation: none;
 }
 
 /* Стили для открытой карты из колоды */
@@ -675,13 +658,9 @@
 }
 
 .revealedCardImage {
-  border-radius: 8px;
-  box-shadow: 
-    0 8px 24px rgba(99, 102, 241, 0.45),
-    0 0 0 2px rgba(99, 102, 241, 0.35),
-    0 0 40px rgba(99, 102, 241, 0.25);
-  transition: all 0.3s ease;
-  animation: revealedCardPulse 2s ease-in-out infinite;
+  border-radius: 0 !important;
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.25), 0 0 0 1px rgba(99, 102, 241, 0.25);
+  animation: none;
 }
 
 /* Table stack in center */
@@ -690,8 +669,8 @@
   left: 50%;
   top: 50%;
   transform: translate(40px, -50%); /* справа от колоды */
-  width: 180px;
-  min-height: 160px;
+  width: 190px;
+  min-height: 170px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -728,7 +707,7 @@
 }
 
 .tableCardImage {
-  border-radius: 8px;
+  border-radius: 0 !important;
   display: block;
 }
 

@@ -48,17 +48,24 @@ function getPlayers(count: number, userName = 'Вы'): Player[] {
 const getCirclePosition = (index: number, total: number): { top: string; left: string } => {
   // Равномерное распределение по овальной траектории, игрок 0 внизу
   const baseAngle = 270; // чтобы первый был снизу
-  const angleStep = 360 / Math.max(total, 1);
-  const angle = baseAngle + index * angleStep;
+  const step = 360 / Math.max(total, 1);
+  const microBuffer = total >= 9 ? 2.5 : total === 8 ? 2 : total === 7 ? 1.5 : 0; // небольшой зазор между соседями
+  const angle = baseAngle + index * (step - microBuffer);
   const radians = (angle * Math.PI) / 180;
 
-  // Динамический радиус: чем больше игроков, тем больше овал
-  const scale = Math.min(1.5, 1 + Math.max(0, total - 4) * 0.09);
-  const horizontalRadius = 40 * scale;
-  const verticalRadius = 34 * scale;
+  // Радиусы стола (визуальный овал)
+  const n = Math.max(total, 1);
+  const scale = Math.min(1.5, 1 + Math.max(0, n - 4) * 0.09);
+  const rTableX = 34 * scale;
+  const rTableY = 28 * scale;
 
-  const x = 50 + horizontalRadius * Math.cos(radians);
-  const y = 50 + verticalRadius * Math.sin(radians);
+  // Орбита сидений — всегда за пределами стола
+  const seatMargin = 8 + Math.max(0, n - 5) * 2; // больше игроков — больше отступ
+  const rSeatX = rTableX + seatMargin;
+  const rSeatY = rTableY + seatMargin;
+
+  const x = 50 + rSeatX * Math.cos(radians);
+  const y = 50 + rSeatY * Math.sin(radians);
 
   return {
     left: `${x}%`,
@@ -211,6 +218,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
               {revealedDeckCard && (
                 <div className={styles.revealedCardContainer}>
                   <div className={styles.revealedCard}>
+                    <div className={styles.cardBackdrop} style={{ width: 80, height: 120 }} />
                     <Image 
                       src={revealedDeckCard.image ? `/img/cards/${revealedDeckCard.image}` : '/img/cards/back.png'} 
                       alt="revealed card" 
@@ -219,14 +227,6 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                       className={styles.revealedCardImage}
                     />
                   </div>
-                  {turnPhase === 'waiting_deck_action' && (
-                    <div className={styles.deckActions}>
-                      <div className={styles.actionHint}>Выберите действие:</div>
-                      {availableTargets.length > 0 && (
-                        <div className={styles.targetHint}>🎯 Выберите игрока</div>
-                      )}
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -427,8 +427,10 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                                   className={`${styles.cardOnPenki} ${card.open ? styles.open : styles.closed} ${(isClickableTarget || isClickableOwnCard) && isTopCard ? styles.targetCard : ''}`}
                                   style={{ 
                                     cursor: (isClickableTarget || isClickableOwnCard) && isTopCard ? 'pointer' : 'default',
-                                    transform: (isClickableTarget || isClickableOwnCard) && isTopCard ? 'scale(1.05)' : 'scale(1)'
-                                  }}
+                                    transform: (isClickableTarget || isClickableOwnCard) && isTopCard ? 'scale(1.05)' : 'scale(1)',
+                                    width: card.open ? 105 : 70,
+                                    height: card.open ? 157 : 105,
+                                   }}
                                   onClick={() => {
                                     if (isTopCard) {
                                       if (isClickableOwnCard) {
@@ -451,27 +453,20 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                                       (card.open && card.image ? `/img/cards/${card.image}` : `/img/cards/back.png`)
                                     }
                                     alt={card.open ? 'card' : 'back'}
-                                    width={60}
-                                    height={85}
+                                    width={card.open ? 105 : 70}
+                                    height={card.open ? 157 : 105}
                                     draggable={false}
                                     style={{
-                                      borderRadius: '8px',
+                                      borderRadius: 0,
                                       transition: 'all 0.3s ease-in-out'
                                     }}
                                   />
-                                  
-                                  {/* Отображение ранга карты */}
-                                  {card.open && card.rank && (
-                                    <div className={styles.cardRank}>
-                                      {card.rank}
-                                    </div>
-                                  )}
-                                </div>
-                              </motion.div>
-                            );
-                          })}
-                        </div>
-                      )}
+                                 </div>
+                               </motion.div>
+                             );
+                           })}
+                         </div>
+                       )}
                     </div>
                   </div>
                 );
@@ -516,7 +511,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                         }
                       }}
                     >
-                      <div style={{ width: '100%', height: '100%' }}>
+                      <div className={styles.cardBase} style={{ width: '100%', height: '100%' }}>
                         <Image
                           src={card.open && card.image ? `/img/cards/${card.image}` : `/img/cards/back.png`}
                           alt={card.open ? 'card' : 'back'}
@@ -525,7 +520,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                           draggable={false}
                           priority
                           style={{ 
-                            borderRadius: '10px',
+                            borderRadius: 0,
                             boxShadow: card.open ? '0 2px 10px rgba(0, 0, 0, 0.35)' : '0 2px 8px rgba(0, 0, 0, 0.5)'
                           }}
                         />
