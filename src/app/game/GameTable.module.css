@@ -586,15 +586,15 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 110px;
+  min-height: 130px;
   z-index: 1;
   position: relative;
-  padding: 10px 0;
+  padding: 14px 0;
 }
 
 .handCard {
   position: relative;
-  width: 70px;
+  width: 70px; /* default, overridden inline for open cards */
   height: 105px;
   border-radius: 10px;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -690,8 +690,8 @@
   left: 50%;
   top: 50%;
   transform: translate(40px, -50%); /* справа от колоды */
-  width: 160px;
-  min-height: 140px;
+  width: 180px;
+  min-height: 160px;
   display: flex;
   align-items: center;
   justify-content: center;

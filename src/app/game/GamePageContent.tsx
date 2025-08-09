@@ -46,50 +46,23 @@ function getPlayers(count: number, userName = 'Вы'): Player[] {
 
 // Идеальное позиционирование игроков вокруг овального стола
 const getCirclePosition = (index: number, total: number): { top: string; left: string } => {
-  // Специальные позиции для разного количества игроков для красивого расположения
-  if (total === 3) {
-    const positions = [
-      { left: '50%', top: '75%' },  // Игрок 1 - снизу по центру  
-      { left: '20%', top: '25%' },  // Игрок 2 - верх слева
-      { left: '80%', top: '25%' }   // Игрок 3 - верх справа
-    ];
-    return positions[index] || { left: '50%', top: '50%' };
-  }
-  
-  if (total === 4) {
-    const positions = [
-      { left: '50%', top: '75%' },  // Игрок 1 - снизу
-      { left: '15%', top: '45%' },  // Игрок 2 - слева
-      { left: '50%', top: '15%' },  // Игрок 3 - сверху  
-      { left: '85%', top: '45%' }   // Игрок 4 - справа
-    ];
-    return positions[index] || { left: '50%', top: '50%' };
-  }
-  
-  if (total === 5) {
-    const positions = [
-      { left: '50%', top: '75%' },  // Игрок 1 - снизу по центру
-      { left: '15%', top: '55%' },  // Игрок 2 - слева снизу
-      { left: '25%', top: '20%' },  // Игрок 3 - верх слева
-      { left: '75%', top: '20%' },  // Игрок 4 - верх справа
-      { left: '85%', top: '55%' }   // Игрок 5 - справа снизу
-    ];
-    return positions[index] || { left: '50%', top: '50%' };
-  }
-  
-  // Для остальных случаев используем математический алгоритм
-  const angle = (index * 360) / total + 270; // +270 чтобы первый игрок был внизу
+  // Равномерное распределение по овальной траектории, игрок 0 внизу
+  const baseAngle = 270; // чтобы первый был снизу
+  const angleStep = 360 / Math.max(total, 1);
+  const angle = baseAngle + index * angleStep;
   const radians = (angle * Math.PI) / 180;
-  
-  const horizontalRadius = 38; // Оптимальный радиус
-  const verticalRadius = 32;   // Оптимальный радиус
-  
+
+  // Динамический радиус: чем больше игроков, тем больше овал
+  const scale = Math.min(1.5, 1 + Math.max(0, total - 4) * 0.09);
+  const horizontalRadius = 40 * scale;
+  const verticalRadius = 34 * scale;
+
   const x = 50 + horizontalRadius * Math.cos(radians);
   const y = 50 + verticalRadius * Math.sin(radians);
-  
+
   return {
-    left: `${Math.max(10, Math.min(90, x))}%`,
-    top: `${Math.max(12, Math.min(82, y))}%`
+    left: `${x}%`,
+    top: `${y}%`,
   };
 };
 
@@ -118,6 +91,25 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
   const [playerCount, setPlayerCount] = useState(initialPlayerCount);
   const [dealt, setDealt] = useState(false);
   const [gameInitialized, setGameInitialized] = useState(false);
+
+  // Динамические масштабы для 5–9 игроков: меньше стол, чуть меньше сиденья, больше расстояние
+  const tableScale = useMemo(() => {
+    const n = players.length || playerCount;
+    if (n >= 9) return 0.78;
+    if (n === 8) return 0.82;
+    if (n === 7) return 0.86;
+    if (n === 6) return 0.9;
+    return 0.95; // 5 и меньше
+  }, [players.length, playerCount]);
+
+  const seatScale = useMemo(() => {
+    const n = players.length || playerCount;
+    if (n >= 9) return 0.82;
+    if (n === 8) return 0.86;
+    if (n === 7) return 0.9;
+    if (n === 6) return 0.94;
+    return 1; // 5 и меньше
+  }, [players.length, playerCount]);
 
   // Получаем текущего игрока (пользователя)
   const currentPlayer = players.find(p => p.id === currentPlayerId);
@@ -213,7 +205,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
       ) : (
         <div className={styles.gameArea}>
           <div className={styles.tableBg}>
-            <div className={styles.tableCenter}>
+            <div className={styles.tableCenter} style={{ transform: `translate(-50%, -50%) scale(${tableScale})` }}>
               
               {/* Открытая карта из колоды (слева от колоды) */}
               {revealedDeckCard && (
@@ -282,6 +274,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                   <div className={styles.tableLabel}>Стол: {tableStack.length}</div>
                   {tableStack.map((c, idx) => {
                     const isTop = idx === tableStack.length - 1;
+                    const size = c.open ? { w: 110, h: 156 } : { w: 90, h: 128 };
                     return (
                       <div
                         key={c.id ?? idx}
@@ -294,8 +287,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                         <Image
                           src={c.open && c.image ? `/img/cards/${c.image}` : '/img/cards/back.png'}
                           alt={c.open ? 'table card' : 'back'}
-                          width={90}
-                          height={128}
+                          width={size.w}
+                          height={size.h}
                           className={styles.tableCardImage}
                           draggable={false}
                         />
@@ -338,7 +331,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                       position: 'absolute',
                       left: position.left,
                       top: position.top,
-                      transform: 'translateX(-50%)', // Центрируем горизонтально
+                      transform: `translate(-50%, -50%) scale(${seatScale})`, // Центр + масштаб под кол-во игроков
                     }}
                   >
                     {/* Аватар и имя по центру */}
@@ -496,7 +489,10 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                 {currentPlayer.cards.map((card, index) => {
                   const isSelectableStage2 = card.open && stage2TurnPhase === 'selecting_card';
                   const isSelected = selectedHandCard?.id === card.id;
-                  const cardOffset = index * 10;
+                  const baseStep = 10;
+                  const step = card.open ? 14 : baseStep; // больше шаг для крупных карт
+                  const cardOffset = index * step;
+                  const size = card.open ? { w: 84, h: 126 } : { w: 70, h: 105 };
                   
                   return (
                     <div 
@@ -505,11 +501,13 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                       style={{ 
                         position: 'absolute',
                         left: `${cardOffset}px`,
-                        top: isSelected ? '-8px' : '0px',
+                        top: isSelected ? '-10px' : '0px',
                         zIndex: index + 1,
-                        transform: isSelected ? 'scale(1.05)' : 'scale(1)',
-                        filter: isSelected ? 'drop-shadow(0 0 8px #00ff00)' : 'none',
-                        transition: 'all 0.2s ease-in-out'
+                        transform: isSelected ? 'scale(1.07)' : 'scale(1)',
+                        filter: isSelected ? 'drop-shadow(0 0 10px #00ff00)' : 'none',
+                        transition: 'all 0.2s ease-in-out',
+                        width: `${size.w}px`,
+                        height: `${size.h}px`,
                       }}
                       onClick={() => {
                         // Разрешаем клики только во 2-й стадии
@@ -522,13 +520,13 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                         <Image
                           src={card.open && card.image ? `/img/cards/${card.image}` : `/img/cards/back.png`}
                           alt={card.open ? 'card' : 'back'}
-                          width={70}
-                          height={105}
+                          width={size.w}
+                          height={size.h}
                           draggable={false}
                           priority
                           style={{ 
                             borderRadius: '10px',
-                            boxShadow: card.open ? '0 2px 8px rgba(0, 0, 0, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.5)'
+                            boxShadow: card.open ? '0 2px 10px rgba(0, 0, 0, 0.35)' : '0 2px 8px rgba(0, 0, 0, 0.5)'
                           }}
                         />
                       </div>
