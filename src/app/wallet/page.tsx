@@ -1,10 +1,64 @@
 'use client'
-import { Box, Flex, Text, Button, Input, Grid, Image, VStack, HStack } from '@chakra-ui/react';
+import { Box, Flex, Text, Button, Input, Grid, Image, VStack, HStack, Spinner } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
-import { FaArrowLeft, FaCoins, FaPlus, FaGift, FaShoppingCart, FaStar, FaTelegram, FaShareAlt } from 'react-icons/fa';
+import { FaArrowLeft, FaCoins, FaPlus, FaGift, FaShoppingCart, FaStar, FaTelegram, FaShareAlt, FaWallet, FaLink, FaUnlink } from 'react-icons/fa';
+import { SiSolana } from 'react-icons/si';
 import BottomNav from '../../components/BottomNav';
+import { useWalletStore } from '../../store/walletStore';
+import { useEffect } from 'react';
+import { tonConnector } from '../../lib/wallets/ton-connector';
+import { solanaConnector } from '../../lib/wallets/solana-connector';
 
 export default function WalletPage() {
+  const {
+    tonAddress,
+    tonBalance,
+    isTonConnected,
+    solanaAddress,
+    solanaBalance,
+    isSolanaConnected,
+    isConnecting,
+    error,
+    connectTonWallet,
+    disconnectTonWallet,
+    connectSolanaWallet,
+    disconnectSolanaWallet,
+    updateBalances,
+    clearError,
+  } = useWalletStore();
+
+  useEffect(() => {
+    // Инициализация TON Connect при загрузке страницы
+    tonConnector.init();
+    
+    // Проверяем подключенные кошельки
+    if (tonConnector.isConnected()) {
+      const wallet = tonConnector.getConnectedWallet();
+      if (wallet) {
+        useWalletStore.setState({
+          tonAddress: wallet.account.address,
+          isTonConnected: true,
+        });
+      }
+    }
+    
+    // Обновляем балансы при загрузке
+    updateBalances();
+  }, []);
+
+  useEffect(() => {
+    if (error) {
+      // Показываем ошибку в консоли, пока не разберемся с toaster в Chakra v3
+      console.error('Wallet error:', error);
+      clearError();
+    }
+  }, [error, clearError]);
+
+  const formatAddress = (address: string) => {
+    if (!address) return '';
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
+
   return (
     <Box minH="100vh" className="bg-gradient-to-br from-[#0f2027] via-[#232b3e] to-[#1e3c72] animate-gradient-move" pb={20}>
       <Flex direction="column" align="center" maxW="420px" mx="auto" w="100%" px={4}>
@@ -17,10 +71,67 @@ export default function WalletPage() {
           <Text fontSize="2xl" fontWeight="bold" color="#ffd700">Кошелёк</Text>
           <Box w={6} />
         </Flex>
-        {/* Баланс */}
+        {/* Подключенные кошельки */}
+        <Box bg="#232b3e" borderRadius="xl" boxShadow="lg" p={6} w="100%" mb={4}>
+          <Text color="#ffd700" fontWeight={600} fontSize="md" mb={4}>Криптокошельки</Text>
+          <VStack align="stretch" gap={3}>
+            {/* TON Wallet */}
+            <Flex align="center" justify="space-between" bg="#181f2a" borderRadius="lg" p={4}>
+              <Flex align="center" gap={3}>
+                <Box w={10} h={10} borderRadius="lg" bg="#0098EA" display="flex" alignItems="center" justifyContent="center">
+                  <Text fontSize="lg" fontWeight="bold" color="white">TON</Text>
+                </Box>
+                <Box>
+                  <Text fontWeight={600} color="white">Telegram Wallet</Text>
+                  {isTonConnected && (
+                    <Text fontSize="xs" color="gray.400">{formatAddress(tonAddress!)}</Text>
+                  )}
+                </Box>
+              </Flex>
+              <Button
+                size="sm"
+                colorScheme={isTonConnected ? 'red' : 'green'}
+                onClick={isTonConnected ? disconnectTonWallet : connectTonWallet}
+                loading={isConnecting}
+
+              >
+                {isTonConnected ? <><FaUnlink /> Отключить</> : <><FaLink /> Подключить</>}
+              </Button>
+            </Flex>
+            
+            {/* Solana Wallet */}
+            <Flex align="center" justify="space-between" bg="#181f2a" borderRadius="lg" p={4}>
+              <Flex align="center" gap={3}>
+                <Box w={10} h={10} borderRadius="lg" bg="#9945FF" display="flex" alignItems="center" justifyContent="center">
+                  <SiSolana size={24} color="white" />
+                </Box>
+                <Box>
+                  <Text fontWeight={600} color="white">Phantom Wallet</Text>
+                  {isSolanaConnected && (
+                    <>
+                      <Text fontSize="xs" color="gray.400">{formatAddress(solanaAddress!)}</Text>
+                      <Text fontSize="xs" color="#ffd700">{solanaBalance.toFixed(4)} SOL</Text>
+                    </>
+                  )}
+                </Box>
+              </Flex>
+              <Button
+                size="sm"
+                colorScheme={isSolanaConnected ? 'red' : 'purple'}
+                onClick={isSolanaConnected ? disconnectSolanaWallet : connectSolanaWallet}
+                loading={isConnecting}
+
+              >
+                {isSolanaConnected ? <><FaUnlink /> Отключить</> : <><FaLink /> Подключить</>}
+              </Button>
+            </Flex>
+          </VStack>
+        </Box>
+        
+        {/* Игровой баланс */}
         <Box bg="#ffd700" color="#222" borderRadius="xl" boxShadow="lg" p={8} fontSize="4xl" fontWeight="bold" textAlign="center" mb={4} w="100%">
           <Flex fontSize="4xl" fontWeight="bold" color="#222" align="center" gap={2} justify="center"><FaCoins color="#222" /> 1000</Flex>
-          <Text fontSize="lg" fontWeight="normal" mt={2}>монет</Text>
+          <Text fontSize="lg" fontWeight="normal" mt={2}>игровых монет</Text>
           <Button px={4} py={2} borderRadius="lg" bg="#232b3e" color="#ffd700" fontWeight="bold" _hover={{ bg: 'gray.700', color: '#ffd700' }} mt={4}>
             <FaPlus style={{marginRight: 8}} />Пополнить
           </Button>
