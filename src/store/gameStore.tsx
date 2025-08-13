@@ -24,6 +24,9 @@ export interface Player {
   penki: Card[] // Пеньки (2 закрытые карты, доступны в 3-й стадии)
   playerStage: 1 | 2 | 3 // Индивидуальная стадия игрока
   isCurrentPlayer: boolean
+  isUser?: boolean // Является ли игрок пользователем
+  isBot?: boolean // Является ли игрок ботом
+  difficulty?: 'easy' | 'medium' | 'hard' // Сложность бота
 }
 
 export interface GameStats {

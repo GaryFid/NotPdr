@@ -12,6 +12,8 @@ export type Player = {
   avatar: string;
   cards: Card[];
   isUser: boolean;
+  isBot?: boolean; // Является ли игрок ботом
+  difficulty?: 'easy' | 'medium' | 'hard'; // Сложность бота
   canReceiveCard?: boolean; // Может ли игрок получить карту на верхнюю
 };
 

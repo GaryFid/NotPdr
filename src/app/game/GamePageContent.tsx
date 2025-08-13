@@ -5,10 +5,13 @@ import BottomNav from '../../components/BottomNav';
 import styles from './GameTable.module.css';
 import { useDragAndDrop } from '@/hooks/useDragAndDrop';
 import type { Player, Card } from '../../types/game';
+import type { Card as StoreCard } from '../../store/gameStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import React from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
+import { createPlayers, generateAvatar } from '@/lib/game/avatars';
+import { AIPlayer, AIDifficulty } from '@/lib/game/ai-player';
 
 const CARD_IMAGES = [
   '2_of_clubs.png','2_of_diamonds.png','2_of_hearts.png','2_of_spades.png',
@@ -26,21 +29,22 @@ const CARD_IMAGES = [
   'queen_of_clubs.png','queen_of_diamonds.png','queen_of_hearts.png','queen_of_spades.png',
 ];
 const CARD_BACK = 'back.png';
-const BOT_NAMES = ['Petr','Ivan','Albert','Ignat','Robert','Alex','Sergey','Dmitry','Oleg'];
-const BOT_AVATAR = '/img/player-avatar.svg';
-const USER_AVATAR = '/img/player-avatar.svg';
-
+// Создаем игроков с уникальными именами и аватарами
 function getPlayers(count: number, userName = 'Вы'): Player[] {
-  return Array.from({ length: count }, (_, i) => ({
+  const playerInfos = createPlayers(count, 0); // 0 - позиция пользователя
+  
+  return playerInfos.map((info, i) => ({
     id: i,
-    name: i === 0 ? userName : BOT_NAMES[i-1] || `AI${i}`,
-    avatar: i === 0 ? USER_AVATAR : BOT_AVATAR,
+    name: info.name,
+    avatar: info.avatar,
     cards: [
       { id: `c${i}a`, image: CARD_BACK, open: false },
       { id: `c${i}b`, image: CARD_BACK, open: false },
       { id: `c${i}c`, image: `/img/cards/${CARD_IMAGES[(i*3)%CARD_IMAGES.length]}`, open: true },
     ],
-    isUser: i === 0,
+    isUser: !info.isBot,
+    isBot: info.isBot,
+    difficulty: info.difficulty,
   }));
 }
 
@@ -121,7 +125,77 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
   // Получаем текущего игрока (пользователя)
   const currentPlayer = players.find(p => p.id === currentPlayerId);
   const currentPlayerIndex = players.findIndex(p => p.id === currentPlayerId);
+  
+  // Создаем экземпляры ИИ для ботов
+  const [aiPlayers, setAiPlayers] = useState<Map<number, AIPlayer>>(new Map());
 
+  // Инициализация ИИ игроков
+  useEffect(() => {
+    const newAiPlayers = new Map<number, AIPlayer>();
+    players.forEach(player => {
+      if (player.isBot) {
+        const playerId = typeof player.id === 'string' ? parseInt(player.id) : player.id;
+        newAiPlayers.set(playerId, new AIPlayer(playerId, player.difficulty || 'medium'));
+      }
+    });
+    setAiPlayers(newAiPlayers);
+  }, [players]);
+  
+  // Обработка ходов ИИ
+  useEffect(() => {
+    if (!isGameActive || !currentPlayerId) return;
+    
+    const currentPlayer = players.find(p => p.id === currentPlayerId);
+    if (!currentPlayer || !currentPlayer.isBot) return;
+    
+    const playerIdNum = typeof currentPlayerId === 'string' ? parseInt(currentPlayerId) : currentPlayerId;
+    const ai = aiPlayers.get(playerIdNum);
+    if (!ai) return;
+    
+    // Задержка перед ходом ИИ для реалистичности
+    const makeAIMove = async () => {
+      const gameState = {
+        players,
+        currentPlayer: currentPlayerId,
+        gameStage,
+        deck,
+        availableTargets,
+        revealedDeckCard,
+        tableStack,
+        trumpSuit: null // TODO: добавить определение козыря
+      };
+      
+      const decision = await ai.makeDecisionWithDelay(gameState);
+      
+      // Выполняем решение ИИ
+      switch (decision.action) {
+        case 'draw_card':
+          if (drawCard) drawCard();
+          break;
+        case 'place_on_target':
+          if (decision.targetPlayerId !== undefined && makeMove) {
+            makeMove(decision.targetPlayerId.toString());
+          }
+          break;
+        case 'place_on_self':
+          if (playSelectedCard) playSelectedCard();
+          break;
+        case 'play_card':
+          // TODO: преобразовать Card в StoreCard для selectHandCard
+          if (decision.cardToPlay && playSelectedCard) {
+            // Пока просто вызываем playSelectedCard
+            playSelectedCard();
+          }
+          break;
+      }
+    };
+    
+    // Запускаем ход ИИ с небольшой задержкой
+    const timeoutId = setTimeout(makeAIMove, 1000);
+    
+    return () => clearTimeout(timeoutId);
+  }, [currentPlayerId, isGameActive, players, gameStage, aiPlayers]);
+  
   // Автоматический запуск игры при загрузке страницы
   useEffect(() => {
     if (!gameInitialized) {
@@ -336,10 +410,44 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                   >
                     {/* Аватар и имя по центру */}
                     <div className={styles.avatarWrap}>
-                      <Image src={p.avatar || USER_AVATAR} alt="avatar" width={22} height={22} className={styles.avatar} />
-                      <span className={styles.playerName}>{p.name}</span>
-                      {isCurrentPlayer && <span style={{color:'#6366f1',marginLeft:4,fontWeight:700}}>⬤</span>}
-                      {isTargetAvailable && <span style={{color:'#6366f1',marginLeft:4}}>🎯</span>}
+                      <div className={styles.avatarContainer}>
+                        {p.avatar && p.avatar.startsWith('data:') ? (
+                          // SVG аватар
+                          <div 
+                            className={styles.avatar}
+                            style={{
+                              width: 40,
+                              height: 40,
+                              borderRadius: '50%',
+                              backgroundImage: `url(${p.avatar})`,
+                              backgroundSize: 'cover',
+                              border: isCurrentPlayer ? '3px solid #6366f1' : '2px solid rgba(255,255,255,0.3)'
+                            }}
+                          />
+                        ) : (
+                          // Обычное изображение
+                          <Image 
+                            src={p.avatar || '/img/player-avatar.svg'} 
+                            alt="avatar" 
+                            width={40} 
+                            height={40} 
+                            className={styles.avatar}
+                            style={{
+                              borderRadius: '50%',
+                              border: isCurrentPlayer ? '3px solid #6366f1' : '2px solid rgba(255,255,255,0.3)'
+                            }}
+                          />
+                        )}
+                        {p.isBot && (
+                          <div className={styles.botBadge} title={`AI (${p.difficulty || 'medium'})`}>
+                            🤖
+                          </div>
+                        )}
+                      </div>
+                      <span className={styles.playerName} style={{ fontSize: '12px', fontWeight: 600 }}>
+                        {p.name}
+                      </span>
+                      {isTargetAvailable && <span style={{color:'#ffd700',marginLeft:4}}>🎯</span>}
                     </div>
                     
                     {/* Контейнер для пеньков и открытой карты */}
