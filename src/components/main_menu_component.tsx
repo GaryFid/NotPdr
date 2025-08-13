@@ -30,8 +30,14 @@ export function MainMenu({ onNavigate }: MainMenuProps) {
     disconnectTonWallet, disconnectSolanaWallet, disconnectEthereumWallet
   } = useWalletStore()
 
-  const handleWalletAction = async (type: 'ton' | 'solana' | 'ethereum') => {
+  const handleWalletAction = async (type: 'ton' | 'solana' | 'ethereum', fromBurger = false) => {
     hapticFeedback('medium')
+    
+    // Закрываем бургер меню если действие из него
+    if (fromBurger) {
+      setMenuOpen(false)
+    }
+    
     try {
       switch (type) {
         case 'ton':
@@ -77,83 +83,102 @@ export function MainMenu({ onNavigate }: MainMenuProps) {
           </button>
           {menuOpen && (
             <div className="wallet-dropdown fade-in">
-              {tokens.map((token) => (
-                <div className="wallet-token" key={token.name} style={{ borderColor: token.color }}>
-                  <div className="wallet-token-header">
-                    <div className="wallet-token-name" style={{ color: token.color }}>
-                      {token.symbol}
+              {/* Информация о балансах */}
+              <div className="burger-section">
+                <div className="burger-section-title">БАЛАНСЫ</div>
+                {tokens.map((token) => (
+                  <div className="wallet-token" key={token.name} style={{ borderColor: token.color }}>
+                    <div className="wallet-token-header">
+                      <div className="wallet-token-name" style={{ color: token.color }}>
+                        {token.symbol}
+                      </div>
+                      <div className="wallet-token-status">
+                        {token.name === 'TON' && isTonConnected && '🟢'}
+                        {token.name === 'SOLANA' && isSolanaConnected && '🟢'}
+                        {token.name === 'ETHEREUM' && isEthereumConnected && '🟢'}
+                        {token.name === 'TON' && !isTonConnected && '🔴'}
+                        {token.name === 'SOLANA' && !isSolanaConnected && '🔴'}
+                        {token.name === 'ETHEREUM' && !isEthereumConnected && '🔴'}
+                      </div>
                     </div>
-                    <div className="wallet-token-status">
-                      {token.name === 'TON' && isTonConnected && '🟢'}
-                      {token.name === 'SOLANA' && isSolanaConnected && '🟢'}
-                      {token.name === 'ETHEREUM' && isEthereumConnected && '🟢'}
-                      {token.name === 'TON' && !isTonConnected && '🔴'}
-                      {token.name === 'SOLANA' && !isSolanaConnected && '🔴'}
-                      {token.name === 'ETHEREUM' && !isEthereumConnected && '🔴'}
+                    <div className="wallet-token-balance">
+                      {token.name === 'TON' ? tonBalance : 
+                       token.name === 'SOLANA' ? solanaBalance :
+                       token.name === 'ETHEREUM' ? ethereumBalance : '0.00'} {token.symbol}
                     </div>
                   </div>
-                  <div className="wallet-token-balance">
-                    {token.name === 'TON' ? tonBalance : 
-                     token.name === 'SOLANA' ? solanaBalance :
-                     token.name === 'ETHEREUM' ? ethereumBalance : '0.00'} {token.symbol}
-                  </div>
+                ))}
+              </div>
+              
+              {/* Кнопки подключения кошельков */}
+              <div className="burger-section">
+                <div className="burger-section-title">ПОДКЛЮЧЕНИЕ</div>
+                <div className="burger-wallet-grid">
+                  <button 
+                    onClick={() => handleWalletAction('ton', true)} 
+                    className="burger-wallet-btn ton-burger"
+                  >
+                    <div className="burger-wallet-icon">💎</div>
+                    <div className="burger-wallet-info">
+                      <div className="burger-wallet-name">
+                        {isTonConnected ? 'TON Connected' : 'Connect TON'}
+                      </div>
+                      {isTonConnected && tonAddress && (
+                        <div className="burger-wallet-address">
+                          {tonAddress.slice(0, 6)}...{tonAddress.slice(-4)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="burger-wallet-action">
+                      {isTonConnected ? '🔓' : '🔒'}
+                    </div>
+                  </button>
+                  
+                  <button 
+                    onClick={() => handleWalletAction('solana', true)} 
+                    className="burger-wallet-btn solana-burger"
+                  >
+                    <div className="burger-wallet-icon">⚡</div>
+                    <div className="burger-wallet-info">
+                      <div className="burger-wallet-name">
+                        {isSolanaConnected ? 'Phantom Connected' : 'Connect Phantom'}
+                      </div>
+                      {isSolanaConnected && solanaAddress && (
+                        <div className="burger-wallet-address">
+                          {solanaAddress.slice(0, 6)}...{solanaAddress.slice(-4)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="burger-wallet-action">
+                      {isSolanaConnected ? '🔓' : '🔒'}
+                    </div>
+                  </button>
+                  
+                  <button 
+                    onClick={() => handleWalletAction('ethereum', true)} 
+                    className="burger-wallet-btn ethereum-burger"
+                  >
+                    <div className="burger-wallet-icon">🦄</div>
+                    <div className="burger-wallet-info">
+                      <div className="burger-wallet-name">
+                        {isEthereumConnected ? 'MetaMask Connected' : 'Connect MetaMask'}
+                      </div>
+                      {isEthereumConnected && ethereumAddress && (
+                        <div className="burger-wallet-address">
+                          {ethereumAddress.slice(0, 6)}...{ethereumAddress.slice(-4)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="burger-wallet-action">
+                      {isEthereumConnected ? '🔓' : '🔒'}
+                    </div>
+                  </button>
                 </div>
-              ))}
+              </div>
             </div>
           )}
         </div>
         
-        {/* Кнопки подключения кошельков */}
-        <div className="wallet-connect-section">
-          <div className="wallet-connect-title">ПОДКЛЮЧИТЬ КОШЕЛЕК</div>
-          <div className="wallet-connect-grid">
-            <button 
-              onClick={() => handleWalletAction('ton')} 
-              className="wallet-connect-btn ton-wallet"
-            >
-              <div className="wallet-connect-icon">💎</div>
-              <div className="wallet-connect-label">
-                {isTonConnected ? 'TON ✓' : 'TON Wallet'}
-              </div>
-              {isTonConnected && (
-                <div className="wallet-connect-address">
-                  {tonAddress?.slice(0, 8)}...{tonAddress?.slice(-6)}
-                </div>
-              )}
-            </button>
-            
-            <button 
-              onClick={() => handleWalletAction('solana')} 
-              className="wallet-connect-btn solana-wallet"
-            >
-              <div className="wallet-connect-icon">⚡</div>
-              <div className="wallet-connect-label">
-                {isSolanaConnected ? 'Phantom ✓' : 'Phantom'}
-              </div>
-              {isSolanaConnected && (
-                <div className="wallet-connect-address">
-                  {solanaAddress?.slice(0, 8)}...{solanaAddress?.slice(-6)}
-                </div>
-              )}
-            </button>
-            
-            <button 
-              onClick={() => handleWalletAction('ethereum')} 
-              className="wallet-connect-btn ethereum-wallet"
-            >
-              <div className="wallet-connect-icon">🦄</div>
-              <div className="wallet-connect-label">
-                {isEthereumConnected ? 'MetaMask ✓' : 'MetaMask'}
-              </div>
-              {isEthereumConnected && (
-                <div className="wallet-connect-address">
-                  {ethereumAddress?.slice(0, 8)}...{ethereumAddress?.slice(-6)}
-                </div>
-              )}
-            </button>
-          </div>
-        </div>
-
         {/* Быстрые действия */}
         <div className="menu-actions-title">БЫСТРЫЕ ДЕЙСТВИЯ</div>
         <div className="menu-actions-grid">
@@ -173,6 +198,42 @@ export function MainMenu({ onNavigate }: MainMenuProps) {
             <User className="menu-action-icon" />
             <span className="menu-action-label">ПРОФИЛЬ</span>
           </button>
+        </div>
+
+        {/* Компактные кошельки под основными кнопками */}
+        <div className="wallet-connect-section-compact">
+          <div className="wallet-connect-title-compact">КОШЕЛЬКИ</div>
+          <div className="wallet-connect-grid-compact">
+            <button 
+              onClick={() => handleWalletAction('ton')} 
+              className="wallet-connect-btn-compact ton-wallet-compact"
+            >
+              <div className="wallet-connect-icon-compact">💎</div>
+              <div className="wallet-connect-label-compact">
+                {isTonConnected ? '✓' : 'TON'}
+              </div>
+            </button>
+            
+            <button 
+              onClick={() => handleWalletAction('solana')} 
+              className="wallet-connect-btn-compact solana-wallet-compact"
+            >
+              <div className="wallet-connect-icon-compact">⚡</div>
+              <div className="wallet-connect-label-compact">
+                {isSolanaConnected ? '✓' : 'SOL'}
+              </div>
+            </button>
+            
+            <button 
+              onClick={() => handleWalletAction('ethereum')} 
+              className="wallet-connect-btn-compact ethereum-wallet-compact"
+            >
+              <div className="wallet-connect-icon-compact">🦄</div>
+              <div className="wallet-connect-label-compact">
+                {isEthereumConnected ? '✓' : 'ETH'}
+              </div>
+            </button>
+          </div>
         </div>
       </div>
     </div>
