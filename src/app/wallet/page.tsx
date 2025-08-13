@@ -1,7 +1,7 @@
 'use client'
 import { Box, Flex, Text, Button, Input, Grid, Image, VStack, HStack, Spinner } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
-import { FaArrowLeft, FaCoins, FaPlus, FaGift, FaShoppingCart, FaStar, FaTelegram, FaShareAlt, FaWallet, FaLink, FaUnlink } from 'react-icons/fa';
+import { FaArrowLeft, FaCoins, FaPlus, FaGift, FaShoppingCart, FaStar, FaTelegram, FaShareAlt, FaWallet, FaLink, FaUnlink, FaEthereum } from 'react-icons/fa';
 import { SiSolana } from 'react-icons/si';
 import BottomNav from '../../components/BottomNav';
 import { useWalletStore } from '../../store/walletStore';
@@ -17,12 +17,18 @@ export default function WalletPage() {
     solanaAddress,
     solanaBalance,
     isSolanaConnected,
+    ethereumAddress,
+    ethereumBalance,
+    isEthereumConnected,
+    ethereumNetwork,
     isConnecting,
     error,
     connectTonWallet,
     disconnectTonWallet,
     connectSolanaWallet,
     disconnectSolanaWallet,
+    connectEthereumWallet,
+    disconnectEthereumWallet,
     updateBalances,
     clearError,
   } = useWalletStore();
@@ -123,6 +129,33 @@ export default function WalletPage() {
 
               >
                 {isSolanaConnected ? <><FaUnlink /> Отключить</> : <><FaLink /> Подключить</>}
+              </Button>
+            </Flex>
+            
+            {/* Ethereum Wallet */}
+            <Flex align="center" justify="space-between" bg="#181f2a" borderRadius="lg" p={4}>
+              <Flex align="center" gap={3}>
+                <Box w={10} h={10} borderRadius="lg" bg="#627EEA" display="flex" alignItems="center" justifyContent="center">
+                  <FaEthereum size={24} color="white" />
+                </Box>
+                <Box>
+                  <Text fontWeight={600} color="white">MetaMask</Text>
+                  {isEthereumConnected && (
+                    <>
+                      <Text fontSize="xs" color="gray.400">{formatAddress(ethereumAddress!)}</Text>
+                      <Text fontSize="xs" color="#ffd700">{ethereumBalance.toFixed(4)} ETH</Text>
+                      <Text fontSize="xs" color="gray.500">{ethereumNetwork}</Text>
+                    </>
+                  )}
+                </Box>
+              </Flex>
+              <Button
+                size="sm"
+                colorScheme={isEthereumConnected ? 'red' : 'blue'}
+                onClick={isEthereumConnected ? disconnectEthereumWallet : connectEthereumWallet}
+                loading={isConnecting}
+              >
+                {isEthereumConnected ? <><FaUnlink /> Отключить</> : <><FaLink /> Подключить</>}
               </Button>
             </Flex>
           </VStack>

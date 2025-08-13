@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { tonConnector } from '../lib/wallets/ton-connector';
 import { solanaConnector } from '../lib/wallets/solana-connector';
+import { ethereumConnector } from '../lib/wallets/ethereum-connector';
 
 interface WalletState {
   // TON
@@ -13,6 +14,12 @@ interface WalletState {
   solanaBalance: number;
   isSolanaConnected: boolean;
   
+  // Ethereum
+  ethereumAddress: string | null;
+  ethereumBalance: number;
+  isEthereumConnected: boolean;
+  ethereumNetwork: string | null;
+  
   // Общее
   isConnecting: boolean;
   error: string | null;
@@ -22,6 +29,8 @@ interface WalletState {
   disconnectTonWallet: () => Promise<void>;
   connectSolanaWallet: () => Promise<void>;
   disconnectSolanaWallet: () => Promise<void>;
+  connectEthereumWallet: () => Promise<void>;
+  disconnectEthereumWallet: () => Promise<void>;
   updateBalances: () => Promise<void>;
   clearError: () => void;
 }
@@ -35,6 +44,11 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   solanaAddress: null,
   solanaBalance: 0,
   isSolanaConnected: false,
+  
+  ethereumAddress: null,
+  ethereumBalance: 0,
+  isEthereumConnected: false,
+  ethereumNetwork: null,
   
   isConnecting: false,
   error: null,
@@ -103,6 +117,40 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     }
   },
   
+  // Ethereum Actions
+  connectEthereumWallet: async () => {
+    set({ isConnecting: true, error: null });
+    try {
+      const wallet = await ethereumConnector.connect();
+      set({
+        ethereumAddress: wallet.address,
+        ethereumBalance: wallet.balance,
+        ethereumNetwork: wallet.network,
+        isEthereumConnected: true,
+        isConnecting: false,
+      });
+    } catch (error: any) {
+      set({
+        error: error.message || 'Failed to connect Ethereum wallet',
+        isConnecting: false,
+      });
+    }
+  },
+  
+  disconnectEthereumWallet: async () => {
+    try {
+      await ethereumConnector.disconnect();
+      set({
+        ethereumAddress: null,
+        ethereumBalance: 0,
+        ethereumNetwork: null,
+        isEthereumConnected: false,
+      });
+    } catch (error: any) {
+      set({ error: error.message || 'Failed to disconnect Ethereum wallet' });
+    }
+  },
+  
   // Обновление балансов
   updateBalances: async () => {
     const state = get();
@@ -111,6 +159,12 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     if (state.isSolanaConnected && state.solanaAddress) {
       const balance = await solanaConnector.getBalance(state.solanaAddress);
       set({ solanaBalance: balance });
+    }
+    
+    // Обновляем баланс Ethereum
+    if (state.isEthereumConnected && state.ethereumAddress) {
+      const balance = await ethereumConnector.getBalance(state.ethereumAddress);
+      set({ ethereumBalance: balance });
     }
     
     // TODO: Обновить баланс TON
