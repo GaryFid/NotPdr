@@ -931,42 +931,132 @@ input:focus, textarea:focus, select:focus {
   text-align: center;
 }
 
-.menu-balance-card {
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(34, 197, 94, 0.08) 100%);
-  border: 1px solid rgba(255, 215, 0, 0.3);
-  color: #ffd700;
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  padding: 32px 24px 24px 24px;
-  margin: 32px 0 24px 0;
+/* Секция подключения кошельков */
+.wallet-connect-section {
+  margin: 20px 0;
   width: 100%;
+}
+
+.wallet-connect-title {
+  color: #b0b0b0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 18px 0 10px 0;
+  letter-spacing: 1px;
   text-align: center;
-  position: relative;
-  overflow: hidden;
 }
 
-.menu-balance-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
+.wallet-connect-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   width: 100%;
-  height: 100%;
-  background: linear-gradient(45deg, transparent 30%, rgba(255, 215, 0, 0.03) 50%, transparent 70%);
-  pointer-events: none;
 }
 
-.menu-balance-amount {
-  font-size: 2.5rem;
-  font-weight: 800;
-  margin-bottom: 4px;
+.wallet-connect-btn {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.7) 100%);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 15px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
-.menu-balance-label {
+.wallet-connect-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+.wallet-connect-btn.ton-wallet {
+  border-color: rgba(0, 136, 255, 0.5);
+}
+
+.wallet-connect-btn.ton-wallet:hover {
+  border-color: rgba(0, 136, 255, 0.8);
+  background: linear-gradient(135deg, rgba(0, 136, 255, 0.1) 0%, rgba(15, 23, 42, 0.9) 100%);
+}
+
+.wallet-connect-btn.solana-wallet {
+  border-color: rgba(153, 69, 255, 0.5);
+}
+
+.wallet-connect-btn.solana-wallet:hover {
+  border-color: rgba(153, 69, 255, 0.8);
+  background: linear-gradient(135deg, rgba(153, 69, 255, 0.1) 0%, rgba(15, 23, 42, 0.9) 100%);
+}
+
+.wallet-connect-btn.ethereum-wallet {
+  border-color: rgba(98, 126, 234, 0.5);
+}
+
+.wallet-connect-btn.ethereum-wallet:hover {
+  border-color: rgba(98, 126, 234, 0.8);
+  background: linear-gradient(135deg, rgba(98, 126, 234, 0.1) 0%, rgba(15, 23, 42, 0.9) 100%);
+}
+
+.wallet-connect-icon {
+  font-size: 1.8rem;
+  min-width: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wallet-connect-label {
   font-size: 1.1rem;
   font-weight: 600;
-  opacity: 0.85;
+  color: #e2e8f0;
+  flex: 1;
+  text-align: left;
+}
+
+.wallet-connect-address {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  font-family: 'Courier New', monospace;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+/* Обновленные стили для токенов в дропдауне */
+.wallet-token {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.7) 100%);
+  border: 1px solid;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  backdrop-filter: blur(10px);
+}
+
+.wallet-token-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.wallet-token-name {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.wallet-token-status {
+  font-size: 0.8rem;
+}
+
+.wallet-token-balance {
+  font-size: 0.9rem;
+  color: #e2e8f0;
+  font-family: 'Courier New', monospace;
 }
 
 .menu-actions-title {

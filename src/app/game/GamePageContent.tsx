@@ -63,8 +63,8 @@ const getCirclePosition = (index: number, total: number): { top: string; left: s
   const rTableX = 34 * scale;
   const rTableY = 28 * scale;
 
-  // Орбита сидений — всегда за пределами стола
-  const seatMargin = 8 + Math.max(0, n - 5) * 2; // больше игроков — больше отступ
+  // Орбита сидений — всегда за пределами стола (УВЕЛИЧЕНО для отдаления от колоды)
+  const seatMargin = 16 + Math.max(0, n - 5) * 3; // больше игроков — больше отступ (было 8 + n*2)
   const rSeatX = rTableX + seatMargin;
   const rSeatY = rTableY + seatMargin;
 
