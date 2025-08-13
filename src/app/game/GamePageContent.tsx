@@ -128,6 +128,21 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
   
   // Создаем экземпляры ИИ для ботов
   const [aiPlayers, setAiPlayers] = useState<Map<number, AIPlayer>>(new Map());
+  
+  // Детектируем размер экрана для адаптивности
+  const [isMobile, setIsMobile] = useState(false);
+  const [isSmallMobile, setIsSmallMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth <= 768);
+      setIsSmallMobile(window.innerWidth <= 480);
+    };
+    
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
 
   // Инициализация ИИ игроков
   useEffect(() => {
@@ -296,8 +311,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                     <Image 
                       src={revealedDeckCard.image ? `/img/cards/${revealedDeckCard.image}` : '/img/cards/back.png'} 
                       alt="revealed card" 
-                      width={80} 
-                      height={120}
+                      width={isSmallMobile ? 65 : isMobile ? 72 : 80} 
+                      height={isSmallMobile ? 97 : isMobile ? 108 : 120}
                       className={styles.revealedCardImage}
                     />
                   </div>
@@ -324,8 +339,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                     <Image 
                       src="/img/cards/back.png" 
                       alt="deck" 
-                      width={70} 
-                      height={100}
+                      width={isSmallMobile ? 56 : isMobile ? 63 : 70} 
+                      height={isSmallMobile ? 80 : isMobile ? 90 : 100}
                       className={styles.deckCard}
                     />
                   )}
@@ -416,12 +431,14 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                           <div 
                             className={styles.avatar}
                             style={{
-                              width: 40,
-                              height: 40,
+                              width: isSmallMobile ? 38 : isMobile ? 45 : 55,
+                              height: isSmallMobile ? 38 : isMobile ? 45 : 55,
                               borderRadius: '50%',
                               backgroundImage: `url(${p.avatar})`,
                               backgroundSize: 'cover',
-                              border: isCurrentPlayer ? '3px solid #6366f1' : '2px solid rgba(255,255,255,0.3)'
+                              border: isCurrentPlayer ? '4px solid #ffd700' : '2px solid rgba(255,255,255,0.3)',
+                              boxShadow: isCurrentPlayer ? '0 0 20px #ffd700, 0 0 40px rgba(255,215,0,0.3)' : 'none',
+                              animation: isCurrentPlayer ? 'pulse 2s infinite' : 'none'
                             }}
                           />
                         ) : (
@@ -429,12 +446,14 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                           <Image 
                             src={p.avatar || '/img/player-avatar.svg'} 
                             alt="avatar" 
-                            width={40} 
-                            height={40} 
+                            width={isSmallMobile ? 38 : isMobile ? 45 : 55} 
+                            height={isSmallMobile ? 38 : isMobile ? 45 : 55} 
                             className={styles.avatar}
                             style={{
                               borderRadius: '50%',
-                              border: isCurrentPlayer ? '3px solid #6366f1' : '2px solid rgba(255,255,255,0.3)'
+                              border: isCurrentPlayer ? '4px solid #ffd700' : '2px solid rgba(255,255,255,0.3)',
+                              boxShadow: isCurrentPlayer ? '0 0 20px #ffd700, 0 0 40px rgba(255,215,0,0.3)' : 'none',
+                              animation: isCurrentPlayer ? 'pulse 2s infinite' : 'none'
                             }}
                           />
                         )}
@@ -444,9 +463,33 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                           </div>
                         )}
                       </div>
-                      <span className={styles.playerName} style={{ fontSize: '12px', fontWeight: 600 }}>
-                        {p.name}
-                      </span>
+                      <div style={{ textAlign: 'center' }}>
+                        <span 
+                          className={styles.playerName} 
+                          style={{ 
+                            fontSize: isSmallMobile ? '11px' : isMobile ? '12px' : '14px', 
+                            fontWeight: 600,
+                            color: isCurrentPlayer ? '#ffd700' : 'white',
+                            textShadow: isCurrentPlayer ? '0 0 10px #ffd700' : 'none',
+                            display: 'block'
+                          }}
+                        >
+                          {p.name}
+                          {isCurrentPlayer && <span style={{ marginLeft: 4 }}>👑</span>}
+                        </span>
+                        {p.cards.length > 3 && (
+                          <span 
+                            style={{ 
+                              fontSize: '11px', 
+                              color: '#94a3b8',
+                              display: 'block',
+                              marginTop: '2px'
+                            }}
+                          >
+                            +{p.cards.length - 3} карт
+                          </span>
+                        )}
+                      </div>
                       {isTargetAvailable && <span style={{color:'#ffd700',marginLeft:4}}>🎯</span>}
                     </div>
                     
@@ -474,8 +517,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                               <Image
                                 src="/img/cards/back.png"
                                 alt="penki"
-                                width={55}
-                                height={80}
+                                width={isSmallMobile ? 44 : isMobile ? 50 : 55}
+                                height={isSmallMobile ? 64 : isMobile ? 72 : 80}
                                 style={{ 
                                   borderRadius: '8px',
                                   opacity: 0.8
@@ -490,12 +533,13 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                       {/* Открытая карта поверх пеньков */}
                       {p.cards.length > 0 && (
                         <div className={styles.activeCardContainer}>
-                          {p.cards.map((card, ci) => {
-                            const isTopCard = ci === p.cards.length - 1;
+                          {p.cards.slice(-3).map((card, ci) => { // Показываем только последние 3 карты
+                            const isTopCard = ci === 2; // Топ карта теперь всегда третья
                             // Определяем направление стекинга карт в зависимости от позиции игрока
                             const playerPosition = getCirclePosition(playerIndex, players.length);
                             const isLeftSide = parseFloat(playerPosition.left) < 50; // Левая половина экрана
-                            const cardOffset = isLeftSide ? ci * 6 : -ci * 6; // Левые игроки - вправо, правые - влево
+                            const spacing = isSmallMobile ? 12 : isMobile ? 13 : 15;
+                            const cardOffset = isLeftSide ? ci * spacing : -ci * spacing;
                             
                             return (
                               <motion.div
@@ -561,8 +605,14 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                                       (card.open && card.image ? `/img/cards/${card.image}` : `/img/cards/back.png`)
                                     }
                                     alt={card.open ? 'card' : 'back'}
-                                    width={card.open ? 105 : 70}
-                                    height={card.open ? 157 : 105}
+                                    width={card.open ? 
+                                      (isSmallMobile ? 84 : isMobile ? 95 : 105) : 
+                                      (isSmallMobile ? 56 : isMobile ? 63 : 70)
+                                    }
+                                    height={card.open ? 
+                                      (isSmallMobile ? 126 : isMobile ? 142 : 157) : 
+                                      (isSmallMobile ? 84 : isMobile ? 95 : 105)
+                                    }
                                     draggable={false}
                                     style={{
                                       borderRadius: 0,
@@ -593,9 +643,17 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                   const isSelectableStage2 = card.open && stage2TurnPhase === 'selecting_card';
                   const isSelected = selectedHandCard?.id === card.id;
                   const baseStep = 10;
-                  const step = card.open ? 14 : baseStep; // больше шаг для крупных карт
+                  const mobileSteps = {
+                    open: isSmallMobile ? 18 : isMobile ? 21 : 25,
+                    closed: isSmallMobile ? 14 : isMobile ? 16 : 18
+                  };
+                  const step = card.open ? mobileSteps.open : mobileSteps.closed;
                   const cardOffset = index * step;
-                  const size = card.open ? { w: 84, h: 126 } : { w: 70, h: 105 };
+                  const mobileCardSizes = {
+                    open: isSmallMobile ? { w: 70, h: 105 } : isMobile ? { w: 77, h: 115 } : { w: 84, h: 126 },
+                    closed: isSmallMobile ? { w: 58, h: 87 } : isMobile ? { w: 64, h: 96 } : { w: 70, h: 105 }
+                  };
+                  const size = card.open ? mobileCardSizes.open : mobileCardSizes.closed;
                   
                   return (
                     <div 
