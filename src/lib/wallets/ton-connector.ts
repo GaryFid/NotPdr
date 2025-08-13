@@ -1,4 +1,4 @@
-import { TonConnectUI, TonConnectUiOptions, THEME } from '@tonconnect/ui-react';
+import { TonConnectUI, THEME } from '@tonconnect/ui-react';
 
 // Манифест для TON Connect
 const manifestUrl = 'https://not-pdr-yhkt.vercel.app/tonconnect-manifest.json';
@@ -9,37 +9,17 @@ export class TonWalletConnector {
   async init() {
     if (typeof window === 'undefined') return;
     
-    const options: TonConnectUiOptions = {
+    // TonConnectUI принимает manifestUrl и options отдельно
+    this.tonConnectUI = new TonConnectUI({
       manifestUrl,
       buttonRootId: 'ton-connect-button',
       uiPreferences: {
         theme: THEME.DARK,
       },
       walletsListConfiguration: {
-        includeWallets: [
-          {
-            appName: 'telegram-wallet',
-            name: 'Telegram Wallet',
-            imageUrl: 'https://wallet.telegram.org/img/logo-256.png',
-            aboutUrl: 'https://wallet.telegram.org',
-            universalLink: 'https://t.me/wallet',
-            bridgeUrl: 'https://bridge.tonapi.io/bridge',
-            platforms: ['ios', 'android', 'macos', 'windows', 'linux']
-          },
-          {
-            appName: 'tonkeeper',
-            name: 'Tonkeeper',
-            imageUrl: 'https://tonkeeper.com/assets/tonkeeper-logo.png',
-            aboutUrl: 'https://tonkeeper.com',
-            universalLink: 'https://app.tonkeeper.com/ton-connect',
-            bridgeUrl: 'https://bridge.tonapi.io/bridge',
-            platforms: ['ios', 'android', 'chrome', 'firefox']
-          }
-        ]
+        includeWallets: []
       }
-    };
-
-    this.tonConnectUI = new TonConnectUI(options);
+    });
     
     // Подписка на изменения состояния
     this.tonConnectUI.onStatusChange((wallet) => {
