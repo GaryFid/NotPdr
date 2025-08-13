@@ -5,7 +5,7 @@ import { Play, User, Star, Book, Wallet, UserPlus, Store, Menu, Link } from 'luc
 import { useGameStore } from '../store/gameStore'
 import { useTelegram } from '../hooks/useTelegram'
 import { useWalletStore } from '../store/walletStore'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 const tokens = [
   { name: 'TON', symbol: 'TON', color: '#0088ff' },
@@ -22,7 +22,6 @@ export function MainMenu({ onNavigate }: MainMenuProps) {
   const { startGame, stats } = useGameStore()
   const { hapticFeedback } = useTelegram()
   const [menuOpen, setMenuOpen] = useState(false)
-  const [isClient, setIsClient] = useState(false)
   const { 
     tonAddress, tonBalance, isTonConnected,
     solanaAddress, solanaBalance, isSolanaConnected,
@@ -30,10 +29,6 @@ export function MainMenu({ onNavigate }: MainMenuProps) {
     connectTonWallet, connectSolanaWallet, connectEthereumWallet,
     disconnectTonWallet, disconnectSolanaWallet, disconnectEthereumWallet
   } = useWalletStore()
-
-  useEffect(() => {
-    setIsClient(true)
-  }, [])
 
   const handleWalletAction = async (type: 'ton' | 'solana' | 'ethereum') => {
     hapticFeedback('medium')

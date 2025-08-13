@@ -49,25 +49,20 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('auto')
   const [colorScheme, setColorSchemeState] = useState<ColorScheme>('blue')
   const [isDark, setIsDark] = useState(false)
-  const [isClient, setIsClient] = useState(false)
-
-  useEffect(() => {
-    setIsClient(true)
-  }, [])
 
   useEffect(() => {
     // Загружаем сохраненные настройки
-    if (isClient && typeof window !== 'undefined') {
+    if (typeof window !== 'undefined') {
       const savedTheme = localStorage.getItem('pidr-theme') as Theme
       const savedColorScheme = localStorage.getItem('pidr-color-scheme') as ColorScheme
       
       if (savedTheme) setThemeState(savedTheme)
       if (savedColorScheme) setColorSchemeState(savedColorScheme)
     }
-  }, [isClient])
+  }, [])
 
   useEffect(() => {
-    if (!isClient) return
+    if (typeof window === 'undefined') return
     
     const root = document.documentElement
     
@@ -101,7 +96,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     root.style.setProperty('--accent-secondary', colors.secondary)
     root.style.setProperty('--accent-light', colors.accent)
     
-  }, [theme, colorScheme, isClient])
+  }, [theme, colorScheme])
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme)

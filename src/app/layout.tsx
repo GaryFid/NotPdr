@@ -3,7 +3,6 @@ import { Inter } from 'next/font/google'
 import Script from 'next/script'
 import './globals.css'
 import { Providers } from './providers'
-import { ErrorBoundary } from '../components/ErrorBoundary'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -38,13 +37,11 @@ export default function RootLayout({
         />
       </head>
       <body className={inter.className}>
-        <ErrorBoundary>
-          <Providers>
-            <div style={{ minHeight: '100vh' }}>
-              {children}
-            </div>
-          </Providers>
-        </ErrorBoundary>
+        <Providers>
+          <div style={{ minHeight: '100vh' }}>
+            {children}
+          </div>
+        </Providers>
       </body>
     </html>
   )

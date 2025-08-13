@@ -1,12 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { TelegramProvider } from '../hooks/useTelegram'
 import { ThemeProvider } from '../context/theme_context'
 import type { TelegramWebApp } from '../types/telegram-webapp'
 import { ChakraProvider } from '@chakra-ui/react'
 import { defaultSystem } from '@chakra-ui/react/preset'
-import { LoadingFallback } from '../components/LoadingFallback'
 
 // Add global augmentation for Window to include Telegram
 declare global {
@@ -18,15 +17,7 @@ declare global {
 }
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const [isClient, setIsClient] = useState(false)
-  
   useEffect(() => {
-    setIsClient(true)
-  }, [])
-  
-  useEffect(() => {
-    if (!isClient) return
-    
     // Инициализация CSS переменных для Telegram
     const root = document.documentElement
     
@@ -63,16 +54,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       root.style.setProperty('--text-color', '#e2e8f0')
       root.style.setProperty('--accent-color', '#22c55e')
     }
-  }, [isClient])
-
-  // Предотвращаем hydration mismatch
-  if (!isClient) {
-    return (
-      <ChakraProvider value={defaultSystem}>
-        <LoadingFallback />
-      </ChakraProvider>
-    )
-  }
+  }, [])
 
   return (
     <ChakraProvider value={defaultSystem}>
