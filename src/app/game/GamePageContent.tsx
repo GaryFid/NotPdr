@@ -10,7 +10,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import React from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
-import { createPlayers, generateAvatar } from '@/lib/game/avatars';
 import { AIPlayer, AIDifficulty } from '@/lib/game/ai-player';
 
 const CARD_IMAGES = [
@@ -29,24 +28,6 @@ const CARD_IMAGES = [
   'queen_of_clubs.png','queen_of_diamonds.png','queen_of_hearts.png','queen_of_spades.png',
 ];
 const CARD_BACK = 'back.png';
-// Создаем игроков с уникальными именами и аватарами
-function getPlayers(count: number, userName = 'Вы'): Player[] {
-  const playerInfos = createPlayers(count, 0); // 0 - позиция пользователя
-  
-  return playerInfos.map((info, i) => ({
-    id: i.toString(), // ИСПРАВЛЕНО: преобразуем в string
-    name: info.name,
-    avatar: info.avatar,
-    cards: [
-      { id: `c${i}a`, image: CARD_BACK, open: false },
-      { id: `c${i}b`, image: CARD_BACK, open: false },
-      { id: `c${i}c`, image: `/img/cards/${CARD_IMAGES[(i*3)%CARD_IMAGES.length]}`, open: true },
-    ],
-    isUser: !info.isBot,
-    isBot: info.isBot,
-    difficulty: info.difficulty,
-  }));
-}
 
 // Идеальное позиционирование игроков вокруг овального стола
 const getCirclePosition = (index: number, total: number): { top: string; left: string } => {
@@ -262,6 +243,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
   const canDrawCard = turnPhase === 'deck_card_revealed' && currentPlayer?.id === currentPlayerId;
   const canClickDeck = turnPhase === 'showing_deck_hint' && currentPlayer?.id === currentPlayerId;
   const waitingForTarget = turnPhase === 'waiting_target_selection';
+
+
 
   return (
     <div className={styles.gameContainer}>

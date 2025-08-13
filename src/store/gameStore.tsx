@@ -1,6 +1,7 @@
 import React from 'react'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { createPlayers, generateAvatar } from '../lib/game/avatars'
 
 export interface Card {
   id: string
@@ -285,7 +286,6 @@ export const useGameStore = create<GameState>()(
         ];
         
         // Проверяем что у нас ровно 52 карты
-        console.log('🃏 Размер колоды:', standardDeck.length, 'карт');
         
         // Перемешиваем колоду
         const shuffledImages = [...standardDeck].sort(() => Math.random() - 0.5);
@@ -293,8 +293,11 @@ export const useGameStore = create<GameState>()(
         const players: Player[] = []
         const cardsPerPlayer = 3;
         
-        // Создаем игроков и раздаем им карты
+        // ИСПРАВЛЕНО: Создаем игроков с аватарами и ботами
+        const playerInfos = createPlayers(playersCount, 0); // 0 - позиция пользователя
+        
         for (let i = 0; i < playersCount; i++) {
+          const playerInfo = playerInfos[i];
           const playerOpenCards: Card[] = []; // Открытые карты (для 1-й стадии)
           const playerPenki: Card[] = []; // Пеньки (2 закрытые карты)
           
@@ -326,12 +329,16 @@ export const useGameStore = create<GameState>()(
           
           players.push({
             id: `player_${i + 1}`,
-            name: i === 0 ? 'Вы' : `Игрок ${i + 1}`,
+            name: playerInfo.name,
+            avatar: playerInfo.avatar,
             score: 0,
             cards: playerOpenCards, // Только верхняя открытая карта
             penki: playerPenki, // 2 закрытые карты
             playerStage: 1, // Все начинают с 1-й стадии
-            isCurrentPlayer: i === 0
+            isCurrentPlayer: i === 0,
+            isUser: !playerInfo.isBot,
+            isBot: playerInfo.isBot,
+            difficulty: playerInfo.difficulty
           });
         }
         
@@ -816,15 +823,15 @@ export const useGameStore = create<GameState>()(
         const { deck, gameStage, lastPlayerToDrawCard, players } = get();
         if (gameStage !== 1 || deck.length > 0) return;
         
-        console.log('🏁 Первая стадия завершена! Колода пуста.');
+
         
         // Определяем козырь второй стадии
         const trumpSuit = get().determineTrumpSuit();
-        console.log('🃏 Козырь второй стадии:', trumpSuit);
+
         
         // Определяем стартового игрока (последний взявший карту)
         let startingPlayerId = lastPlayerToDrawCard || players[0].id;
-        console.log('🎮 Стартовый игрок второй стадии:', startingPlayerId);
+
         
         // Обновляем текущего игрока и переводим всех во 2-ю стадию
         players.forEach(p => {
@@ -881,7 +888,7 @@ export const useGameStore = create<GameState>()(
         
         // ИСПРАВЛЕНО: Обрабатываем как 1-ю так и 2-ю стадии
         if (gameStage === 2) {
-          console.log(`🎮 Обработка хода игрока во 2-й стадии: ${playerId}`);
+
           // Для 2-й стадии просто устанавливаем фазу выбора карты
           set({ stage2TurnPhase: 'selecting_card' });
           const currentPlayer = players.find(p => p.id === playerId);
@@ -893,24 +900,20 @@ export const useGameStore = create<GameState>()(
         
         if (gameStage !== 1) return; // Только 1-я и 2-я стадии поддерживаются
         
-        console.log(`🎮 Обработка хода игрока в 1-й стадии: ${playerId}, пропуск анализа руки: ${skipHandAnalysis}`);
+
         
         const currentPlayer = players.find(p => p.id === playerId);
         if (!currentPlayer) return;
         
-        // ДЕБАГ: проверяем состояние карт игрока
+        // Проверяем состояние карт игрока
         const openCards = currentPlayer.cards.filter(c => c.open);
-        console.log(`📋 У игрока ${currentPlayer.name}: ${currentPlayer.cards.length} карт, из них открытых: ${openCards.length}`);
-        if (openCards.length > 0) {
-          console.log(`📋 Верхняя открытая карта:`, openCards[openCards.length - 1]?.image);
-        }
         
               // ЭТАП 1: Анализ руки (ТОЛЬКО если не пропускаем)
       if (!skipHandAnalysis && currentPlayer.cards.length > 0) {
         if (get().canMakeMove(playerId)) {
           // Может ходить - показываем цели и ждем клика по карте
           const targets = get().findAvailableTargets(playerId);
-          console.log(`✅ Может ходить картой из руки, цели:`, targets);
+
           set({ 
             availableTargets: targets,
             turnPhase: 'analyzing_hand'
@@ -918,7 +921,7 @@ export const useGameStore = create<GameState>()(
           get().showNotification(`${currentPlayer.name}: выберите карту для хода`, 'info');
           return; // Ждем клика по карте в руке игрока
         } else {
-          console.log(`❌ Не может ходить картой из руки, переходим к колоде`);
+
           // ИСПРАВЛЕНО: очищаем состояние и НЕ продолжаем автоматически к колоде
           set({ 
             availableTargets: [],
@@ -929,13 +932,13 @@ export const useGameStore = create<GameState>()(
           return; // ВАЖНО: Прерываем выполнение, ждем клика по колоде
         }
       } else if (skipHandAnalysis) {
-        console.log(`⏭️ Пропускаем анализ руки, идем к колоде`);
+
         set({ skipHandAnalysis: false }); // Сбрасываем флаг
       }
         
         // ЭТАП 2: Работа с колодой
         if (deck.length === 0) {
-          console.log(`🔚 Колода пуста - завершаем стадию`);
+
           get().checkStage1End();
           return;
         }
@@ -962,7 +965,7 @@ export const useGameStore = create<GameState>()(
         const currentPlayer = players.find(p => p.id === currentPlayerId);
         if (!currentPlayer) return;
         
-                 console.log(`🃏 Открыта карта из колоды:`, newRevealedCard.image);
+
          
          // Проверяем возможности с картой из колоды
          const deckTargets = get().findAvailableTargetsForDeckCard(newRevealedCard);
@@ -980,7 +983,7 @@ export const useGameStore = create<GameState>()(
            availableTargets: canMoveToOpponents ? deckTargets : []
          });
         
-        console.log(`🎯 Доступные действия: ходить на соперников: ${canMoveToOpponents}, положить на себя: ${canPlaceOnSelfByRules}`);
+
         
         if (canMoveToOpponents) {
           get().showNotification('Выберите: сходить на соперника или положить на себя', 'info');
@@ -1053,7 +1056,7 @@ export const useGameStore = create<GameState>()(
         const deckRank = get().getCardRank(deckCard.image);
         const playerRank = get().getCardRank(playerTopCard.image);
         
-        console.log(`🃏 Проверка canPlaceCardOnSelf: колода ${deckRank} → игрок ${playerRank}`);
+
         
         // ПРАВИЛЬНАЯ ЛОГИКА: Карта из колоды может лечь на карту игрока, если она на 1 ранг БОЛЬШЕ
         // Пример: 5♠ (deckRank=5) может лечь на 4♣ (playerRank=4)
