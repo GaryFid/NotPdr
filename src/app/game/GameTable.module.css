@@ -820,9 +820,11 @@
 }
 
 .revealedCardImage {
-  border-radius: 0 !important;
-  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.25), 0 0 0 1px rgba(99, 102, 241, 0.25);
+  border-radius: 8px !important;
+  background: white;
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.25), 0 0 0 1px rgba(99, 102, 241, 0.25), 0 2px 8px rgba(0, 0, 0, 0.1);
   animation: none;
+  padding: 2px;
 }
 
 /* Table stack in center */
@@ -951,6 +953,8 @@
   object-fit: contain;
   border-radius: 7px;
   transition: all 0.3s ease;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .handCard:hover img {

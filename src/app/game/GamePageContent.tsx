@@ -307,7 +307,17 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
               {revealedDeckCard && (
                 <div className={styles.revealedCardContainer}>
                   <div className={styles.revealedCard}>
-                    <div className={styles.cardBackdrop} style={{ width: 80, height: 120 }} />
+                    <div 
+                      className={styles.cardBackdrop} 
+                      style={{ 
+                        width: isSmallMobile ? 65 : isMobile ? 72 : 80, 
+                        height: isSmallMobile ? 97 : isMobile ? 108 : 120,
+                        background: 'white',
+                        borderRadius: '8px',
+                        position: 'absolute',
+                        zIndex: -1
+                      }} 
+                    />
                     <Image 
                       src={revealedDeckCard.image ? `/img/cards/${revealedDeckCard.image}` : '/img/cards/back.png'} 
                       alt="revealed card" 
