@@ -34,25 +34,34 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
   const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
-      const tg = window.Telegram.WebApp
-      tg.ready()
-      tg.expand()
-      
-      setWebApp(tg)
-      setIsReady(true)
+    // Добавляем небольшую задержку для полной загрузки скрипта
+    const initializeTelegram = () => {
+      try {
+        if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+          const tg = window.Telegram.WebApp
+          tg.ready()
+          tg.expand()
+          
+          setWebApp(tg)
+          setIsReady(true)
 
-      // Настройка темы
-      // document.documentElement.style.setProperty('--tg-bg-color', tg.backgroundColor)
-      // document.documentElement.style.setProperty('--tg-text-color', tg.themeParams.text_color || '#000000')
-      
-      if (tg.colorScheme === 'dark') {
-        document.documentElement.classList.add('dark')
+          // Настройка темы только на клиенте
+          if (tg.colorScheme === 'dark') {
+            document.documentElement.classList.add('dark')
+          }
+        } else {
+          // Для разработки без Telegram
+          setIsReady(true)
+        }
+      } catch (error) {
+        console.warn('Failed to initialize Telegram WebApp:', error)
+        setIsReady(true) // Продолжаем работу без Telegram
       }
-    } else {
-      // Для разработки без Telegram
-      setIsReady(true)
     }
+
+    // Используем setTimeout для обеспечения полной загрузки
+    const timer = setTimeout(initializeTelegram, 100)
+    return () => clearTimeout(timer)
   }, [])
 
   const showMainButton = (text: string, callback: () => void) => {

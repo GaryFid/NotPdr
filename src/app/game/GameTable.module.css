@@ -1825,6 +1825,7 @@
   background: #334155;
   outline: none;
   -webkit-appearance: none;
+  appearance: none;
   margin: 10px 0;
 }
 

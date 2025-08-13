@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import Script from 'next/script'
 import './globals.css'
-import '../../public/css/style.css'
 import { Providers } from './providers'
+import { ErrorBoundary } from '../components/ErrorBoundary'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -26,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="ru" suppressHydrationWarning>
+    <html lang="ru">
       <head>
         <Script 
           src="https://telegram.org/js/telegram-web-app.js" 
@@ -38,11 +38,13 @@ export default function RootLayout({
         />
       </head>
       <body className={inter.className}>
-        <Providers>
-          <div style={{ minHeight: '100vh' }}>
-            {children}
-          </div>
-        </Providers>
+        <ErrorBoundary>
+          <Providers>
+            <div style={{ minHeight: '100vh' }}>
+              {children}
+            </div>
+          </Providers>
+        </ErrorBoundary>
       </body>
     </html>
   )
