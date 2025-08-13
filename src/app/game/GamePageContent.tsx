@@ -34,7 +34,7 @@ function getPlayers(count: number, userName = 'Вы'): Player[] {
   const playerInfos = createPlayers(count, 0); // 0 - позиция пользователя
   
   return playerInfos.map((info, i) => ({
-    id: i,
+    id: i.toString(), // ИСПРАВЛЕНО: преобразуем в string
     name: info.name,
     avatar: info.avatar,
     cards: [

@@ -217,22 +217,22 @@ export class AIPlayer {
   private identifyThreats(players: Player[]): number[] {
     // Определяем игроков, которые представляют угрозу
     return players
-      .filter(p => p.id !== this.playerId)
+      .filter(p => parseInt(p.id) !== this.playerId)
       .sort((a, b) => {
         // Сортируем по количеству хороших карт
         const aScore = this.evaluatePlayerPosition(a);
         const bScore = this.evaluatePlayerPosition(b);
         return bScore - aScore;
       })
-      .map(p => p.id);
+      .map(p => parseInt(p.id));
   }
   
   private identifyOpportunities(players: Player[]): number[] {
     // Определяем слабых игроков
     return players
-      .filter(p => p.id !== this.playerId)
+      .filter(p => parseInt(p.id) !== this.playerId)
       .filter(p => p.cards.length < 3) // Мало карт
-      .map(p => p.id);
+      .map(p => parseInt(p.id));
   }
   
   private evaluatePlayerPosition(player: Player): number {

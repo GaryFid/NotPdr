@@ -7,7 +7,7 @@ export type Card = {
 };
 
 export type Player = {
-  id: number;
+  id: string; // ИСПРАВЛЕНО: должно быть string как в gameStore
   name: string;
   avatar: string;
   cards: Card[];
