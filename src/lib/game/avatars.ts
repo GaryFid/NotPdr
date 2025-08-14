@@ -54,8 +54,8 @@ export function generateAvatar(name: string, seed: number = 0): string {
     </svg>
   `;
   
-  // Конвертируем в data URL
-  return `data:image/svg+xml;base64,${btoa(svg)}`;
+  // Конвертируем в data URL (используем encodeURIComponent для поддержки кириллицы)
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
 // Генерация случайного имени
