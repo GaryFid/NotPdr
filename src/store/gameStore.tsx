@@ -518,11 +518,16 @@ export const useGameStore = create<GameState>()(
       nextTurn: () => {
         const { players, currentPlayerId, currentRound, maxRounds, gameStage } = get()
         
+        const currentPlayerName = players.find(p => p.id === currentPlayerId)?.name || currentPlayerId;
+        console.log(`🔄 [nextTurn] Передача хода от ${currentPlayerName} (не может больше ходить)`);
+        
         // Находим следующего игрока
         const currentIndex = players.findIndex(p => p.id === currentPlayerId)
         const nextIndex = (currentIndex + 1) % players.length
         const nextPlayerId = players[nextIndex].id
         const nextPlayer = players[nextIndex]
+        
+        console.log(`🔄 [nextTurn] Ход переходит к ${nextPlayer.name} (индекс ${nextIndex})`);
         
         // Обновляем текущего игрока
         players.forEach(p => p.isCurrentPlayer = p.id === nextPlayerId)
@@ -546,6 +551,8 @@ export const useGameStore = create<GameState>()(
         })
         
         get().showNotification(`Ход переходит к ${nextPlayer.name}`, 'info')
+        
+        console.log(`🔄 [nextTurn] Запускаем processPlayerTurn для ${nextPlayer.name}`);
         
         // Запускаем обработку хода для соответствующей стадии
         if (gameStage === 1) {
@@ -800,17 +807,14 @@ export const useGameStore = create<GameState>()(
         
         get().showNotification(`Карта переложена на ${targetPlayer.name}!`, 'success');
         
-        // Продолжаем ход (анализ верхней карты в руке) только если это был ход из руки
-        if (!revealedDeckCard || (turnPhase !== 'waiting_target_selection' && turnPhase !== 'waiting_deck_action')) {
-          setTimeout(() => {
-            get().processPlayerTurn(currentPlayerId);
-          }, 1000);
-        } else {
-          // Если это был ход картой из колоды - возвращаемся к анализу руки
-          setTimeout(() => {
-            get().processPlayerTurn(currentPlayerId);
-          }, 1000);
-        }
+        console.log(`🔄 [makeMove] Ход выполнен успешно, игрок продолжает ходить`);
+        
+        // ИСПРАВЛЕНО: После успешного хода игрок ПРОДОЛЖАЕТ ходить (анализ руки)
+        // Ход передается только когда игрок не может больше ходить
+        get().resetTurnState();
+        setTimeout(() => {
+          get().processPlayerTurn(currentPlayerId);
+        }, 1000);
       },
       
       // Взятие карты из колоды
@@ -1185,15 +1189,14 @@ export const useGameStore = create<GameState>()(
         });
         set({ drawnHistory: [...get().drawnHistory, revealedDeckCard] });
         
-        get().showNotification(`${currentPlayer.name} положил карту поверх своих карт`, 'info');
+        get().showNotification(`${currentPlayer.name} положил карту поверх своих карт и передает ход`, 'info');
         get().resetTurnState();
         
-        console.log(`🔄 [takeCardNotByRules] Карта добавлена в руку, запускаем повторный анализ руки`);
+        console.log(`🔄 [takeCardNotByRules] Карта добавлена в руку, ход передается следующему игроку`);
         
-        // ИСПРАВЛЕНО: После добавления карты в руку - повторный анализ руки!
+        // ИСПРАВЛЕНО: После добавления карты в руку - ход передается следующему игроку!
         setTimeout(() => {
-          console.log(`🔄 [takeCardNotByRules] Повторный анализ руки для ${currentPlayer.name}`);
-          get().processPlayerTurn(currentPlayerId);
+          get().nextTurn();
         }, 1500);
       },
        
