@@ -74,7 +74,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
     players, currentPlayerId, deck, availableTargets,
     selectedHandCard, revealedDeckCard, tableStack, trumpSuit,
     startGame, endGame, 
-    drawCard, makeMove, onDeckClick, revealDeckCardAndAnalyze,
+    drawCard, makeMove, onDeckClick,
     selectHandCard, playSelectedCard, takeTableCards
   } = useGameStore();
 
@@ -368,18 +368,11 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                       }} 
                     />
                     <Image 
-                      src={revealedDeckCard.open && revealedDeckCard.image ? `/img/cards/${revealedDeckCard.image}` : '/img/cards/back.png'} 
+                      src={revealedDeckCard.image ? `/img/cards/${revealedDeckCard.image}` : '/img/cards/back.png'} 
                       alt="revealed card" 
                       width={isSmallMobile ? 65 : isMobile ? 72 : 80} 
                       height={isSmallMobile ? 97 : isMobile ? 108 : 120}
                       className={styles.revealedCardImage}
-                      onClick={() => {
-                        if (!revealedDeckCard.open) {
-                          console.log(`🎴 [GamePageContent] Клик по закрытой карте из колоды - открываем`);
-                          revealDeckCardAndAnalyze();
-                        }
-                      }}
-                      style={{ cursor: !revealedDeckCard.open ? 'pointer' : 'default' }}
                     />
                   </div>
                 </div>

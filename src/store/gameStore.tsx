@@ -120,7 +120,6 @@ interface GameState {
   
   // Новые методы для алгоритма хода
   revealDeckCard: () => boolean
-  revealDeckCardAndAnalyze: () => void // Открыть карту из колоды при клике и проанализировать
   canPlaceCardOnSelf: (deckCard: Card, playerTopCard: Card) => boolean  
   placeCardOnSelfByRules: () => void
   takeCardNotByRules: () => void // Положить карту поверх своих карт (если нет ходов)
@@ -1010,52 +1009,40 @@ export const useGameStore = create<GameState>()(
         const { turnPhase, currentPlayerId, players, revealedDeckCard } = get();
         if (turnPhase !== 'showing_deck_hint' || !currentPlayerId) return;
         
-        // Открываем карту из колоды
+        // Открываем карту из колоды (ВОЗВРАЩАЕМ СТАРУЮ ЛОГИКУ)
         if (!get().revealDeckCard()) {
           get().checkStage1End();
           return;
         }
         
+        // Сразу анализируем открытую карту (как и было раньше)
         const { revealedDeckCard: newRevealedCard } = get();
         if (!newRevealedCard) return;
         
         const currentPlayer = players.find(p => p.id === currentPlayerId);
         if (!currentPlayer) return;
         
-
-         
-         // Проверяем возможности с картой из колоды
-         const deckTargets = get().findAvailableTargetsForDeckCard(newRevealedCard);
-         const canMoveToOpponents = deckTargets.length > 0;
-         
-         console.log(`🎯 [onDeckClick] Результат анализа карты из колоды:`);
-         console.log(`🎯 [onDeckClick] - Может ходить на соперников: ${canMoveToOpponents}`);
-         console.log(`🎯 [onDeckClick] - Цели: [${deckTargets.join(', ')}]`);
+        // Проверяем возможности с картой из колоды
+        const deckTargets = get().findAvailableTargetsForDeckCard(newRevealedCard);
+        const canMoveToOpponents = deckTargets.length > 0;
         
         let canPlaceOnSelfByRules = false;
         if (currentPlayer.cards.length > 0) {
           const topCard = currentPlayer.cards[currentPlayer.cards.length - 1];
           canPlaceOnSelfByRules = get().canPlaceCardOnSelf(newRevealedCard, topCard);
-          console.log(`🎯 [onDeckClick] - Может положить на себя по правилам: ${canPlaceOnSelfByRules}`);
         }
         
-                 set({
-           turnPhase: 'waiting_deck_action',
-           canPlaceOnSelfByRules: canPlaceOnSelfByRules,
-           availableTargets: canMoveToOpponents ? deckTargets : []
-         });
-        
-        console.log(`🎯 [onDeckClick] Устанавливаем turnPhase: 'waiting_deck_action'`);
-
+        set({
+          turnPhase: 'waiting_deck_action',
+          canPlaceOnSelfByRules: canPlaceOnSelfByRules,
+          availableTargets: canMoveToOpponents ? deckTargets : []
+        });
         
         if (canMoveToOpponents) {
-          console.log(`✅ [onDeckClick] Есть ходы картой из колоды!`);
           get().showNotification('Выберите: сходить на соперника или положить на себя', 'info');
         } else if (canPlaceOnSelfByRules) {
-          console.log(`🔹 [onDeckClick] Можно положить карту на себя по правилам`);
           get().showNotification('Можете положить карту на себя по правилам', 'info');
         } else {
-          console.log(`❌ [onDeckClick] Нет ходов - карта уйдет в руку игрока`);
           get().showNotification('Нет доступных ходов - карта ложится поверх ваших карт', 'warning');
           // Автоматически кладем карту поверх через 2 секунды
           setTimeout(() => {
@@ -1104,59 +1091,18 @@ export const useGameStore = create<GameState>()(
          
          const topCard = { ...deck[0] };
          topCard.rank = get().getCardRank(topCard.image || '');
-         topCard.open = false; // ИСПРАВЛЕНО: Карта НЕ открывается автоматически
+         topCard.open = true; // ВОЗВРАЩАЕМ: Карта открывается сразу как и было
          
          set({ 
            revealedDeckCard: topCard,
            turnPhase: 'deck_card_revealed'
          });
          
-         console.log(`🎴 [revealDeckCard] Карта из колоды НЕ открыта, ждем клика`);
+         console.log(`🎴 [revealDeckCard] Карта из колоды открыта: ${topCard.image}`);
          return true;
        },
        
-       // Открыть карту из колоды при клике и проанализировать ее
-       revealDeckCardAndAnalyze: () => {
-         const { revealedDeckCard, currentPlayerId } = get();
-         if (!revealedDeckCard || revealedDeckCard.open || !currentPlayerId) return;
-         
-         console.log(`🎴 [revealDeckCardAndAnalyze] Открываем карту из колоды: ${revealedDeckCard.image}`);
-         
-         // Открываем карту
-         revealedDeckCard.open = true;
-         
-         set({ revealedDeckCard: { ...revealedDeckCard } });
-         
-         // Сразу анализируем возможности с открытой картой
-         const currentPlayer = get().players.find(p => p.id === currentPlayerId);
-         if (!currentPlayer) return;
-         
-         const deckTargets = get().findAvailableTargetsForDeckCard(revealedDeckCard);
-         const canMoveToOpponents = deckTargets.length > 0;
-         
-         let canPlaceOnSelfByRules = false;
-         if (currentPlayer.cards.length > 0) {
-           const topCard = currentPlayer.cards[currentPlayer.cards.length - 1];
-           canPlaceOnSelfByRules = get().canPlaceCardOnSelf(revealedDeckCard, topCard);
-         }
-         
-         set({
-           turnPhase: 'waiting_deck_action',
-           canPlaceOnSelfByRules: canPlaceOnSelfByRules,
-           availableTargets: canMoveToOpponents ? deckTargets : []
-         });
-         
-         if (canMoveToOpponents) {
-           get().showNotification('Выберите: сходить на соперника или положить на себя', 'info');
-         } else if (canPlaceOnSelfByRules) {
-           get().showNotification('Можете положить карту на себя по правилам', 'info');
-         } else {
-           get().showNotification('Нет доступных ходов - карта ложится поверх ваших карт', 'warning');
-           setTimeout(() => {
-             get().takeCardNotByRules();
-           }, 2000);
-         }
-       },
+
        
              // Проверка возможности положить карту из колоды на себя по правилам
       canPlaceCardOnSelf: (deckCard: Card, playerTopCard: Card) => {
