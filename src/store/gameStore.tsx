@@ -1022,11 +1022,16 @@ export const useGameStore = create<GameState>()(
          // Проверяем возможности с картой из колоды
          const deckTargets = get().findAvailableTargetsForDeckCard(newRevealedCard);
          const canMoveToOpponents = deckTargets.length > 0;
+         
+         console.log(`🎯 [onDeckClick] Результат анализа карты из колоды:`);
+         console.log(`🎯 [onDeckClick] - Может ходить на соперников: ${canMoveToOpponents}`);
+         console.log(`🎯 [onDeckClick] - Цели: [${deckTargets.join(', ')}]`);
         
         let canPlaceOnSelfByRules = false;
         if (currentPlayer.cards.length > 0) {
           const topCard = currentPlayer.cards[currentPlayer.cards.length - 1];
           canPlaceOnSelfByRules = get().canPlaceCardOnSelf(newRevealedCard, topCard);
+          console.log(`🎯 [onDeckClick] - Может положить на себя по правилам: ${canPlaceOnSelfByRules}`);
         }
         
                  set({
@@ -1035,13 +1040,17 @@ export const useGameStore = create<GameState>()(
            availableTargets: canMoveToOpponents ? deckTargets : []
          });
         
+        console.log(`🎯 [onDeckClick] Устанавливаем turnPhase: 'waiting_deck_action'`);
 
         
         if (canMoveToOpponents) {
+          console.log(`✅ [onDeckClick] Есть ходы картой из колоды!`);
           get().showNotification('Выберите: сходить на соперника или положить на себя', 'info');
         } else if (canPlaceOnSelfByRules) {
+          console.log(`🔹 [onDeckClick] Можно положить карту на себя по правилам`);
           get().showNotification('Можете положить карту на себя по правилам', 'info');
         } else {
+          console.log(`❌ [onDeckClick] Нет ходов - карта уйдет в руку игрока`);
           get().showNotification('Нет доступных ходов - карта ложится поверх ваших карт', 'warning');
           // Автоматически кладем карту поверх через 2 секунды
           setTimeout(() => {
@@ -1176,12 +1185,15 @@ export const useGameStore = create<GameState>()(
         });
         set({ drawnHistory: [...get().drawnHistory, revealedDeckCard] });
         
-        get().showNotification(`${currentPlayer.name} положил карту поверх своих карт и передает ход`, 'info');
+        get().showNotification(`${currentPlayer.name} положил карту поверх своих карт`, 'info');
         get().resetTurnState();
         
-        // Переход к следующему игроку
+        console.log(`🔄 [takeCardNotByRules] Карта добавлена в руку, запускаем повторный анализ руки`);
+        
+        // ИСПРАВЛЕНО: После добавления карты в руку - повторный анализ руки!
         setTimeout(() => {
-          get().nextTurn();
+          console.log(`🔄 [takeCardNotByRules] Повторный анализ руки для ${currentPlayer.name}`);
+          get().processPlayerTurn(currentPlayerId);
         }, 1500);
       },
        
@@ -1203,6 +1215,7 @@ export const useGameStore = create<GameState>()(
            if (!deckCard.image || !currentPlayerId) return [];
            
            const deckRank = get().getCardRank(deckCard.image);
+           console.log(`🃏 [findAvailableTargetsForDeckCard] Анализ карты из колоды: ${deckCard.image}, ранг: ${deckRank}`);
            
            // Определяем целевой ранг (та же логика что в findAvailableTargets)
            let targetRank: number;
@@ -1216,6 +1229,8 @@ export const useGameStore = create<GameState>()(
              targetRank = deckRank - 1;
            }
            
+           console.log(`🃏 [findAvailableTargetsForDeckCard] Ищем соперников с картами ранга: ${targetRank}`);
+           
            const targets: number[] = [];
            players.forEach((player, index) => {
              if (player.id === currentPlayerId) return; // Не можем положить на себя
@@ -1224,12 +1239,15 @@ export const useGameStore = create<GameState>()(
              const playerTopCard = player.cards[player.cards.length - 1];
              if (playerTopCard && playerTopCard.open && playerTopCard.image) {
                const playerRank = get().getCardRank(playerTopCard.image);
+               console.log(`🃏 [findAvailableTargetsForDeckCard] Соперник ${player.name} (индекс ${index}), карта: ${playerTopCard.image}, ранг: ${playerRank}`);
                if (playerRank === targetRank) {
+                 console.log(`✅ [findAvailableTargetsForDeckCard] НАЙДЕНА ЦЕЛЬ ДЛЯ КАРТЫ ИЗ КОЛОДЫ: ${player.name} (индекс ${index})`);
                  targets.push(index);
                }
              }
            });
            
+           console.log(`🃏 [findAvailableTargetsForDeckCard] ИТОГО найдено целей для карты из колоды: ${targets.length}, массив: [${targets.join(', ')}]`);
            return targets;
          },
          
