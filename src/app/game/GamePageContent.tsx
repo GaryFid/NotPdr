@@ -240,11 +240,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
     setGameInitialized(true);
   };
 
-  const handleResetGame = () => {
-    endGame();
-    setDealt(false);
-    setGameInitialized(false);
-  };
+
 
   const canDrawCard = turnPhase === 'deck_card_revealed' && currentPlayer?.id === currentPlayerId;
   const canClickDeck = turnPhase === 'showing_deck_hint' && currentPlayer?.id === currentPlayerId;
@@ -299,9 +295,6 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
           </div>
           <div className={styles.deckInfo}>
             Колода: {deck.length}
-          </div>
-          <div className={styles.targetInfo}>
-            Ходов: {players.length - currentPlayerIndex}
           </div>
         </div>
       )}
@@ -588,7 +581,13 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                       {p.cards.length > 0 && (
                         <div className={styles.activeCardContainer}>
                           {p.cards.slice(-3).map((card, ci) => { // Показываем только последние 3 карты
-                            const isTopCard = ci === 2; // Топ карта теперь всегда третья
+                            const visibleCards = p.cards.slice(-3);
+                            const isTopCard = ci === visibleCards.length - 1; // Последняя из видимых карт
+                            
+                            // ОТЛАДКА: Логи для isTopCard
+                            if (p.id === currentPlayerId) {
+                              console.log(`🎯 [GamePageContent] Карта ${ci} игрока ${p.name}: isTopCard = ${isTopCard}, visibleCards.length = ${visibleCards.length}`);
+                            }
                             // Определяем направление стекинга карт в зависимости от позиции игрока
                             const playerPosition = getCirclePosition(playerIndex, players.length);
                             const isLeftSide = parseFloat(playerPosition.left) < 50; // Левая половина экрана
@@ -694,8 +693,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
             </div>
           </div>
 
-          {/* Контейнер карт игрока внизу - только во время игры */}
-          {isGameActive && currentPlayer && currentPlayer.cards.length > 0 && (
+          {/* Контейнер карт игрока внизу - только во 2-й и 3-й стадиях */}
+          {isGameActive && currentPlayer && currentPlayer.cards.length > 0 && gameStage >= 2 && (
             <div className={styles.playerHand}>
               <div className={styles.handTitle}>
                 {stage2TurnPhase === 'selecting_card' ? '🎯 ВЫБЕРИТЕ КАРТУ' : '🎴 Ваши карты'} ({currentPlayer.cards.length})
@@ -760,11 +759,28 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
             </div>
           )}
 
-          {/* Кнопка сброса игры */}
+          {/* Бургер меню */}
           <div className={styles.gameControls}>
-            <button onClick={handleResetGame} className={styles.resetButton}>
-              Новая игра
-            </button>
+            <div className={styles.burgerMenu}>
+              <button className={styles.burgerButton}>
+                <div className={styles.burgerLines}>
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+              </button>
+              <div className={styles.burgerDropdown}>
+                <button onClick={() => window.history.back()} className={styles.menuItem}>
+                  ← Назад
+                </button>
+                <button onClick={() => window.location.reload()} className={styles.menuItem}>
+                  🔄 Обновить
+                </button>
+                <button onClick={() => console.log('Чат открыт')} className={styles.menuItem}>
+                  💬 Чат
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
