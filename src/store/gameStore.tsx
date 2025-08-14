@@ -120,6 +120,7 @@ interface GameState {
   
   // Новые методы для алгоритма хода
   revealDeckCard: () => boolean
+  revealDeckCardAndAnalyze: () => void // Открыть карту из колоды при клике и проанализировать
   canPlaceCardOnSelf: (deckCard: Card, playerTopCard: Card) => boolean  
   placeCardOnSelfByRules: () => void
   takeCardNotByRules: () => void // Положить карту поверх своих карт (если нет ходов)
@@ -1103,14 +1104,58 @@ export const useGameStore = create<GameState>()(
          
          const topCard = { ...deck[0] };
          topCard.rank = get().getCardRank(topCard.image || '');
-         topCard.open = true;
+         topCard.open = false; // ИСПРАВЛЕНО: Карта НЕ открывается автоматически
          
          set({ 
            revealedDeckCard: topCard,
            turnPhase: 'deck_card_revealed'
          });
          
+         console.log(`🎴 [revealDeckCard] Карта из колоды НЕ открыта, ждем клика`);
          return true;
+       },
+       
+       // Открыть карту из колоды при клике и проанализировать ее
+       revealDeckCardAndAnalyze: () => {
+         const { revealedDeckCard, currentPlayerId } = get();
+         if (!revealedDeckCard || revealedDeckCard.open || !currentPlayerId) return;
+         
+         console.log(`🎴 [revealDeckCardAndAnalyze] Открываем карту из колоды: ${revealedDeckCard.image}`);
+         
+         // Открываем карту
+         revealedDeckCard.open = true;
+         
+         set({ revealedDeckCard: { ...revealedDeckCard } });
+         
+         // Сразу анализируем возможности с открытой картой
+         const currentPlayer = get().players.find(p => p.id === currentPlayerId);
+         if (!currentPlayer) return;
+         
+         const deckTargets = get().findAvailableTargetsForDeckCard(revealedDeckCard);
+         const canMoveToOpponents = deckTargets.length > 0;
+         
+         let canPlaceOnSelfByRules = false;
+         if (currentPlayer.cards.length > 0) {
+           const topCard = currentPlayer.cards[currentPlayer.cards.length - 1];
+           canPlaceOnSelfByRules = get().canPlaceCardOnSelf(revealedDeckCard, topCard);
+         }
+         
+         set({
+           turnPhase: 'waiting_deck_action',
+           canPlaceOnSelfByRules: canPlaceOnSelfByRules,
+           availableTargets: canMoveToOpponents ? deckTargets : []
+         });
+         
+         if (canMoveToOpponents) {
+           get().showNotification('Выберите: сходить на соперника или положить на себя', 'info');
+         } else if (canPlaceOnSelfByRules) {
+           get().showNotification('Можете положить карту на себя по правилам', 'info');
+         } else {
+           get().showNotification('Нет доступных ходов - карта ложится поверх ваших карт', 'warning');
+           setTimeout(() => {
+             get().takeCardNotByRules();
+           }, 2000);
+         }
        },
        
              // Проверка возможности положить карту из колоды на себя по правилам
@@ -1311,7 +1356,7 @@ export const useGameStore = create<GameState>()(
            
            // Добавляем карту на стол (всегда наверх стопки)
            const playedCard = { ...selectedHandCard };
-           playedCard.open = false; // На столе карты рубашкой вверх
+           playedCard.open = true; // ИСПРАВЛЕНО: На столе карты должны быть открыты
            
            set({
              players: [...players],
@@ -1382,7 +1427,7 @@ export const useGameStore = create<GameState>()(
            
            // Добавляем карту на стол (поверх всех)
            const playedCard = { ...defendCard };
-           playedCard.open = false; // Рубашкой вверх
+           playedCard.open = true; // ИСПРАВЛЕНО: Карта битья также открыта
            
            set({
              players: [...players],

@@ -74,8 +74,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
     players, currentPlayerId, deck, availableTargets,
     selectedHandCard, revealedDeckCard, tableStack, trumpSuit,
     startGame, endGame, 
-    drawCard, makeMove, onDeckClick,
-    selectHandCard, playSelectedCard
+    drawCard, makeMove, onDeckClick, revealDeckCardAndAnalyze,
+    selectHandCard, playSelectedCard, takeTableCards
   } = useGameStore();
 
   const [playerCount, setPlayerCount] = useState(initialPlayerCount);
@@ -245,6 +245,28 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
   const canDrawCard = turnPhase === 'deck_card_revealed' && currentPlayer?.id === currentPlayerId;
   const canClickDeck = turnPhase === 'showing_deck_hint' && currentPlayer?.id === currentPlayerId;
   const waitingForTarget = turnPhase === 'waiting_target_selection';
+  
+  // Логика для 2-й стадии: может ли игрок побить верхнюю карту на столе
+  const canBeatTopCard = useMemo(() => {
+    if (gameStage !== 2 || !currentPlayer || !tableStack.length || stage2TurnPhase !== 'waiting_beat') {
+      return true; // Если не во 2-й стадии или нет карт на столе - не показываем кнопку
+    }
+    
+    const topCard = tableStack[tableStack.length - 1];
+    if (!topCard || !trumpSuit) return false;
+    
+    // Проверяем есть ли у игрока карты которые могут побить верхнюю
+    const { canBeatCard } = useGameStore.getState();
+    return currentPlayer.cards.some(playerCard => 
+      playerCard.open && canBeatCard(topCard, playerCard, trumpSuit)
+    );
+  }, [gameStage, currentPlayer, tableStack, stage2TurnPhase, trumpSuit]);
+  
+  const shouldShowTakeButton = gameStage === 2 && 
+                               stage2TurnPhase === 'waiting_beat' && 
+                               tableStack.length > 0 && 
+                               currentPlayer?.id === currentPlayerId && 
+                               !canBeatTopCard;
 
   // Показываем заглушку если игра не активна
   if (!isGameActive) {
@@ -291,6 +313,14 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
       {isGameActive && (
         <div className={styles.gameHeader}>
           <div className={styles.stageInfo}>
+            {gameStage >= 2 && trumpSuit && (
+              <span className={styles.trumpIcon}>
+                {trumpSuit === 'hearts' ? '♥️' : 
+                 trumpSuit === 'diamonds' ? '♦️' : 
+                 trumpSuit === 'clubs' ? '♣️' : 
+                 trumpSuit === 'spades' ? '♠️' : ''}
+              </span>
+            )}
             Стадия {gameStage}
           </div>
           <div className={styles.deckInfo}>
@@ -338,11 +368,18 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                       }} 
                     />
                     <Image 
-                      src={revealedDeckCard.image ? `/img/cards/${revealedDeckCard.image}` : '/img/cards/back.png'} 
+                      src={revealedDeckCard.open && revealedDeckCard.image ? `/img/cards/${revealedDeckCard.image}` : '/img/cards/back.png'} 
                       alt="revealed card" 
                       width={isSmallMobile ? 65 : isMobile ? 72 : 80} 
                       height={isSmallMobile ? 97 : isMobile ? 108 : 120}
                       className={styles.revealedCardImage}
+                      onClick={() => {
+                        if (!revealedDeckCard.open) {
+                          console.log(`🎴 [GamePageContent] Клик по закрытой карте из колоды - открываем`);
+                          revealDeckCardAndAnalyze();
+                        }
+                      }}
+                      style={{ cursor: !revealedDeckCard.open ? 'pointer' : 'default' }}
                     />
                   </div>
                 </div>
@@ -414,6 +451,19 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                       </div>
                     );
                   })}
+                  
+                  {/* Кнопка "взять нижнюю карту" во 2-й стадии */}
+                  {shouldShowTakeButton && (
+                    <button 
+                      className={styles.takeBottomCardButton}
+                      onClick={() => {
+                        console.log('🃏 [GamePageContent] Взять нижнюю карту со стола');
+                        takeTableCards();
+                      }}
+                    >
+                      📥 Взять нижнюю карту
+                    </button>
+                  )}
                 </div>
               )}
 
