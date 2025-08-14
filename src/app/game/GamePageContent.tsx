@@ -74,7 +74,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
     players, currentPlayerId, deck, availableTargets,
     selectedHandCard, revealedDeckCard, tableStack, trumpSuit,
     startGame, endGame, 
-    drawCard, makeMove, onDeckClick,
+    drawCard, makeMove, onDeckClick, placeCardOnSelfByRules,
     selectHandCard, playSelectedCard, takeTableCards
   } = useGameStore();
 
@@ -482,8 +482,14 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                 const isCurrentTurn = p.id === players[currentPlayerIndex]?.id;
                 const isTargetAvailable = availableTargets.includes(playerIndex);
                 const isCurrentPlayerCard = p.id === currentPlayerId && turnPhase === 'analyzing_hand' && availableTargets.length > 0;
+                
+                // Дополнительная проверка для фазы waiting_deck_action когда можно положить карту на себя по правилам
+                const canPlaceOnSelfInDeckAction = p.id === currentPlayerId && 
+                                                   turnPhase === 'waiting_deck_action' && 
+                                                   useGameStore.getState().canPlaceOnSelfByRules;
+                
                 const isClickableTarget = isTargetAvailable && (turnPhase === 'waiting_target_selection' || turnPhase === 'waiting_deck_action');
-                const isClickableOwnCard = isCurrentPlayerCard;
+                const isClickableOwnCard = isCurrentPlayerCard || canPlaceOnSelfInDeckAction;
                 
                 // ОТЛАДКА: Логи кликабельности карт
                 if (p.id === currentPlayerId) {
@@ -492,6 +498,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                   console.log(`🎯 [GamePageContent] - turnPhase: ${turnPhase}`);
                   console.log(`🎯 [GamePageContent] - availableTargets: [${availableTargets.join(', ')}], длина: ${availableTargets.length}`);
                   console.log(`🎯 [GamePageContent] - isCurrentPlayerCard: ${isCurrentPlayerCard}`);
+                  console.log(`🎯 [GamePageContent] - canPlaceOnSelfInDeckAction: ${canPlaceOnSelfInDeckAction}`);
                   console.log(`🎯 [GamePageContent] - isClickableOwnCard: ${isClickableOwnCard}`);
                 }
                 
@@ -684,10 +691,14 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                                     console.log(`🎯 [GamePageContent] - isClickableOwnCard: ${isClickableOwnCard}, isClickableTarget: ${isClickableTarget}`);
                                     if (isTopCard) {
                                       if (isClickableOwnCard) {
-                                        console.log(`✅ [GamePageContent] Клик по своей карте - вызываем makeMove('initiate_move')`);
-                                        // Клик по своей карте - переключаемся в режим выбора цели
-                                        // Добавим новый метод в gameStore
-                                        makeMove('initiate_move');
+                                        // Проверяем что именно можно делать с картой
+                                        if (canPlaceOnSelfInDeckAction) {
+                                          console.log(`✅ [GamePageContent] Клик по своей карте - кладем карту из колоды на себя по правилам`);
+                                          placeCardOnSelfByRules();
+                                        } else if (isCurrentPlayerCard) {
+                                          console.log(`✅ [GamePageContent] Клик по своей карте - вызываем makeMove('initiate_move')`);
+                                          makeMove('initiate_move');
+                                        }
                                       } else if (isClickableTarget) {
                                         console.log(`✅ [GamePageContent] Клик по карте соперника - вызываем makeMove(${p.id})`);
                                         // Клик по карте соперника - делаем ход

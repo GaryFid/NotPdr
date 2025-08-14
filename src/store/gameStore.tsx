@@ -1030,6 +1030,10 @@ export const useGameStore = create<GameState>()(
         if (currentPlayer.cards.length > 0) {
           const topCard = currentPlayer.cards[currentPlayer.cards.length - 1];
           canPlaceOnSelfByRules = get().canPlaceCardOnSelf(newRevealedCard, topCard);
+          console.log(`🎯 [onDeckClick] Проверка canPlaceCardOnSelf:`);
+          console.log(`🎯 [onDeckClick] - Карта из колоды: ${newRevealedCard.image} (ранг ${get().getCardRank(newRevealedCard.image || '')})`);
+          console.log(`🎯 [onDeckClick] - Верхняя карта игрока: ${topCard.image} (ранг ${get().getCardRank(topCard.image || '')})`);
+          console.log(`🎯 [onDeckClick] - Результат canPlaceCardOnSelf: ${canPlaceOnSelfByRules}`);
         }
         
         set({
