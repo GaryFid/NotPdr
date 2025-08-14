@@ -8,7 +8,6 @@ import type { Player, Card } from '../../types/game';
 import type { Card as StoreCard } from '../../store/gameStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import React from 'react';
-import { useSearchParams } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import { AIPlayer, AIDifficulty } from '@/lib/game/ai-player';
 
@@ -79,7 +78,6 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
     selectHandCard, playSelectedCard
   } = useGameStore();
 
-  const searchParams = useSearchParams();
   const [playerCount, setPlayerCount] = useState(initialPlayerCount);
   const [dealt, setDealt] = useState(false);
   const [gameInitialized, setGameInitialized] = useState(false);
@@ -192,33 +190,22 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
     return () => clearTimeout(timeoutId);
   }, [currentPlayerId, isGameActive, players, gameStage, aiPlayers]);
   
-  // Автоматический запуск игры при загрузке страницы
+  // Инициализация игры из gameStore
   useEffect(() => {
     if (!gameInitialized) {
-      const tableParam = searchParams.get('table');
-      const aiParam = searchParams.get('ai');
-      const modeParam = searchParams.get('mode');
-      const testParam = searchParams.get('test');
-      
-      if (tableParam) {
-        // Если есть параметры URL - автозапуск
-        const playerCount = parseInt(tableParam);
-        const withAI = aiParam === '1';
-        const gameMode = modeParam || 'classic';
-        const testMode = testParam === '1';
-        
-        console.log(`🎮 Автозапуск игры: ${playerCount} игроков, ИИ: ${withAI}, режим: ${gameMode}, тест: ${testMode}`);
-        
-        setPlayerCount(playerCount);
-        startGame('multiplayer', playerCount);
+      if (isGameActive && players.length > 0) {
+        // Игра уже запущена через gameStore - просто инициализируем интерфейс
+        console.log(`🎮 Игра P.I.D.R. запущена: ${players.length} игроков`);
+        setPlayerCount(players.length);
         setGameInitialized(true);
         setDealt(false);
       } else {
-        // Если нет параметров - просто инициализируем
+        // Игра не активна - просто инициализируем интерфейс
+        console.log('🎮 Ожидание запуска игры...');
         setGameInitialized(true);
       }
     }
-  }, [searchParams, gameInitialized, startGame]);
+  }, [gameInitialized, isGameActive, players.length]);
 
   // Эффект для автоматической раздачи карт при старте игры
   useEffect(() => {
@@ -244,7 +231,44 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
   const canClickDeck = turnPhase === 'showing_deck_hint' && currentPlayer?.id === currentPlayerId;
   const waitingForTarget = turnPhase === 'waiting_target_selection';
 
-
+  // Показываем заглушку если игра не активна
+  if (!isGameActive) {
+    return (
+      <div className={styles.gameContainer}>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+          color: '#e2e8f0',
+          textAlign: 'center',
+          padding: '20px'
+        }}>
+          <h2 style={{ marginBottom: '20px', fontSize: '24px' }}>P.I.D.R. Game</h2>
+          <p style={{ marginBottom: '30px', opacity: 0.7 }}>
+            Игра не запущена. Вернитесь в главное меню и настройте игру.
+          </p>
+          <button
+            onClick={() => window.history.back()}
+            style={{
+              background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '12px',
+              padding: '12px 24px',
+              fontSize: '16px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            ← Назад в меню
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.gameContainer}>

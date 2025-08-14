@@ -1,22 +1,41 @@
 'use client'
 import { useState } from 'react';
 import { ArrowLeft, Play, Users, Zap, Settings } from 'lucide-react';
+import { useGameStore } from '../../store/gameStore';
+import { useRouter } from 'next/navigation';
 
 export default function GameSetupPage() {
   const [selectedPlayers, setSelectedPlayers] = useState(5);
   const [selectedMode, setSelectedMode] = useState('classic');
   const [addBots, setAddBots] = useState(true);
   const [testMode, setTestMode] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
+
+  const { startGame: startGameInStore } = useGameStore();
+  const router = useRouter();
 
   const playerOptions = [5, 6, 7, 8, 9];
   const modes = [
-    { key: 'classic', icon: Users, label: 'Классический' },
-    { key: 'quick', icon: Zap, label: 'Быстрый' },
-    { key: 'custom', icon: Settings, label: 'Свой' },
+    { key: 'classic', icon: Users, label: 'Классический.' },
+    { key: 'quick', icon: Zap, label: 'Быстрая' },
+    { key: 'custom', icon: Settings, label: 'Своя' },
   ];
 
-  const startGame = () => {
-    window.location.href = `/game?ai=${addBots ? 1 : 0}&table=${selectedPlayers}&mode=${selectedMode}&test=${testMode ? 1 : 0}`;
+  const startGame = async () => {
+    try {
+      setIsStarting(true);
+      
+      // Запускаем игру через gameStore с вашими правилами P.I.D.R.
+      startGameInStore('single', selectedPlayers);
+      
+      // Переходим на страницу игры через Next.js router
+      router.push('/game');
+      
+    } catch (error) {
+      console.error('Ошибка запуска игры:', error);
+      setIsStarting(false);
+      alert('Ошибка запуска игры. Попробуйте еще раз.');
+    }
   };
 
   return (
@@ -235,8 +254,11 @@ export default function GameSetupPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <button
             onClick={startGame}
+            disabled={isStarting}
             style={{
-              background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+              background: isStarting 
+                ? 'linear-gradient(135deg, #64748b 0%, #475569 100%)' 
+                : 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
               color: '#ffffff',
               border: '1px solid rgba(34, 197, 94, 0.3)',
               borderRadius: '16px',
@@ -247,23 +269,28 @@ export default function GameSetupPage() {
               alignItems: 'center',
               justifyContent: 'center',
               gap: '8px',
-              cursor: 'pointer',
+              cursor: isStarting ? 'not-allowed' : 'pointer',
               transition: 'all 0.3s ease',
-              boxShadow: '0 4px 20px rgba(34, 197, 94, 0.3)'
+              boxShadow: '0 4px 20px rgba(34, 197, 94, 0.3)',
+              opacity: isStarting ? 0.7 : 1
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 6px 28px rgba(34, 197, 94, 0.4)';
+              if (!isStarting) {
+                e.currentTarget.style.background = 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 6px 28px rgba(34, 197, 94, 0.4)';
+              }
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)';
-              e.currentTarget.style.transform = 'translateY(0px)';
-              e.currentTarget.style.boxShadow = '0 4px 20px rgba(34, 197, 94, 0.3)';
+              if (!isStarting) {
+                e.currentTarget.style.background = 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)';
+                e.currentTarget.style.transform = 'translateY(0px)';
+                e.currentTarget.style.boxShadow = '0 4px 20px rgba(34, 197, 94, 0.3)';
+              }
             }}
           >
             <Play size={20} />
-            Играть с ботами
+            {isStarting ? 'Запуск игры P.I.D.R...' : `Играть P.I.D.R. (${selectedPlayers} игроков)`}
           </button>
 
           <div style={{ display: 'flex', gap: '12px' }}>
