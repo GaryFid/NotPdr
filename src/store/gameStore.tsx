@@ -767,6 +767,8 @@ export const useGameStore = create<GameState>()(
         } else {
           // Ходим верхней картой из руки
           if (currentPlayer.cards.length === 0) return;
+          
+          // Ходим верхней картой из руки (удаляем ее из стопки)
           cardToMove = currentPlayer.cards.pop();
           
           set({ 
@@ -777,7 +779,7 @@ export const useGameStore = create<GameState>()(
         
         if (!cardToMove) return;
         
-        // Перемещаем карту
+        // Перемещаем карту ПОВЕРХ открытых карт целевого игрока
         targetPlayer.cards.push(cardToMove);
         
         set({ 
@@ -801,7 +803,7 @@ export const useGameStore = create<GameState>()(
       
       // Взятие карты из колоды
       drawCardFromDeck: () => {
-        const { deck, players, currentPlayerId } = get();
+        const { deck, players, currentPlayerId, gameStage } = get();
         if (deck.length === 0 || !currentPlayerId) return false;
         
         const currentPlayer = players.find(p => p.id === currentPlayerId);
@@ -812,6 +814,7 @@ export const useGameStore = create<GameState>()(
         drawnCard.rank = get().getCardRank(drawnCard.image || '');
         drawnCard.open = true;
         
+        // Карта добавляется ПОВЕРХ открытых карт (в стопку)
         currentPlayer.cards.push(drawnCard);
         
         // Отслеживаем для второй стадии
@@ -1102,7 +1105,7 @@ export const useGameStore = create<GameState>()(
        
        // Положить карту из колоды на себя по правилам
        placeCardOnSelfByRules: () => {
-         const { players, currentPlayerId, revealedDeckCard, deck } = get();
+         const { players, currentPlayerId, revealedDeckCard, deck, gameStage } = get();
          if (!currentPlayerId || !revealedDeckCard) return;
          
          const currentPlayer = players.find(p => p.id === currentPlayerId);
@@ -1110,6 +1113,8 @@ export const useGameStore = create<GameState>()(
          
          // Добавляем карту из колоды на верх стопки игрока (ОТКРЫТОЙ!)
          revealedDeckCard.open = true; // ИСПРАВЛЕНО: убеждаемся что карта открыта
+         
+         // Добавляем карту из колоды ПОВЕРХ открытых карт игрока
          currentPlayer.cards.push(revealedDeckCard);
          
          // Отслеживаем для второй стадии
@@ -1134,7 +1139,7 @@ export const useGameStore = create<GameState>()(
        
              // Положить карту поверх своих карт (завершение хода)
       takeCardNotByRules: () => {
-        const { players, currentPlayerId, revealedDeckCard, deck } = get();
+        const { players, currentPlayerId, revealedDeckCard, deck, gameStage } = get();
         if (!currentPlayerId || !revealedDeckCard) return;
         
         const currentPlayer = players.find(p => p.id === currentPlayerId);
@@ -1142,6 +1147,8 @@ export const useGameStore = create<GameState>()(
         
         // Карта ложится ПОВЕРХ открытых карт игрока (становится новой верхней картой)
         revealedDeckCard.open = true; // Карта остается открытой
+        
+        // Карта ложится ПОВЕРХ открытых карт игрока (становится новой верхней картой)
         currentPlayer.cards.push(revealedDeckCard);
         
         // Отслеживаем для второй стадии
