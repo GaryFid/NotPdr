@@ -255,7 +255,11 @@ export const useGameStore = create<GameState>()(
       
       // Игровые действия
       startGame: (mode, playersCount = 2) => {
-        // Создаем полную стандартную колоду карт (52 карты)
+        console.log('🎮 [GameStore] startGame вызван с параметрами:', { mode, playersCount });
+        
+        try {
+          // Создаем полную стандартную колоду карт (52 карты)
+          console.log('🎮 [GameStore] Создаем колоду...');
         const standardDeck = [
           // Двойки (2)
           '2_of_clubs.png','2_of_diamonds.png','2_of_hearts.png','2_of_spades.png',
@@ -294,10 +298,18 @@ export const useGameStore = create<GameState>()(
         const cardsPerPlayer = 3;
         
         // ИСПРАВЛЕНО: Создаем игроков с аватарами и ботами
+        console.log('🎮 [GameStore] Создаем игроков...');
         const playerInfos = createPlayers(playersCount, 0); // 0 - позиция пользователя
+        console.log('🎮 [GameStore] Игроки созданы:', playerInfos);
         
         for (let i = 0; i < playersCount; i++) {
           const playerInfo = playerInfos[i];
+          
+          // Проверяем что playerInfo корректен
+          if (!playerInfo) {
+            throw new Error(`Не удалось создать информацию для игрока ${i + 1}`);
+          }
+          
           const playerOpenCards: Card[] = []; // Открытые карты (для 1-й стадии)
           const playerPenki: Card[] = []; // Пеньки (2 закрытые карты)
           
@@ -327,6 +339,8 @@ export const useGameStore = create<GameState>()(
             }
           }
           
+          console.log(`🎮 [GameStore] Создаем игрока ${i + 1}:`, playerInfo);
+          
           players.push({
             id: `player_${i + 1}`,
             name: playerInfo.name,
@@ -340,6 +354,8 @@ export const useGameStore = create<GameState>()(
             isBot: playerInfo.isBot,
             difficulty: playerInfo.difficulty
           });
+          
+          console.log(`🎮 [GameStore] Игрок ${i + 1} создан успешно`);
         }
         
         // Оставшиеся карты в колоде
@@ -390,12 +406,30 @@ export const useGameStore = create<GameState>()(
           drawnHistory: []
         });
         
+        console.log('🎮 [GameStore] Игра успешно создана, показываем уведомление...');
         get().showNotification(`Игра начата! Ходит первым: ${players[firstPlayerIndex].name}`, 'success');
         
         // ИСПРАВЛЕНО: Запускаем обработку хода первого игрока через новую систему
+        console.log('🎮 [GameStore] Запускаем processPlayerTurn через 1 секунду...');
         setTimeout(() => {
           get().processPlayerTurn(players[firstPlayerIndex].id);
         }, 1000);
+        
+        console.log('🎮 [GameStore] startGame завершен успешно!');
+        
+        } catch (error) {
+          console.error('🚨 [GameStore] ОШИБКА В startGame:', error);
+          console.error('Stack trace:', (error as Error).stack);
+          
+          // Сбрасываем состояние при ошибке
+          set({
+            isGameActive: false,
+            isLoading: false
+          });
+          
+          // Пробрасываем ошибку дальше
+          throw error;
+        }
       },
       
       endGame: () => {
@@ -864,9 +898,9 @@ export const useGameStore = create<GameState>()(
             setTimeout(() => {
               const trumpName = trumpSuit === 'clubs' ? 'Трефы' : 
                               trumpSuit === 'diamonds' ? 'Бубны' :
-                              trumpSuit === 'hearts' ? 'Червы' : 
-                              trumpSuit === 'spades' ? 'Пики' : 'Неизвестно';
-              get().showNotification(`🃏 Козырь: ${trumpName}`, 'warning', 5000);
+                              trumpSuit === 'hearts' ? 'Червы' : 'Неизвестно';
+              // Примечание: Пики никогда не могут быть козырем!
+              get().showNotification(`🃏 Козырь: ${trumpName} (Пики не козырь!)`, 'warning', 5000);
               
               // Показываем правило "Пики только Пикями!"
               setTimeout(() => {
@@ -999,24 +1033,23 @@ export const useGameStore = create<GameState>()(
       },
       
       // Определение козыря для второй стадии
+      // ПРАВИЛО: Козырь = последняя взятая карта из колоды, которая НЕ пики
       determineTrumpSuit: () => {
-        const { lastDrawnCard, drawnHistory } = get();
-        const pickSuit = (card?: Card | null) => {
-          if (!card || !card.image) return 'unknown' as const;
-          return get().getCardSuit(card.image);
-        };
-        let suit = pickSuit(lastDrawnCard);
-        if (suit && suit !== 'spades' && suit !== 'unknown') {
-          return suit as 'clubs' | 'diamonds' | 'hearts' | 'spades';
-        }
-        // ищем последнюю непиковую в истории
+        const { drawnHistory } = get();
+        
+        // Ищем последнюю непиковую карту в истории взятых карт
         for (let i = drawnHistory.length - 1; i >= 0; i--) {
-          const s = pickSuit(drawnHistory[i]);
-          if (s !== 'spades' && s !== 'unknown') {
-            return s as 'clubs' | 'diamonds' | 'hearts' | 'spades';
+          const card = drawnHistory[i];
+          if (card && card.image) {
+            const suit = get().getCardSuit(card.image);
+            // Козырем может быть любая масть КРОМЕ пик
+            if (suit !== 'spades' && suit !== 'unknown') {
+              return suit as 'clubs' | 'diamonds' | 'hearts' | 'spades';
+            }
           }
         }
-        // запасной вариант — червы
+        
+        // Запасной вариант если все взятые карты были пиками (маловероятно)
         return 'hearts';
       },
       

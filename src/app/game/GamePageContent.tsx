@@ -72,7 +72,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
   const { 
     isGameActive, gameStage, turnPhase, stage2TurnPhase,
     players, currentPlayerId, deck, availableTargets,
-    selectedHandCard, revealedDeckCard, tableStack,
+    selectedHandCard, revealedDeckCard, tableStack, trumpSuit,
     startGame, endGame, 
     drawCard, makeMove, onDeckClick,
     selectHandCard, playSelectedCard
@@ -156,7 +156,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
         availableTargets,
         revealedDeckCard,
         tableStack,
-        trumpSuit: null // TODO: добавить определение козыря
+        trumpSuit // Козырь из gameStore (определяется автоматически)
       };
       
       const decision = await ai.makeDecisionWithDelay(gameState);

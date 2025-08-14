@@ -23,18 +23,32 @@ export default function GameSetupPage() {
 
   const startGame = async () => {
     try {
+      console.log('🎮 Начинаем запуск игры...');
+      console.log('Параметры:', { selectedPlayers, selectedMode, addBots, testMode });
+      
       setIsStarting(true);
       
-      // Запускаем игру через gameStore с вашими правилами P.I.D.R.
-      startGameInStore('single', selectedPlayers);
+      // Проверяем что startGameInStore существует
+      if (!startGameInStore) {
+        throw new Error('startGameInStore не найден в gameStore');
+      }
       
+      console.log('🎮 Вызываем startGameInStore...');
+      // Запускаем игру через gameStore с вашими правилами P.I.D.R.
+      await startGameInStore('single', selectedPlayers);
+      
+      console.log('🎮 Игра успешно запущена, переходим на /game...');
       // Переходим на страницу игры через Next.js router
       router.push('/game');
       
     } catch (error) {
-      console.error('Ошибка запуска игры:', error);
+      console.error('🚨 ОШИБКА ЗАПУСКА ИГРЫ:', error);
+      console.error('Stack trace:', (error as Error).stack);
       setIsStarting(false);
-      alert('Ошибка запуска игры. Попробуйте еще раз.');
+      
+      // Более детальное сообщение об ошибке
+      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+      alert(`Ошибка запуска игры: ${errorMessage}\n\nПроверьте консоль браузера для подробностей.`);
     }
   };
 
