@@ -161,26 +161,45 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
       
       const decision = await ai.makeDecisionWithDelay(gameState);
       
-      // Выполняем решение ИИ
-      switch (decision.action) {
-        case 'draw_card':
-          if (drawCard) drawCard();
-          break;
-        case 'place_on_target':
-          if (decision.targetPlayerId !== undefined && makeMove) {
-            makeMove(decision.targetPlayerId.toString());
-          }
-          break;
-        case 'place_on_self':
-          if (playSelectedCard) playSelectedCard();
-          break;
-        case 'play_card':
-          // TODO: преобразовать Card в StoreCard для selectHandCard
-          if (decision.cardToPlay && playSelectedCard) {
-            // Пока просто вызываем playSelectedCard
-            playSelectedCard();
-          }
-          break;
+      // Выполняем решение ИИ с учетом стадии игры
+      if (gameStage === 1) {
+        // В 1-й стадии ИИ должен следовать алгоритму: анализ руки → колода → анализ карты из колоды
+        switch (decision.action) {
+          case 'place_on_target':
+            if (decision.targetPlayerId !== undefined && makeMove) {
+              makeMove(decision.targetPlayerId.toString());
+            }
+            break;
+          case 'draw_card':
+            // В 1-й стадии ИИ кликает по колоде только если не может ходить из руки
+            if (onDeckClick) onDeckClick();
+            break;
+          default:
+            console.log('ИИ не может сделать ход в 1-й стадии');
+            break;
+        }
+      } else {
+        // Во 2-й и 3-й стадиях используем обычную логику
+        switch (decision.action) {
+          case 'draw_card':
+            if (drawCard) drawCard();
+            break;
+          case 'place_on_target':
+            if (decision.targetPlayerId !== undefined && makeMove) {
+              makeMove(decision.targetPlayerId.toString());
+            }
+            break;
+          case 'place_on_self':
+            if (playSelectedCard) playSelectedCard();
+            break;
+          case 'play_card':
+            // TODO: преобразовать Card в StoreCard для selectHandCard
+            if (decision.cardToPlay && playSelectedCard) {
+              // Пока просто вызываем playSelectedCard
+              playSelectedCard();
+            }
+            break;
+        }
       }
     };
     
@@ -364,7 +383,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                   <div className={styles.deckCount}>{deck.length}</div>
                 </div>
                 
-                {canDrawCard && (
+                {/* В 1-й стадии нет кнопки "Взять карту" - только клик по колоде */}
+                {canDrawCard && gameStage > 1 && (
                   <button 
                     onClick={() => drawCard()}
                     className={styles.drawButton}
