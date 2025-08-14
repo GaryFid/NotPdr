@@ -1060,18 +1060,29 @@ export const useGameStore = create<GameState>()(
       determineTrumpSuit: () => {
         const { drawnHistory } = get();
         
+        console.log(`🃏 [determineTrumpSuit] История взятых карт (${drawnHistory.length} карт):`);
+        drawnHistory.forEach((card, index) => {
+          if (card && card.image) {
+            const suit = get().getCardSuit(card.image);
+            console.log(`🃏 [determineTrumpSuit] ${index}: ${card.image} → масть: ${suit}`);
+          }
+        });
+        
         // Ищем последнюю непиковую карту в истории взятых карт
         for (let i = drawnHistory.length - 1; i >= 0; i--) {
           const card = drawnHistory[i];
           if (card && card.image) {
             const suit = get().getCardSuit(card.image);
+            console.log(`🃏 [determineTrumpSuit] Проверяем карту ${i}: ${card.image} → масть: ${suit}`);
             // Козырем может быть любая масть КРОМЕ пик
             if (suit !== 'spades' && suit !== 'unknown') {
+              console.log(`✅ [determineTrumpSuit] НАЙДЕН КОЗЫРЬ: ${suit} (карта: ${card.image})`);
               return suit as 'clubs' | 'diamonds' | 'hearts' | 'spades';
             }
           }
         }
         
+        console.log(`⚠️ [determineTrumpSuit] Все карты были пиками! Используем запасной вариант: hearts`);
         // Запасной вариант если все взятые карты были пиками (маловероятно)
         return 'hearts';
       },
