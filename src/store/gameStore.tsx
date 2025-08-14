@@ -667,12 +667,17 @@ export const useGameStore = create<GameState>()(
       // Определение ранга карты по изображению
       getCardRank: (imageName: string) => {
         const name = imageName.replace('.png', '').replace('/img/cards/', '');
-        if (name.startsWith('ace')) return 14;
-        if (name.startsWith('king')) return 13;
-        if (name.startsWith('queen')) return 12;
-        if (name.startsWith('jack')) return 11;
-        const match = name.match(/(\d+)_of/);
-        return match ? parseInt(match[1], 10) : 0;
+        let rank = 0;
+        if (name.startsWith('ace')) rank = 14;
+        else if (name.startsWith('king')) rank = 13;
+        else if (name.startsWith('queen')) rank = 12;
+        else if (name.startsWith('jack')) rank = 11;
+        else {
+          const match = name.match(/(\d+)_of/);
+          rank = match ? parseInt(match[1], 10) : 0;
+        }
+        console.log(`🎴 [getCardRank] ${imageName} → ${name} → ранг: ${rank}`);
+        return rank;
       },
       
       // Поиск доступных целей для текущего хода
@@ -686,6 +691,7 @@ export const useGameStore = create<GameState>()(
         if (!topCard || !topCard.open) return [];
         
         const currentRank = get().getCardRank(topCard.image || '');
+        console.log(`🎯 [findAvailableTargets] Игрок ${currentPlayer.name}, карта: ${topCard.image}, ранг: ${currentRank}`);
         
         // Определяем целевой ранг с учетом правил P.I.D.R.
         // ПРАВИЛО: Ищем у соперников карты на 1 ранг НИЖЕ нашей карты
@@ -703,6 +709,8 @@ export const useGameStore = create<GameState>()(
           targetRank = currentRank - 1;
         }
         
+        console.log(`🎯 [findAvailableTargets] Ищем цели с рангом: ${targetRank}`);
+        
         const targets: number[] = [];
         players.forEach((player, index) => {
           if (player.id === currentPlayerId) return; // Не можем положить на себя (пока)
@@ -711,18 +719,22 @@ export const useGameStore = create<GameState>()(
           const playerTopCard = player.cards[player.cards.length - 1];
           if (playerTopCard && playerTopCard.open) {
             const playerRank = get().getCardRank(playerTopCard.image || '');
+            console.log(`🎯 [findAvailableTargets] Соперник ${player.name}, карта: ${playerTopCard.image}, ранг: ${playerRank}`);
             if (playerRank === targetRank) {
+              console.log(`✅ [findAvailableTargets] НАЙДЕНА ЦЕЛЬ: ${player.name} (индекс ${index})`);
               targets.push(index);
             }
           }
         });
         
+        console.log(`🎯 [findAvailableTargets] ИТОГО найдено целей: ${targets.length}, массив: [${targets.join(', ')}]`);
         return targets;
       },
       
       // Проверка возможности сделать ход
       canMakeMove: (currentPlayerId: string) => {
         const targets = get().findAvailableTargets(currentPlayerId);
+        console.log(`🎯 [canMakeMove] Игрок ${currentPlayerId}, найдено целей: ${targets.length}, цели: [${targets.join(', ')}]`);
         return targets.length > 0;
       },
       
@@ -947,9 +959,11 @@ export const useGameStore = create<GameState>()(
         
               // ЭТАП 1: Анализ руки (ТОЛЬКО если не пропускаем)
       if (!skipHandAnalysis && currentPlayer.cards.length > 0) {
+        console.log(`🎮 [processPlayerTurn] ЭТАП 1: Анализ руки для ${currentPlayer.name}`);
         if (get().canMakeMove(playerId)) {
           // Может ходить - показываем цели и ждем клика по карте
           const targets = get().findAvailableTargets(playerId);
+          console.log(`✅ [processPlayerTurn] Игрок МОЖЕТ ходить, цели: [${targets.join(', ')}]`);
 
           set({ 
             availableTargets: targets,
@@ -958,6 +972,7 @@ export const useGameStore = create<GameState>()(
           get().showNotification(`${currentPlayer.name}: выберите карту для хода`, 'info');
           return; // Ждем клика по карте в руке игрока
         } else {
+          console.log(`❌ [processPlayerTurn] Игрок НЕ МОЖЕТ ходить, переход к колоде`);
 
           // ИСПРАВЛЕНО: очищаем состояние и НЕ продолжаем автоматически к колоде
           set({ 
