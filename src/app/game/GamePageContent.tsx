@@ -448,6 +448,23 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                 const isCurrentPlayerCard = p.id === currentPlayerId && turnPhase === 'analyzing_hand' && availableTargets.length > 0;
                 const isClickableTarget = isTargetAvailable && (turnPhase === 'waiting_target_selection' || turnPhase === 'waiting_deck_action');
                 const isClickableOwnCard = isCurrentPlayerCard;
+                
+                // ОТЛАДКА: Логи кликабельности карт
+                if (p.id === currentPlayerId) {
+                  console.log(`🎯 [GamePageContent] Анализ кликабельности карты игрока ${p.name}:`);
+                  console.log(`🎯 [GamePageContent] - p.id: ${p.id}, currentPlayerId: ${currentPlayerId}, совпадает: ${p.id === currentPlayerId}`);
+                  console.log(`🎯 [GamePageContent] - turnPhase: ${turnPhase}`);
+                  console.log(`🎯 [GamePageContent] - availableTargets: [${availableTargets.join(', ')}], длина: ${availableTargets.length}`);
+                  console.log(`🎯 [GamePageContent] - isCurrentPlayerCard: ${isCurrentPlayerCard}`);
+                  console.log(`🎯 [GamePageContent] - isClickableOwnCard: ${isClickableOwnCard}`);
+                }
+                
+                if (isTargetAvailable) {
+                  console.log(`🎯 [GamePageContent] Анализ кликабельности ЦЕЛИ ${p.name} (индекс ${playerIndex}):`);
+                  console.log(`🎯 [GamePageContent] - isTargetAvailable: ${isTargetAvailable}`);
+                  console.log(`🎯 [GamePageContent] - turnPhase: ${turnPhase}`);
+                  console.log(`🎯 [GamePageContent] - isClickableTarget: ${isClickableTarget}`);
+                }
 
                 return (
                   <div
@@ -621,15 +638,23 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                                     height: card.open ? 157 : 105,
                                    }}
                                   onClick={() => {
+                                    console.log(`🎯 [GamePageContent] КЛИК по карте ${p.name}, isTopCard: ${isTopCard}`);
+                                    console.log(`🎯 [GamePageContent] - isClickableOwnCard: ${isClickableOwnCard}, isClickableTarget: ${isClickableTarget}`);
                                     if (isTopCard) {
                                       if (isClickableOwnCard) {
+                                        console.log(`✅ [GamePageContent] Клик по своей карте - вызываем makeMove('initiate_move')`);
                                         // Клик по своей карте - переключаемся в режим выбора цели
                                         // Добавим новый метод в gameStore
                                         makeMove('initiate_move');
                                       } else if (isClickableTarget) {
+                                        console.log(`✅ [GamePageContent] Клик по карте соперника - вызываем makeMove(${p.id})`);
                                         // Клик по карте соперника - делаем ход
                                         makeMove(p.id);
+                                      } else {
+                                        console.log(`❌ [GamePageContent] Карта не кликабельна`);
                                       }
+                                    } else {
+                                      console.log(`❌ [GamePageContent] Клик не по верхней карте`);
                                     }
                                   }}
                                 >
