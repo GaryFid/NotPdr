@@ -1319,11 +1319,21 @@ export const useGameStore = create<GameState>()(
          
          // Розыгрыш выбранной карты
          playSelectedCard: () => {
-           const { selectedHandCard, currentPlayerId, players, tableStack, roundInProgress } = get();
+           const { selectedHandCard, currentPlayerId, players, tableStack, roundInProgress, stage2TurnPhase, trumpSuit } = get();
            if (!selectedHandCard || !currentPlayerId) return;
            
            const currentPlayer = players.find(p => p.id === currentPlayerId);
            if (!currentPlayer) return;
+           
+           // НОВАЯ ЛОГИКА: Проверяем правила битья во 2-й стадии
+           if (tableStack.length > 0 && stage2TurnPhase === 'waiting_beat') {
+             // Если на столе есть карты и ждем битья, проверяем правила дурака
+             const topCard = tableStack[tableStack.length - 1];
+             if (!get().canBeatCard(topCard, selectedHandCard, trumpSuit || '')) {
+               get().showNotification('Эта карта не может побить верхнюю карту на столе!', 'error', 3000);
+               return; // Блокируем неправильный ход
+             }
+           }
            
            // Проверяем лимит карт на столе ПЕРЕД добавлением
            const maxCardsOnTable = players.length - 1;
@@ -1350,6 +1360,10 @@ export const useGameStore = create<GameState>()(
            const playedCard = { ...selectedHandCard };
            playedCard.open = true; // ИСПРАВЛЕНО: На столе карты должны быть открыты
            
+           // Определяем тип действия: атака или защита
+           const isBeating = tableStack.length > 0 && stage2TurnPhase === 'waiting_beat';
+           const actionType = isBeating ? 'побил карту' : 'сыграл карту';
+           
            set({
              players: [...players],
              tableStack: [...tableStack, playedCard],
@@ -1359,7 +1373,7 @@ export const useGameStore = create<GameState>()(
              stage2TurnPhase: 'waiting_beat'
            });
            
-           get().showNotification(`${currentPlayer.name} сыграл карту (на столе: ${tableStack.length + 1}/${maxCardsOnTable})`, 'info', 5000);
+           get().showNotification(`${currentPlayer.name} ${actionType} (на столе: ${tableStack.length + 1}/${maxCardsOnTable})`, isBeating ? 'success' : 'info', 3000);
            
            // Проверяем переход в 3-ю стадию после розыгрыша карты
            get().checkStage3Transition(currentPlayerId);
