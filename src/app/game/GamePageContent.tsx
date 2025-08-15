@@ -630,8 +630,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                               <Image
                                 src="/img/cards/back.png"
                                 alt="penki"
-                                width={isSmallMobile ? 44 : isMobile ? 50 : 55}
-                                height={isSmallMobile ? 64 : isMobile ? 72 : 80}
+                                width={isSmallMobile ? 88 : isMobile ? 100 : 110} /* Увеличено в 2 раза */
+                                height={isSmallMobile ? 128 : isMobile ? 144 : 160} /* Увеличено в 2 раза */
                                 style={{ 
                                   borderRadius: '8px',
                                   opacity: 0.8

@@ -564,6 +564,11 @@ export const useGameStore = create<GameState>()(
         
         console.log(`🔄 [nextTurn] Запускаем processPlayerTurn для ${nextPlayer.name}`);
         
+        // Проверяем переход к 3-й стадии для игрока который получает ход
+        if (gameStage === 2) {
+          get().checkStage3Transition(nextPlayerId);
+        }
+        
         // Запускаем обработку хода для соответствующей стадии
         if (gameStage === 1) {
           setTimeout(() => get().processPlayerTurn(nextPlayerId), 1000)
@@ -1599,8 +1604,15 @@ export const useGameStore = create<GameState>()(
            // Проверяем есть ли у игрока открытые карты
            const hasOpenCards = player.cards.some(card => card.open);
            
-           if (!hasOpenCards && player.cards.length === 0 && player.playerStage === 2 && player.penki.length > 0) {
-             // У игрока нет открытых карт и он во 2-й стадии - переводим в 3-ю
+           console.log(`🃏 [checkStage3Transition] Проверка перехода игрока ${player.name}:`);
+           console.log(`🃏 [checkStage3Transition] - hasOpenCards: ${hasOpenCards}`);
+           console.log(`🃏 [checkStage3Transition] - player.cards.length: ${player.cards.length}`);
+           console.log(`🃏 [checkStage3Transition] - player.playerStage: ${player.playerStage}`);
+           console.log(`🃏 [checkStage3Transition] - player.penki.length: ${player.penki.length}`);
+           
+           // ИСПРАВЛЕНО: Во 2-й стадии если у игрока НЕТ открытых карт → открываем пеньки
+           if (!hasOpenCards && player.playerStage === 2 && player.penki.length > 0) {
+             console.log(`🃏 [checkStage3Transition] ✅ У игрока ${player.name} нет открытых карт во 2-й стадии - активируем пеньки!`);
              get().activatePenki(playerId);
            }
          },
