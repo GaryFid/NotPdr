@@ -248,8 +248,9 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
   
   // Логика для 2-й стадии: может ли игрок побить верхнюю карту на столе
   const canBeatTopCard = useMemo(() => {
-    if (gameStage !== 2 || !currentPlayer || !tableStack.length || stage2TurnPhase !== 'waiting_beat') {
-      return true; // Если не во 2-й стадии или нет карт на столе - не показываем кнопку
+    // Проверяем только во 2-й стадии, когда есть карты на столе и это наш ход
+    if (gameStage !== 2 || !currentPlayer || !tableStack.length || currentPlayer.id !== currentPlayerId) {
+      return true; // В других случаях считаем что может побить (кнопка не нужна)
     }
     
     const topCard = tableStack[tableStack.length - 1];
@@ -257,16 +258,31 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
     
     // Проверяем есть ли у игрока карты которые могут побить верхнюю
     const { canBeatCard } = useGameStore.getState();
-    return currentPlayer.cards.some(playerCard => 
+    const hasBeatingCard = currentPlayer.cards.some(playerCard => 
       playerCard.open && canBeatCard(topCard, playerCard, trumpSuit)
     );
-  }, [gameStage, currentPlayer, tableStack, stage2TurnPhase, trumpSuit]);
+    
+    console.log(`🃏 [canBeatTopCard] Анализ битья:`);
+    console.log(`🃏 [canBeatTopCard] - topCard: ${topCard?.image}`);
+    console.log(`🃏 [canBeatTopCard] - trumpSuit: ${trumpSuit}`);
+    console.log(`🃏 [canBeatTopCard] - открытых карт у игрока: ${currentPlayer.cards.filter(c => c.open).length}`);
+    console.log(`🃏 [canBeatTopCard] - может побить: ${hasBeatingCard}`);
+    
+    return hasBeatingCard;
+  }, [gameStage, currentPlayer, tableStack, trumpSuit, currentPlayerId]);
   
   const shouldShowTakeButton = gameStage === 2 && 
-                               stage2TurnPhase === 'waiting_beat' && 
                                tableStack.length > 0 && 
                                currentPlayer?.id === currentPlayerId && 
                                !canBeatTopCard;
+                               
+  console.log(`🃏 [shouldShowTakeButton] Проверка кнопки "Взять карту":`);
+  console.log(`🃏 [shouldShowTakeButton] - gameStage: ${gameStage}`);
+  console.log(`🃏 [shouldShowTakeButton] - tableStack.length: ${tableStack.length}`);
+  console.log(`🃏 [shouldShowTakeButton] - currentPlayer?.id: ${currentPlayer?.id}`);
+  console.log(`🃏 [shouldShowTakeButton] - currentPlayerId: ${currentPlayerId}`);
+  console.log(`🃏 [shouldShowTakeButton] - canBeatTopCard: ${canBeatTopCard}`);
+  console.log(`🃏 [shouldShowTakeButton] - ИТОГ shouldShowTakeButton: ${shouldShowTakeButton}`);
 
   // Показываем заглушку если игра не активна
   if (!isGameActive) {
