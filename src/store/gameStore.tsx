@@ -861,7 +861,7 @@ export const useGameStore = create<GameState>()(
           lastPlayerToDrawCard: currentPlayerId
         });
         // фиксируем историю
-        set({ drawnHistory: [...get().drawnHistory, drawnCard] });
+        // set({ drawnHistory: [...get().drawnHistory, drawnCard] }); // Уже добавлено в revealDeckCard
         
         // Проверяем переход к стадии 2 если мы в 1-й стадии и колода опустела
         if (gameStage === 1 && newDeck.length === 0) {
@@ -1153,9 +1153,12 @@ export const useGameStore = create<GameState>()(
          topCard.rank = get().getCardRank(topCard.image || '');
          topCard.open = true; // Карта открывается для хода
          
+         // ИСПРАВЛЕНИЕ: Добавляем открытую карту в историю для правильного определения козыря
+         const { drawnHistory } = get();
          set({ 
            revealedDeckCard: topCard,
-           turnPhase: 'deck_card_revealed'
+           turnPhase: 'deck_card_revealed',
+           drawnHistory: [...drawnHistory, topCard] // Добавляем в историю при открытии
          });
          
          // СПЕЦИАЛЬНЫЙ СЛУЧАЙ: Если это последняя карта, отмечаем это в логах
@@ -1164,7 +1167,7 @@ export const useGameStore = create<GameState>()(
            console.log(`🃏 [revealDeckCard] После использования этой карты -> переход к стадии 2`);
          }
          
-         console.log(`🎴 [revealDeckCard] Карта из колоды открыта: ${topCard.image}`);
+         console.log(`🎴 [revealDeckCard] Карта из колоды открыта: ${topCard.image}, добавлена в drawnHistory`);
          return true;
        },
        
@@ -1213,7 +1216,7 @@ export const useGameStore = create<GameState>()(
           skipHandAnalysis: true, // ⭐ Пропускаем анализ руки!
           turnPhase: 'analyzing_hand' // Возвращаемся к началу (но с пропуском)
         });
-        set({ drawnHistory: [...get().drawnHistory, revealedDeckCard] });
+        // set({ drawnHistory: [...get().drawnHistory, revealedDeckCard] }); // Уже добавлено в revealDeckCard
         
         // Проверяем переход к стадии 2 после размещения карты на себя
         if (newDeck.length === 0) {
@@ -1254,7 +1257,7 @@ export const useGameStore = create<GameState>()(
           lastPlayerToDrawCard: currentPlayerId,
           turnPhase: 'turn_ended'
         });
-        set({ drawnHistory: [...get().drawnHistory, revealedDeckCard] });
+        // set({ drawnHistory: [...get().drawnHistory, revealedDeckCard] }); // Уже добавлено в revealDeckCard
         
         // Проверяем переход к стадии 2 после взятия карты поверх
         if (newDeck.length === 0) {
@@ -1364,13 +1367,28 @@ export const useGameStore = create<GameState>()(
            if (!currentPlayer) return;
            
            // НОВАЯ ЛОГИКА: Проверяем правила битья во 2-й стадии
-           if (tableStack.length > 0 && stage2TurnPhase === 'waiting_beat') {
-             // Если на столе есть карты и ждем битья, проверяем правила дурака
+           console.log(`🃏 [playSelectedCard] Анализ правил битья:`);
+           console.log(`🃏 [playSelectedCard] - tableStack.length: ${tableStack.length}`);
+           console.log(`🃏 [playSelectedCard] - stage2TurnPhase: ${stage2TurnPhase}`);
+           console.log(`🃏 [playSelectedCard] - selectedHandCard: ${selectedHandCard?.image}`);
+           console.log(`🃏 [playSelectedCard] - trumpSuit: ${trumpSuit}`);
+           
+           if (tableStack.length > 0) {
+             // Если на столе есть карты, ВСЕГДА проверяем правила дурака
              const topCard = tableStack[tableStack.length - 1];
-             if (!get().canBeatCard(topCard, selectedHandCard, trumpSuit || '')) {
+             console.log(`🃏 [playSelectedCard] - topCard на столе: ${topCard?.image}`);
+             
+             const canBeat = get().canBeatCard(topCard, selectedHandCard, trumpSuit || '');
+             console.log(`🃏 [playSelectedCard] - Результат canBeatCard: ${canBeat}`);
+             
+             if (!canBeat) {
                get().showNotification('Эта карта не может побить верхнюю карту на столе!', 'error', 3000);
+               console.log(`🃏 [playSelectedCard] ❌ БЛОКИРУЕМ НЕПРАВИЛЬНЫЙ ХОД!`);
                return; // Блокируем неправильный ход
              }
+             console.log(`🃏 [playSelectedCard] ✅ Правила битья соблюдены`);
+           } else {
+             console.log(`🃏 [playSelectedCard] 🆕 Первая карта на стол - правила битья не применяются`);
            }
            
            // Проверяем лимит карт на столе ПЕРЕД добавлением
