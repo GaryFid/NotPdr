@@ -1377,15 +1377,15 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 240px; /* Увеличено в 2 раза: 120px * 2 */
-  width: 330px; /* Увеличено в 2 раза: 165px * 2 */
+  height: 120px; /* Увеличено в 2 раза: 120px * 2 */
+  width: 165px; /* Увеличено в 2 раза: 165px * 2 */
   perspective: 1000px;
 }
 
 .penkiCard {
   position: absolute;
-  width: 166px; /* Увеличено в 2 раза: 83px * 2 */
-  height: 240px; /* Увеличено в 2 раза: 120px * 2 */
+  width: 83px; /* Увеличено в 2 раза: 83px * 2 */
+  height: 120px; /* Увеличено в 2 раза: 120px * 2 */
   background: 
     linear-gradient(145deg, #1e293b 0%, #334155 100%);
   border-radius: 8px;
@@ -1451,8 +1451,8 @@
   }
   
   .penkiRow {
-    height: 120px; /* Увеличено в 2 раза: 60px * 2 */
-    width: 180px; /* Увеличено в 2 раза: 90px * 2 */
+    height: 60px; /* Увеличено в 2 раза: 60px * 2 */
+    width: 90px; /* Увеличено в 2 раза: 90px * 2 */
   }
   
   .penkiCard {
@@ -1528,8 +1528,8 @@
   }
   
   .penkiRow {
-    height: 96px; /* Увеличено в 2 раза: 48px * 2 */
-    width: 150px; /* Увеличено в 2 раза: 75px * 2 */
+    height: 48px; /* Увеличено в 2 раза: 48px * 2 */
+    width: 75px; /* Увеличено в 2 раза: 75px * 2 */
   }
   
   .penkiCard {
@@ -1652,8 +1652,8 @@
   }
   
   .penkiRow {
-    height: 106px; /* Увеличено в 2 раза: 53px * 2 */
-    width: 166px; /* Увеличено в 2 раза: 83px * 2 */
+    height: 53px; /* Увеличено в 2 раза: 53px * 2 */
+    width: 83px; /* Увеличено в 2 раза: 83px * 2 */
   }
   
   .penkiCard {
@@ -2064,13 +2064,13 @@
   }
   
   .penkiRow {
-    height: 270px; /* Увеличено в 2 раза: 135px * 2 */
-    width: 360px; /* Увеличено в 2 раза: 180px * 2 */
+    height: 135px; /* Увеличено в 2 раза: 135px * 2 */
+    width: 180px; /* Увеличено в 2 раза: 180px * 2 */
   }
   
   .penkiCard {
-    width: 180px; /* Увеличено в 2 раза: 90px * 2 */
-    height: 256px; /* Увеличено в 2 раза: 128px * 2 */
+    width: 90px; /* Увеличено в 2 раза: 90px * 2 */
+    height: 128px; /* Увеличено в 2 раза: 128px * 2 */
   }
   
   .playerHand {
@@ -2183,13 +2183,13 @@
   }
   
   .penkiRow {
-    height: 300px; /* Увеличено в 2 раза: 150px * 2 */
-    width: 420px; /* Увеличено в 2 раза: 210px * 2 */
+    height: 150px; /* Увеличено в 2 раза: 150px * 2 */
+    width: 210px; /* Увеличено в 2 раза: 210px * 2 */
   }
   
   .penkiCard {
-    width: 196px; /* Увеличено в 2 раза: 98px * 2 */
-    height: 286px; /* Увеличено в 2 раза: 143px * 2 */
+    width: 98px; /* Увеличено в 2 раза: 98px * 2 */
+    height: 143px; /* Увеличено в 2 раза: 143px * 2 */
   }
   
   .playerHand {
@@ -2302,8 +2302,8 @@
   }
   
   .penkiRow {
-    height: 330px; /* Увеличено в 2 раза: 165px * 2 */
-    width: 480px; /* Увеличено в 2 раза: 240px * 2 */
+    height: 165px; /* Увеличено в 2 раза: 165px * 2 */
+    width: 240px; /* Увеличено в 2 раза: 240px * 2 */
   }
   
   .penkiCard {
