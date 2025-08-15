@@ -502,7 +502,7 @@ export const useGameStore = create<GameState>()(
         const { players, currentPlayerId, deck } = get()
         const currentPlayer = players.find(p => p.id === currentPlayerId)
         
-        if (!currentPlayer || deck.length === 0) return
+        if (!currentPlayer || deck.length <= 1) return // Нельзя брать последнюю карту - она козырь
         
         const drawnCard = deck[0]
         currentPlayer.cards.push(drawnCard)
@@ -820,7 +820,7 @@ export const useGameStore = create<GameState>()(
       // Взятие карты из колоды
       drawCardFromDeck: () => {
         const { deck, players, currentPlayerId, gameStage } = get();
-        if (deck.length === 0 || !currentPlayerId) return false;
+        if (deck.length <= 1 || !currentPlayerId) return false; // Нельзя брать последнюю карту - она козырь
         
         const currentPlayer = players.find(p => p.id === currentPlayerId);
         if (!currentPlayer) return false;
@@ -874,7 +874,7 @@ export const useGameStore = create<GameState>()(
       // Проверка окончания 1-й стадии
       checkStage1End: () => {
         const { deck, gameStage, lastPlayerToDrawCard, players } = get();
-        if (gameStage !== 1 || deck.length > 0) return;
+        if (gameStage !== 1 || deck.length !== 1) return;
         
 
         
@@ -993,8 +993,8 @@ export const useGameStore = create<GameState>()(
       }
         
         // ЭТАП 2: Работа с колодой
-        if (deck.length === 0) {
-
+        if (deck.length <= 1) {
+          // Если остается 1 или 0 карт, переходим к стадии 2
           get().checkStage1End();
           return;
         }
@@ -1011,7 +1011,7 @@ export const useGameStore = create<GameState>()(
         
         // Открываем карту из колоды (ВОЗВРАЩАЕМ СТАРУЮ ЛОГИКУ)
         if (!get().revealDeckCard()) {
-          get().checkStage1End();
+          // revealDeckCard уже вызвал checkStage1End если нужно
           return;
         }
         
@@ -1056,34 +1056,58 @@ export const useGameStore = create<GameState>()(
       },
       
       // Определение козыря для второй стадии
-      // ПРАВИЛО: Козырь = последняя взятая карта из колоды, которая НЕ пики
+      // ПРАВИЛО: Козырь = последняя карта в колоде, которая НЕ пики
+      // Если последняя карта пика, ищем предыдущую непиковую из взятых карт
       determineTrumpSuit: () => {
-        const { drawnHistory } = get();
+        const { deck, drawnHistory } = get();
         
-        console.log(`🃏 [determineTrumpSuit] История взятых карт (${drawnHistory.length} карт):`);
+        console.log(`🃏 [determineTrumpSuit] Проверяем последнюю карту в колоде (${deck.length} карт)`);
+        
+        // Должна остаться ровно 1 карта в колоде - она и становится козырем
+        if (deck.length !== 1) {
+          console.log(`⚠️ [determineTrumpSuit] Неверное количество карт в колоде: ${deck.length}! Ожидается 1`);
+          return 'hearts'; // Запасной вариант
+        }
+        
+        const lastCard = deck[0];
+        if (!lastCard || !lastCard.image) {
+          console.log(`⚠️ [determineTrumpSuit] Последняя карта в колоде не найдена или без изображения`);
+          return 'hearts'; // Запасной вариант
+        }
+        
+        const suit = get().getCardSuit(lastCard.image);
+        console.log(`🃏 [determineTrumpSuit] Последняя карта в колоде: ${lastCard.image} → масть: ${suit}`);
+        
+        // Козырем может быть любая масть КРОМЕ пик
+        if (suit !== 'spades' && suit !== 'unknown') {
+          console.log(`✅ [determineTrumpSuit] НАЙДЕН КОЗЫРЬ: ${suit} (карта: ${lastCard.image})`);
+          return suit as 'clubs' | 'diamonds' | 'hearts' | 'spades';
+        }
+        
+        // Если последняя карта пика, ищем предыдущую непиковую из истории взятых карт
+        console.log(`🃏 [determineTrumpSuit] Последняя карта была пикой! Ищем предыдущую непиковую в истории (${drawnHistory.length} карт)`);
         drawnHistory.forEach((card, index) => {
           if (card && card.image) {
-            const suit = get().getCardSuit(card.image);
-            console.log(`🃏 [determineTrumpSuit] ${index}: ${card.image} → масть: ${suit}`);
+            const cardSuit = get().getCardSuit(card.image);
+            console.log(`🃏 [determineTrumpSuit] История ${index}: ${card.image} → масть: ${cardSuit}`);
           }
         });
         
-        // Ищем последнюю непиковую карту в истории взятых карт
+        // Ищем последнюю непиковую карту в истории взятых карт (в обратном порядке)
         for (let i = drawnHistory.length - 1; i >= 0; i--) {
           const card = drawnHistory[i];
           if (card && card.image) {
-            const suit = get().getCardSuit(card.image);
-            console.log(`🃏 [determineTrumpSuit] Проверяем карту ${i}: ${card.image} → масть: ${suit}`);
-            // Козырем может быть любая масть КРОМЕ пик
-            if (suit !== 'spades' && suit !== 'unknown') {
-              console.log(`✅ [determineTrumpSuit] НАЙДЕН КОЗЫРЬ: ${suit} (карта: ${card.image})`);
-              return suit as 'clubs' | 'diamonds' | 'hearts' | 'spades';
+            const cardSuit = get().getCardSuit(card.image);
+            console.log(`🃏 [determineTrumpSuit] Проверяем историю ${i}: ${card.image} → масть: ${cardSuit}`);
+            if (cardSuit !== 'spades' && cardSuit !== 'unknown') {
+              console.log(`✅ [determineTrumpSuit] НАЙДЕН КОЗЫРЬ ИЗ ИСТОРИИ: ${cardSuit} (карта: ${card.image})`);
+              return cardSuit as 'clubs' | 'diamonds' | 'hearts' | 'spades';
             }
           }
         }
         
         console.log(`⚠️ [determineTrumpSuit] Все карты были пиками! Используем запасной вариант: hearts`);
-        // Запасной вариант если все взятые карты были пиками (маловероятно)
+        // Запасной вариант если все карты были пиками (крайне маловероятно)
         return 'hearts';
       },
       
@@ -1103,6 +1127,13 @@ export const useGameStore = create<GameState>()(
        revealDeckCard: () => {
          const { deck } = get();
          if (deck.length === 0) return false;
+         
+         // СПЕЦИАЛЬНЫЙ СЛУЧАЙ: Если остается последняя карта, она становится козырем
+         if (deck.length === 1) {
+           console.log(`🃏 [revealDeckCard] Остается последняя карта в колоде - переходим к стадии 2`);
+           get().checkStage1End();
+           return false; // Не открываем карту для хода, она остается как козырь
+         }
          
          const topCard = { ...deck[0] };
          topCard.rank = get().getCardRank(topCard.image || '');
@@ -1377,6 +1408,21 @@ export const useGameStore = create<GameState>()(
            // Проверяем можем ли побить
            if (!get().canBeatCard(topCard, defendCard, trumpSuit || '')) {
              get().showNotification('Нельзя побить эту карту!', 'error', 5000);
+             return;
+           }
+           
+           // Проверяем лимит карт на столе ПЕРЕД добавлением карты битья
+           const maxCardsOnTable = players.length - 1;
+           if (tableStack.length >= maxCardsOnTable) {
+             get().showNotification(`Лимит карт на столе достигнут (${maxCardsOnTable}). Карты уходят в бито!`, 'warning', 5000);
+             // Все карты со стола уходят в бито
+             set({
+               tableStack: [],
+               roundInProgress: false,
+               currentRoundInitiator: null,
+               stage2TurnPhase: 'selecting_card'
+             });
+             get().showNotification(`${currentPlayer.name} начинает новый ход!`, 'info', 3000);
              return;
            }
            

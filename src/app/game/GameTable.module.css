@@ -909,13 +909,16 @@
 .tableCard {
   position: absolute;
   border-radius: 8px;
+  background: #ffffff; /* Белый фон для лучшей видимости карт */
   box-shadow:
     0 8px 24px rgba(0, 0, 0, 0.45),
     0 0 0 2px rgba(99, 102, 241, 0.3);
   transition: transform 0.25s ease, box-shadow 0.25s ease;
+  padding: 4px; /* Небольшой отступ для рамки */
 }
 
 .tableCardTop {
+  background: #ffffff; /* Белый фон для верхней карты */
   box-shadow:
     0 12px 30px rgba(0, 0, 0, 0.55),
     0 0 0 2px rgba(99, 102, 241, 0.4),
