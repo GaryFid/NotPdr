@@ -163,8 +163,100 @@ export class AIPlayer {
   
   // Решения для 3-й стадии (пеньки)
   private makeStage3Decision(gameState: any): AIDecision {
-    // Похожая логика на 1-ю стадию, но с пеньками
-    return this.makeStage1Decision(gameState);
+    const { players, availableTargets, revealedDeckCard } = gameState;
+    const currentPlayer = players[this.playerId];
+    
+    console.log(`🤖 [AI Stage3] Анализ ситуации 3-й стадии:`);
+    console.log(`🤖 [AI Stage3] - player.cards.length: ${currentPlayer.cards.length}`);
+    console.log(`🤖 [AI Stage3] - player.penki.length: ${currentPlayer.penki.length}`);
+    console.log(`🤖 [AI Stage3] - availableTargets: [${availableTargets.join(', ')}]`);
+    console.log(`🤖 [AI Stage3] - revealedDeckCard: ${revealedDeckCard?.image || 'нет'}`);
+    
+    // В 3-й стадии логика аналогична 1-й стадии:
+    // 1. Если есть открытая карта из колоды - анализируем её
+    // 2. Если есть ходы из руки - делаем их
+    // 3. Если нет ходов - берем из колоды
+    
+    if (revealedDeckCard) {
+      const cardRank = this.getCardRank(revealedDeckCard);
+      
+      // В 3-й стадии игрок уже опытный, стратегия более агрессивная
+      switch (this.difficulty) {
+        case 'easy':
+          // Простой ИИ - случайный выбор
+          if (availableTargets.length > 0) {
+            const randomTarget = availableTargets[Math.floor(Math.random() * availableTargets.length)];
+            console.log(`🤖 [AI Stage3] Easy: случайный ход на цель ${randomTarget}`);
+            return {
+              action: 'place_on_target',
+              targetPlayerId: randomTarget,
+              confidence: 0.6
+            };
+          }
+          break;
+          
+        case 'medium':
+          // Средний ИИ - стратегия "мешать лидерам"
+          if (cardRank <= 7 && availableTargets.length > 0) {
+            // Находим игрока с наименьшим количеством карт (лидера)
+            const enemyTargets = availableTargets.filter((id: number) => id !== this.playerId);
+            if (enemyTargets.length > 0) {
+              let targetWithFewestCards = enemyTargets[0];
+              let fewestCardsCount = players[targetWithFewestCards].cards.length + players[targetWithFewestCards].penki.length;
+              
+              enemyTargets.forEach(targetId => {
+                const targetPlayer = players[targetId];
+                const totalCards = targetPlayer.cards.length + targetPlayer.penki.length;
+                if (totalCards < fewestCardsCount) {
+                  fewestCardsCount = totalCards;
+                  targetWithFewestCards = targetId;
+                }
+              });
+              
+              console.log(`🤖 [AI Stage3] Medium: мешаем лидеру (у него ${fewestCardsCount} карт)`);
+              return {
+                action: 'place_on_target',
+                targetPlayerId: targetWithFewestCards,
+                confidence: 0.8
+              };
+            }
+          } else if (cardRank >= 10) {
+            // Хорошие карты себе
+            if (this.canPlaceOnSelf(currentPlayer, revealedDeckCard)) {
+              console.log(`🤖 [AI Stage3] Medium: хорошую карту себе`);
+              return {
+                action: 'place_on_self',
+                confidence: 0.9
+              };
+            }
+          }
+          break;
+          
+        case 'hard':
+          // Сложный ИИ - продвинутая стратегия
+          const decision = this.analyzeStage3Situation(gameState);
+          if (decision) return decision;
+          break;
+      }
+    }
+    
+    // Если есть доступные цели из руки
+    if (availableTargets.length > 0) {
+      const target = availableTargets[0];
+      console.log(`🤖 [AI Stage3] Ход из руки на цель ${target}`);
+      return {
+        action: 'place_on_target',
+        targetPlayerId: target,
+        confidence: 0.7
+      };
+    }
+    
+    // По умолчанию берем карту из колоды
+    console.log(`🤖 [AI Stage3] Берем карту из колоды`);
+    return {
+      action: 'draw_card',
+      confidence: 0.6
+    };
   }
   
   // Вспомогательные методы
@@ -225,6 +317,49 @@ export class AIPlayer {
     }
     
     return null;
+  }
+  
+  private analyzeStage3Situation(gameState: any): AIDecision | null {
+    const { players, availableTargets, revealedDeckCard } = gameState;
+    
+    console.log(`🤖 [AI Stage3 Hard] Продвинутый анализ ситуации`);
+    
+    // В 3-й стадии критически важно блокировать игроков близких к победе
+    const criticalThreats = this.identifyCriticalThreats(players);
+    
+    if (criticalThreats.length > 0 && revealedDeckCard) {
+      const cardRank = this.getCardRank(revealedDeckCard);
+      
+      // Если есть игрок с 1-2 картами - мешаем ему любой картой
+      const closestToVictory = criticalThreats[0];
+      if (availableTargets.includes(closestToVictory)) {
+        console.log(`🤖 [AI Stage3 Hard] КРИТИЧЕСКАЯ УГРОЗА! Блокируем игрока ${closestToVictory}`);
+        return {
+          action: 'place_on_target',
+          targetPlayerId: closestToVictory,
+          confidence: 1.0 // Максимальная уверенность
+        };
+      }
+    }
+    
+    // Если нет критических угроз, применяем обычную стратегию
+    return this.analyzeStage1Situation(gameState);
+  }
+  
+  private identifyCriticalThreats(players: Player[]): number[] {
+    // Игроки с минимальным количеством карт (близкие к победе)
+    return players
+      .filter(p => parseInt(p.id) !== this.playerId)
+      .filter(p => {
+        const totalCards = p.cards.length + p.penki.length;
+        return totalCards <= 2; // Критическая угроза - 2 или меньше карт
+      })
+      .sort((a, b) => {
+        const aCards = a.cards.length + a.penki.length;
+        const bCards = b.cards.length + b.penki.length;
+        return aCards - bCards; // Сортируем по возрастанию количества карт
+      })
+      .map(p => parseInt(p.id));
   }
   
   private identifyThreats(players: Player[]): number[] {

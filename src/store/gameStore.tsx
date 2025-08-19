@@ -433,28 +433,15 @@ export const useGameStore = create<GameState>()(
       },
       
       endGame: () => {
-        const { players, stats } = get()
-        const winner = players.reduce((prev, current) => 
-          prev.score > current.score ? prev : current
-        )
-        
-        const playerWon = winner.id === 'player_1'
+        // УСТАРЕЛО: Логика определения победителя перенесена в checkVictoryCondition
+        // Этот метод теперь используется только для принудительного завершения игры
+        console.log('🎮 [endGame] Принудительное завершение игры');
         
         set({
-          isGameActive: false,
-          stats: {
-            ...stats,
-            gamesPlayed: stats.gamesPlayed + 1,
-            gamesWon: playerWon ? stats.gamesWon + 1 : stats.gamesWon,
-            totalScore: stats.totalScore + winner.score,
-            bestScore: Math.max(stats.bestScore, winner.score)
-          }
-        })
+          isGameActive: false
+        });
         
-        get().showNotification(
-          playerWon ? 'Вы выиграли!' : 'Игра окончена!', 
-          playerWon ? 'success' : 'info'
-        )
+        get().showNotification('Игра завершена', 'info', 3000);
       },
       
       playCard: (cardId) => {
@@ -569,6 +556,9 @@ export const useGameStore = create<GameState>()(
           get().checkStage3Transition(nextPlayerId);
         }
         
+        // ДОБАВЛЕНО: Проверяем условия победы после каждого хода
+        get().checkVictoryCondition();
+        
         // Запускаем обработку хода для соответствующей стадии
         if (gameStage === 1) {
           setTimeout(() => get().processPlayerTurn(nextPlayerId), 1000)
@@ -578,10 +568,8 @@ export const useGameStore = create<GameState>()(
           setTimeout(() => get().processPlayerTurn(nextPlayerId), 1000)
         }
         
-        // Проверяем окончание игры (только для стадий выше 1)
-        if (gameStage > 1 && newRound > maxRounds) {
-          get().endGame()
-        }
+        // УДАЛЕНО: Неправильная логика завершения игры по maxRounds
+        // Игра завершается только когда игроки остаются без карт (checkVictoryCondition)
       },
       
       resetGame: () => {
@@ -836,6 +824,10 @@ export const useGameStore = create<GameState>()(
         // ИСПРАВЛЕНО: После успешного хода игрок ПРОДОЛЖАЕТ ходить (анализ руки)
         // Ход передается только когда игрок не может больше ходить
         get().resetTurnState();
+        
+        // Проверяем условия победы после хода
+        get().checkVictoryCondition();
+        
         setTimeout(() => {
           get().processPlayerTurn(currentPlayerId);
         }, 1000);
@@ -971,59 +963,85 @@ export const useGameStore = create<GameState>()(
       // Обработка хода игрока (НОВАЯ логика)
       processPlayerTurn: (playerId: string) => {
         const { gameStage, players, skipHandAnalysis, deck } = get();
+        const currentPlayer = players.find(p => p.id === playerId);
+        if (!currentPlayer) return;
+        
+        console.log(`🎮 [processPlayerTurn] Обработка хода для ${currentPlayer.name} (стадия ${gameStage}, бот: ${currentPlayer.isBot})`);
         
         // ИСПРАВЛЕНО: Обрабатываем как 1-ю так и 2-ю стадии
         if (gameStage === 2) {
 
           // Для 2-й стадии просто устанавливаем фазу выбора карты
           set({ stage2TurnPhase: 'selecting_card' });
-          const currentPlayer = players.find(p => p.id === playerId);
           if (currentPlayer) {
             get().showNotification(`${currentPlayer.name}: выберите карту для хода`, 'info', 5000);
           }
           return;
         }
         
-        if (gameStage !== 1) return; // Только 1-я и 2-я стадии поддерживаются
-        
-
-        
-        const currentPlayer = players.find(p => p.id === playerId);
-        if (!currentPlayer) return;
+        if (gameStage !== 1 && gameStage !== 3) return; // Поддерживаем 1-ю и 3-ю стадии
         
         // Проверяем состояние карт игрока
         const openCards = currentPlayer.cards.filter(c => c.open);
         
-              // ЭТАП 1: Анализ руки (ТОЛЬКО если не пропускаем)
-      if (!skipHandAnalysis && currentPlayer.cards.length > 0) {
-        console.log(`🎮 [processPlayerTurn] ЭТАП 1: Анализ руки для ${currentPlayer.name}`);
-        if (get().canMakeMove(playerId)) {
-          // Может ходить - показываем цели и ждем клика по карте
-          const targets = get().findAvailableTargets(playerId);
-          console.log(`✅ [processPlayerTurn] Игрок МОЖЕТ ходить, цели: [${targets.join(', ')}]`);
+        // ЭТАП 1: Анализ руки (ТОЛЬКО если не пропускаем)
+        if (!skipHandAnalysis && currentPlayer.cards.length > 0) {
+          console.log(`🎮 [processPlayerTurn] ЭТАП 1: Анализ руки для ${currentPlayer.name}`);
+          
+          if (get().canMakeMove(playerId)) {
+            // Может ходить - для ботов автоматически делаем ход, для пользователя ждем клика
+            const targets = get().findAvailableTargets(playerId);
+            console.log(`✅ [processPlayerTurn] Игрок МОЖЕТ ходить, цели: [${targets.join(', ')}]`);
 
-          set({ 
-            availableTargets: targets,
-            turnPhase: 'analyzing_hand'
-          });
-          get().showNotification(`${currentPlayer.name}: выберите карту для хода`, 'info');
-          return; // Ждем клика по карте в руке игрока
-        } else {
-          console.log(`❌ [processPlayerTurn] Игрок НЕ МОЖЕТ ходить, переход к колоде`);
+            set({ 
+              availableTargets: targets,
+              turnPhase: 'analyzing_hand'
+            });
+            
+            if (currentPlayer.isBot) {
+              console.log(`🤖 [processPlayerTurn] Бот автоматически делает ход из руки`);
+              // Для бота - автоматически выбираем первую доступную цель и делаем ход
+              setTimeout(() => {
+                if (targets.length > 0) {
+                  const targetIndex = targets[0];
+                  const targetPlayer = players[targetIndex];
+                  console.log(`🤖 [processPlayerTurn] Бот ходит на ${targetPlayer?.name} (индекс ${targetIndex})`);
+                  get().makeMove('initiate_move'); // Сначала инициируем ход
+                  setTimeout(() => {
+                    get().makeMove(targetPlayer?.id || ''); // Затем делаем ход на цель
+                  }, 500);
+                } else {
+                  console.log(`🤖 [processPlayerTurn] У бота нет целей для хода`);
+                }
+              }, 1000);
+            } else {
+              get().showNotification(`${currentPlayer.name}: выберите карту для хода`, 'info');
+            }
+            return; // Ждем выполнения хода
+          } else {
+            console.log(`❌ [processPlayerTurn] Игрок НЕ МОЖЕТ ходить, переход к колоде`);
 
-          // ИСПРАВЛЕНО: очищаем состояние и НЕ продолжаем автоматически к колоде
-          set({ 
-            availableTargets: [],
-            canPlaceOnSelf: false,
-            turnPhase: 'showing_deck_hint' // Сразу переключаемся на подсказку колоды
-          });
-          get().showNotification(`${currentPlayer.name}: нет ходов из руки, кликните на колоду`, 'warning');
-          return; // ВАЖНО: Прерываем выполнение, ждем клика по колоде
+            // Очищаем состояние и переходим к колоде
+            set({ 
+              availableTargets: [],
+              canPlaceOnSelf: false,
+              turnPhase: 'showing_deck_hint'
+            });
+            
+            if (currentPlayer.isBot) {
+              console.log(`🤖 [processPlayerTurn] Бот автоматически кликает по колоде`);
+              // Для бота - автоматически кликаем по колоде
+              setTimeout(() => {
+                get().onDeckClick();
+              }, 1000);
+            } else {
+              get().showNotification(`${currentPlayer.name}: нет ходов из руки, кликните на колоду`, 'warning');
+            }
+            return; // Ждем клика по колоде
+          }
+        } else if (skipHandAnalysis) {
+          set({ skipHandAnalysis: false }); // Сбрасываем флаг
         }
-      } else if (skipHandAnalysis) {
-
-        set({ skipHandAnalysis: false }); // Сбрасываем флаг
-      }
         
         // ЭТАП 2: Работа с колодой
         if (deck.length === 0) {
@@ -1034,7 +1052,16 @@ export const useGameStore = create<GameState>()(
         
         // Показываем подсказку о клике на колоду
         set({ turnPhase: 'showing_deck_hint' });
-        get().showNotification(`${currentPlayer.name}: кликните на колоду чтобы открыть карту`, 'info');
+        
+        if (currentPlayer.isBot) {
+          console.log(`🤖 [processPlayerTurn] Бот автоматически кликает по колоде (этап 2)`);
+          // Для бота - автоматически кликаем по колоде
+          setTimeout(() => {
+            get().onDeckClick();
+          }, 1000);
+        } else {
+          get().showNotification(`${currentPlayer.name}: кликните на колоду чтобы открыть карту`, 'info');
+        }
       },
       
       // Обработка клика по колоде
@@ -1075,16 +1102,42 @@ export const useGameStore = create<GameState>()(
           availableTargets: canMoveToOpponents ? deckTargets : []
         });
         
-        if (canMoveToOpponents) {
-          get().showNotification('Выберите: сходить на соперника или положить на себя', 'info');
-        } else if (canPlaceOnSelfByRules) {
-          get().showNotification('Можете положить карту на себя по правилам', 'info');
-        } else {
-          get().showNotification('Нет доступных ходов - карта ложится поверх ваших карт', 'warning');
-          // Автоматически кладем карту поверх через 2 секунды
+        // Для ботов - автоматически принимаем решение
+        if (currentPlayer.isBot) {
+          console.log(`🤖 [onDeckClick] Бот анализирует карту из колоды:`);
+          console.log(`🤖 [onDeckClick] - canMoveToOpponents: ${canMoveToOpponents}, targets: [${deckTargets.join(', ')}]`);
+          console.log(`🤖 [onDeckClick] - canPlaceOnSelfByRules: ${canPlaceOnSelfByRules}`);
+          
           setTimeout(() => {
-            get().takeCardNotByRules();
-          }, 2000);
+            if (canMoveToOpponents) {
+              // Приоритет: ходить на противников
+              const targetIndex = deckTargets[0];
+              const targetPlayer = players[targetIndex];
+              console.log(`🤖 [onDeckClick] Бот ходит картой из колоды на ${targetPlayer?.name}`);
+              get().makeMove(targetPlayer?.id || '');
+            } else if (canPlaceOnSelfByRules) {
+              // Второй приоритет: положить на себя по правилам
+              console.log(`🤖 [onDeckClick] Бот кладет карту на себя по правилам`);
+              get().placeCardOnSelfByRules();
+            } else {
+              // Последний вариант: взять поверх
+              console.log(`🤖 [onDeckClick] Бот берет карту поверх своих карт`);
+              get().takeCardNotByRules();
+            }
+          }, 1500);
+        } else {
+          // Для пользователя - показываем варианты
+          if (canMoveToOpponents) {
+            get().showNotification('Выберите: сходить на соперника или положить на себя', 'info');
+          } else if (canPlaceOnSelfByRules) {
+            get().showNotification('Можете положить карту на себя по правилам', 'info');
+          } else {
+            get().showNotification('Нет доступных ходов - карта ложится поверх ваших карт', 'warning');
+            // Автоматически кладем карту поверх через 2 секунды
+            setTimeout(() => {
+              get().takeCardNotByRules();
+            }, 2000);
+          }
         }
       },
       
@@ -1436,11 +1489,14 @@ export const useGameStore = create<GameState>()(
            
            get().showNotification(`${currentPlayer.name} ${actionType} (на столе: ${tableStack.length + 1}/${maxCardsOnTable})`, isBeating ? 'success' : 'info', 3000);
            
-           // Проверяем переход в 3-ю стадию после розыгрыша карты
-           get().checkStage3Transition(currentPlayerId);
-           
-           // Переходим к следующему игроку
-           get().nextTurn();
+                     // Проверяем переход в 3-ю стадию после розыгрыша карты
+          get().checkStage3Transition(currentPlayerId);
+          
+          // Проверяем условия победы после розыгрыша карты
+          get().checkVictoryCondition();
+          
+          // Переходим к следующему игроку
+          get().nextTurn();
          },
          
          // Проверка возможности побить карту
@@ -1567,11 +1623,14 @@ export const useGameStore = create<GameState>()(
              get().showNotification('Стол очищен! Новый раунд', 'info', 3000);
            }
            
-           // Проверяем переход в 3-ю стадию (игрок мог остаться без карт)
-           get().checkStage3Transition(currentPlayerId);
-           
-           // Переходим к следующему игроку по кругу
-           get().nextTurn();
+                     // Проверяем переход в 3-ю стадию (игрок мог остаться без карт)
+          get().checkStage3Transition(currentPlayerId);
+          
+          // Проверяем условия победы после взятия карты
+          get().checkVictoryCondition();
+          
+          // Переходим к следующему игроку по кругу
+          get().nextTurn();
          },
          
          // Проверка завершения раунда
@@ -1641,25 +1700,85 @@ export const useGameStore = create<GameState>()(
            get().checkVictoryCondition();
          },
          
-         // Проверка условий победы
+         // Проверка условий победы и поражения
          checkVictoryCondition: () => {
            const { players } = get();
            
-           // Ищем игроков без карт (ни открытых, ни пеньков)
-           const winnersIds: string[] = [];
+           // 1. Ищем игроков без карт (ни открытых, ни пеньков) - ПОБЕДИТЕЛИ
+           const winners: Player[] = [];
+           const playersWithCards: Player[] = [];
+           
            players.forEach(player => {
-             if (player.cards.length === 0 && player.penki.length === 0) {
-               winnersIds.push(player.id);
+             const hasCards = player.cards.length > 0 || player.penki.length > 0;
+             if (!hasCards) {
+               winners.push(player);
+             } else {
+               playersWithCards.push(player);
              }
            });
            
-           if (winnersIds.length > 0) {
-             const winners = players.filter(p => winnersIds.includes(p.id));
-             const winnerNames = winners.map(w => w.name).join(', ');
+           console.log(`🏆 [checkVictoryCondition] Анализ игроков:`);
+           console.log(`🏆 [checkVictoryCondition] - Без карт (победители): ${winners.map(w => w.name).join(', ')}`);
+           console.log(`🏆 [checkVictoryCondition] - С картами: ${playersWithCards.map(p => `${p.name}(${p.cards.length + p.penki.length})`).join(', ')}`);
+           
+           // 2. Определяем ПОБЕДИТЕЛЯ (первый кто остался без карт)
+           if (winners.length === 1) {
+             const winner = winners[0];
+             const isUserWinner = winner.isUser;
              
-             get().showNotification(`🎉 ПОБЕДА! ${winnerNames} выиграл(и)!`, 'success', 10000);
-             get().endGame();
+             get().showNotification(`🎉 ПОБЕДИТЕЛЬ: ${winner.name}!`, 'success', 8000);
+             
+             // Определяем проигравшего если остался только один с картами
+             if (playersWithCards.length === 1) {
+               const loser = playersWithCards[0];
+               const totalCardsLeft = loser.cards.length + loser.penki.length;
+               setTimeout(() => {
+                 get().showNotification(`💸 ПРОИГРАВШИЙ: ${loser.name} (осталось ${totalCardsLeft} карт)`, 'error', 8000);
+               }, 2000);
+             }
+             
+             // Обновляем статистику
+             const { stats } = get();
+             set({
+               isGameActive: false,
+               stats: {
+                 ...stats,
+                 gamesPlayed: stats.gamesPlayed + 1,
+                 gamesWon: isUserWinner ? stats.gamesWon + 1 : stats.gamesWon,
+                 totalScore: stats.totalScore + (isUserWinner ? 100 : 0),
+                 bestScore: isUserWinner ? Math.max(stats.bestScore, 100) : stats.bestScore
+               }
+             });
+             
+             setTimeout(() => {
+               get().showNotification(
+                 isUserWinner ? '🎉 Поздравляем с победой!' : '😔 В следующий раз повезет!', 
+                 isUserWinner ? 'success' : 'info',
+                 5000
+               );
+             }, 4000);
            }
+           // 3. Несколько игроков без карт одновременно - ничья
+           else if (winners.length > 1) {
+             const winnerNames = winners.map(w => w.name).join(', ');
+             const hasUserWinner = winners.some(w => w.isUser);
+             
+             get().showNotification(`🤝 НИЧЬЯ! Победители: ${winnerNames}`, 'success', 8000);
+             
+             // Обновляем статистику для ничьей
+             const { stats } = get();
+             set({
+               isGameActive: false,
+               stats: {
+                 ...stats,
+                 gamesPlayed: stats.gamesPlayed + 1,
+                 gamesWon: hasUserWinner ? stats.gamesWon + 1 : stats.gamesWon,
+                 totalScore: stats.totalScore + (hasUserWinner ? 50 : 0), // Меньше очков за ничью
+                 bestScore: hasUserWinner ? Math.max(stats.bestScore, 50) : stats.bestScore
+               }
+             });
+           }
+           // 4. Никто не выиграл - игра продолжается
          }
     }),
     {
