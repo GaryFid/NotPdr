@@ -364,7 +364,7 @@
   }
   
   .targetCard {
-    outline: 3px solid rgba(99,102,241,0.8);
+    outline: 3px solid rgba(255,215,0,0.9);
   }
   
   .startButton {
@@ -595,39 +595,42 @@
   }
 }
 
-/* Стили для P.I.D.R игры с улучшениями */
+/* Стили для P.I.D.R игры с золотым подсвечиванием */
 .highlightedTarget {
-  animation: pulseTarget 3s ease-in-out infinite;
+  /* Убрали анимацию pulse - оставляем только статичное подсвечивание */
+  transition: all 0.3s ease;
 }
 
 .highlightedTarget .avatarWrap {
   background: 
-    linear-gradient(145deg, rgba(99, 102, 241, 0.1) 0%, rgba(79, 70, 229, 0.1) 100%);
-  border: 2px solid rgba(99, 102, 241, 0.6);
+    linear-gradient(145deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 193, 7, 0.15) 100%);
+  border: 2px solid rgba(255, 215, 0, 0.8);
   box-shadow: 
-    0 0 15px rgba(99, 102, 241, 0.3),
+    0 0 20px rgba(255, 215, 0, 0.4),
     0 15px 35px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .targetCard {
-  animation: none;
+  /* Убрали анимацию */
   transform: scale(1.04) translateY(-3px);
-  outline: 2px solid rgba(99,102,241,0.6);
-  box-shadow: none !important;
+  outline: 3px solid rgba(255, 215, 0, 0.9);
+  box-shadow: 
+    0 0 15px rgba(255, 215, 0, 0.6),
+    0 4px 20px rgba(255, 215, 0, 0.3) !important;
 }
 
 .targetCard::after {
   content: '';
   position: absolute;
-  top: -8px;
-  left: -8px;
-  right: -8px;
-  bottom: -8px;
-  background: linear-gradient(45deg, #6366f1, #4f46e5, #6366f1);
-  border-radius: 20px;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  background: linear-gradient(45deg, #ffd700, #ffeb3b, #ffd700);
+  border-radius: 12px;
   z-index: -1;
-  animation: rotateBorder 3s linear infinite;
+  /* Убрали анимацию вращения */
 }
 
 /* Новый компактный интерфейс игры с премиум дизайном */
@@ -1047,16 +1050,7 @@
 }
 
 /* Обновленные анимации */
-@keyframes pulseTarget {
-  0%, 100% { 
-    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
-    border-color: rgba(99, 102, 241, 0.6);
-  }
-  50% { 
-    box-shadow: 0 0 0 8px rgba(99, 102, 241, 0);
-    border-color: rgba(99, 102, 241, 0.8);
-  }
-}
+/* Убрали анимацию pulseTarget */
 
 @keyframes glowCard {
   0% { 
@@ -1067,10 +1061,7 @@
   }
 }
 
-@keyframes rotateBorder {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+/* Убрали анимацию rotateBorder */
 
 /* Уменьшенная анимация для центральной кнопки КЛИКНИ! */
 @keyframes pulse {
@@ -1102,14 +1093,14 @@
 }
 
 .centralButton {
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-  color: #fff;
+  background: linear-gradient(135deg, #ffd700 0%, #ffb300 100%);
+  color: #000;
   border: none;
   border-radius: 8px;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.3s ease;
-  animation: pulse 2s infinite;
+  /* animation: pulse 2s infinite; Убрали раздражающую анимацию */
   font-size: 8px;
   padding: 4px 8px;
   width: 40px;
@@ -1118,9 +1109,9 @@
 }
 
 .centralButton:hover {
-  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+  background: linear-gradient(135deg, #ffb300 0%, #ff8f00 100%);
   transform: scale(1.1);
-  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 6px 16px rgba(255, 215, 0, 0.4);
 }
 
 /* Кнопки действий с картой из колоды */

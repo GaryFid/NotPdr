@@ -164,7 +164,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
         availableTargets,
         revealedDeckCard,
         tableStack,
-        trumpSuit // Козырь из gameStore (определяется автоматически)
+        trumpSuit, // Козырь из gameStore (определяется автоматически)
+        stage2TurnPhase // Добавляем фазу 2-й стадии для AI
       };
       
       const decision = await ai.makeDecisionWithDelay(gameState);
@@ -239,7 +240,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
     const timeoutId = setTimeout(makeAIMove, 1000);
     
     return () => clearTimeout(timeoutId);
-  }, [currentPlayerId, isGameActive, players, gameStage, aiPlayers]);
+  }, [currentPlayerId, isGameActive, players, gameStage, stage2TurnPhase, aiPlayers, tableStack]);
   
   // Инициализация игры из gameStore
   useEffect(() => {
@@ -536,7 +537,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                               backgroundSize: 'cover',
                               border: isCurrentPlayer ? '4px solid #ffd700' : '2px solid rgba(255,255,255,0.3)',
                               boxShadow: isCurrentPlayer ? '0 0 20px #ffd700, 0 0 40px rgba(255,215,0,0.3)' : 'none',
-                              animation: isCurrentPlayer ? 'pulse 2s infinite' : 'none'
+                              animation: 'none' /* Убрали раздражающую анимацию pulse */
                             }}
                           />
                         ) : (
@@ -551,7 +552,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                               borderRadius: '50%',
                               border: isCurrentPlayer ? '4px solid #ffd700' : '2px solid rgba(255,255,255,0.3)',
                               boxShadow: isCurrentPlayer ? '0 0 20px #ffd700, 0 0 40px rgba(255,215,0,0.3)' : 'none',
-                              animation: isCurrentPlayer ? 'pulse 2s infinite' : 'none'
+                              animation: 'none' /* Убрали раздражающую анимацию pulse */
                             }}
                           />
                         )}

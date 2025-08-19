@@ -124,7 +124,7 @@ export class AIPlayer {
     if (!tableStack || tableStack.length === 0) {
       // Начинаем атаку - играем самую слабую карту
       console.log(`🤖 [AI Stage2] Начинаем атаку`);
-      const weakestCard = this.findWeakestCard(handCards, trumpSuit);
+      const weakestCard = this.findWeakestNonTrumpCard(handCards, trumpSuit) || this.findWeakestCard(handCards, trumpSuit);
       if (weakestCard) {
         console.log(`🤖 [AI Stage2] ✅ Атакуем картой: ${weakestCard.image}`);
         return {
@@ -391,6 +391,16 @@ export class AIPlayer {
       }
     }
     return score;
+  }
+  
+  private findWeakestNonTrumpCard(cards: Card[], trumpSuit: string | null): Card | null {
+    // Ищем самую слабую некозырную карту для атаки
+    const nonTrumpCards = cards.filter(c => !this.isTrump(c, trumpSuit));
+    if (nonTrumpCards.length === 0) return null;
+    
+    return nonTrumpCards.reduce((weakest, card) => {
+      return this.getCardRank(card) < this.getCardRank(weakest) ? card : weakest;
+    });
   }
   
   private findWeakestCard(cards: Card[], trumpSuit: string | null): Card | null {
