@@ -168,7 +168,7 @@ export class AIPlayer {
     
     console.log(`🤖 [AI Stage3] Анализ ситуации 3-й стадии:`);
     console.log(`🤖 [AI Stage3] - player.cards.length: ${currentPlayer.cards.length}`);
-    console.log(`🤖 [AI Stage3] - player.penki.length: ${currentPlayer.penki.length}`);
+    console.log(`🤖 [AI Stage3] - player.penki.length: ${currentPlayer.penki?.length || 0}`);
     console.log(`🤖 [AI Stage3] - availableTargets: [${availableTargets.join(', ')}]`);
     console.log(`🤖 [AI Stage3] - revealedDeckCard: ${revealedDeckCard?.image || 'нет'}`);
     
@@ -202,11 +202,11 @@ export class AIPlayer {
             const enemyTargets = availableTargets.filter((id: number) => id !== this.playerId);
             if (enemyTargets.length > 0) {
               let targetWithFewestCards = enemyTargets[0];
-              let fewestCardsCount = players[targetWithFewestCards].cards.length + players[targetWithFewestCards].penki.length;
+              let fewestCardsCount = players[targetWithFewestCards].cards.length + (players[targetWithFewestCards].penki?.length || 0);
               
-              enemyTargets.forEach(targetId => {
+              enemyTargets.forEach((targetId: number) => {
                 const targetPlayer = players[targetId];
-                const totalCards = targetPlayer.cards.length + targetPlayer.penki.length;
+                const totalCards = targetPlayer.cards.length + (targetPlayer.penki?.length || 0);
                 if (totalCards < fewestCardsCount) {
                   fewestCardsCount = totalCards;
                   targetWithFewestCards = targetId;
@@ -351,12 +351,12 @@ export class AIPlayer {
     return players
       .filter(p => parseInt(p.id) !== this.playerId)
       .filter(p => {
-        const totalCards = p.cards.length + p.penki.length;
+        const totalCards = p.cards.length + (p.penki?.length || 0);
         return totalCards <= 2; // Критическая угроза - 2 или меньше карт
       })
       .sort((a, b) => {
-        const aCards = a.cards.length + a.penki.length;
-        const bCards = b.cards.length + b.penki.length;
+        const aCards = a.cards.length + (a.penki?.length || 0);
+        const bCards = b.cards.length + (b.penki?.length || 0);
         return aCards - bCards; // Сортируем по возрастанию количества карт
       })
       .map(p => parseInt(p.id));
