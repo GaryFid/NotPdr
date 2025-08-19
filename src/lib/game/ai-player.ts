@@ -115,10 +115,18 @@ export class AIPlayer {
     const currentPlayer = players[this.playerId];
     const handCards = currentPlayer.cards.filter((c: Card) => c.open);
     
+    console.log(`🤖 [AI Stage2] Анализ ситуации:`);
+    console.log(`🤖 [AI Stage2] - tableStack.length: ${tableStack?.length || 0}`);
+    console.log(`🤖 [AI Stage2] - handCards.length: ${handCards.length}`);
+    console.log(`🤖 [AI Stage2] - trumpSuit: ${trumpSuit}`);
+    console.log(`🤖 [AI Stage2] - difficulty: ${this.difficulty}`);
+    
     if (!tableStack || tableStack.length === 0) {
-      // Начинаем атаку
+      // Начинаем атаку - играем самую слабую карту
+      console.log(`🤖 [AI Stage2] Начинаем атаку`);
       const weakestCard = this.findWeakestCard(handCards, trumpSuit);
       if (weakestCard) {
+        console.log(`🤖 [AI Stage2] ✅ Атакуем картой: ${weakestCard.image}`);
         return {
           action: 'play_card',
           cardToPlay: weakestCard,
@@ -126,11 +134,14 @@ export class AIPlayer {
         };
       }
     } else {
-      // Защищаемся
+      // На столе есть карты - пытаемся отбиться
       const attackCard = tableStack[tableStack.length - 1];
+      console.log(`🤖 [AI Stage2] Защищаемся от: ${attackCard?.image}`);
+      
       const defenseCard = this.findBestDefenseCard(handCards, attackCard, trumpSuit);
       
       if (defenseCard) {
+        console.log(`🤖 [AI Stage2] ✅ Отбиваемся картой: ${defenseCard.image}`);
         return {
           action: 'play_card',
           cardToPlay: defenseCard,
@@ -138,13 +149,15 @@ export class AIPlayer {
         };
       } else {
         // Не можем отбиться - берем карты
+        console.log(`🤖 [AI Stage2] ❌ Не можем отбиться - берем карты со стола`);
         return {
-          action: 'draw_card',
+          action: 'draw_card', // В контексте 2-й стадии = takeTableCards
           confidence: 0.9
         };
       }
     }
     
+    console.log(`🤖 [AI Stage2] ⚠️ Нет доступных ходов - пропускаем`);
     return { action: 'pass', confidence: 0.3 };
   }
   
@@ -272,30 +285,74 @@ export class AIPlayer {
     const attackRank = this.getCardRank(attackCard);
     const attackSuit = this.getCardSuit(attackCard);
     
-    // Ищем карты той же масти
-    const sameSuitCards = handCards.filter(c => 
-      this.getCardSuit(c) === attackSuit && this.getCardRank(c) > attackRank
-    );
+    console.log(`🤖 [findBestDefenseCard] Ищем защиту от: ${attackCard.image} (${attackSuit}, ранг ${attackRank})`);
+    console.log(`🤖 [findBestDefenseCard] Козырь: ${trumpSuit}`);
     
-    if (sameSuitCards.length > 0) {
-      // Выбираем минимальную подходящую карту
-      return sameSuitCards.reduce((min, card) => {
-        return this.getCardRank(card) < this.getCardRank(min) ? card : min;
-      });
+    // Подходящие карты для защиты
+    const validDefenseCards: Card[] = [];
+    
+    handCards.forEach(card => {
+      const cardRank = this.getCardRank(card);
+      const cardSuit = this.getCardSuit(card);
+      
+      // Проверяем правила битья (как в gameStore.canBeatCard)
+      let canBeat = false;
+      
+      // 1. ОСОБОЕ ПРАВИЛО: "Пики только Пикями!"
+      if (attackSuit === 'spades' && cardSuit !== 'spades') {
+        canBeat = false;
+      }
+      // 2. Бить той же мастью старшей картой
+      else if (attackSuit === cardSuit && cardRank > attackRank) {
+        canBeat = true;
+      }
+      // 3. Бить козырем некозырную карту (НО НЕ ПИКУ!)
+      else if (trumpSuit && cardSuit === trumpSuit && attackSuit !== trumpSuit && attackSuit !== 'spades') {
+        canBeat = true;
+      }
+      
+      if (canBeat) {
+        console.log(`🤖 [findBestDefenseCard] ✅ Подходящая карта: ${card.image} (${cardSuit}, ранг ${cardRank})`);
+        validDefenseCards.push(card);
+      } else {
+        console.log(`🤖 [findBestDefenseCard] ❌ Не подходит: ${card.image} (${cardSuit}, ранг ${cardRank})`);
+      }
+    });
+    
+    if (validDefenseCards.length === 0) {
+      console.log(`🤖 [findBestDefenseCard] Нет подходящих карт для защиты`);
+      return null;
     }
     
-    // Если нет карт той же масти, ищем козыри
-    if (trumpSuit && attackSuit !== trumpSuit) {
-      const trumpCards = handCards.filter(c => this.isTrump(c, trumpSuit));
-      if (trumpCards.length > 0) {
-        // Выбираем минимальный козырь
-        return trumpCards.reduce((min, card) => {
+    // Выбираем стратегию в зависимости от сложности AI
+    let bestCard: Card;
+    
+    switch (this.difficulty) {
+      case 'easy':
+        // Простой AI - случайная подходящая карта
+        bestCard = validDefenseCards[Math.floor(Math.random() * validDefenseCards.length)];
+        break;
+        
+      case 'medium':
+        // Средний AI - минимальная подходящая карта
+        bestCard = validDefenseCards.reduce((min, card) => {
           return this.getCardRank(card) < this.getCardRank(min) ? card : min;
         });
-      }
+        break;
+        
+      case 'hard':
+        // Сложный AI - продвинутая стратегия (пока тоже минимальная)
+        bestCard = validDefenseCards.reduce((min, card) => {
+          return this.getCardRank(card) < this.getCardRank(min) ? card : min;
+        });
+        break;
+        
+      default:
+        bestCard = validDefenseCards[0];
     }
     
-    return null;
+    console.log(`🤖 [findBestDefenseCard] Выбранная карта: ${bestCard.image}`);
+    return bestCard;
   }
   
   private getCardSuit(card: Card): string {

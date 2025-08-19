@@ -81,6 +81,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
   const [playerCount, setPlayerCount] = useState(initialPlayerCount);
   const [dealt, setDealt] = useState(false);
   const [gameInitialized, setGameInitialized] = useState(false);
+  const [previousGameStage, setPreviousGameStage] = useState(gameStage);
 
   // Динамические масштабы для 5–9 игроков: меньше стол, чуть меньше сиденья, больше расстояние
   const tableScale = useMemo(() => {
@@ -134,6 +135,13 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
     });
     setAiPlayers(newAiPlayers);
   }, [players]);
+
+  // Отслеживаем изменения стадии игры для анимации пеньков
+  useEffect(() => {
+    if (gameStage !== previousGameStage) {
+      setPreviousGameStage(gameStage);
+    }
+  }, [gameStage, previousGameStage]);
   
   // Обработка ходов ИИ
   useEffect(() => {
@@ -178,8 +186,39 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
             console.log('ИИ не может сделать ход в 1-й стадии');
             break;
         }
+      } else if (gameStage === 2) {
+        // Во 2-й стадии AI использует систему selectHandCard + playSelectedCard
+        switch (decision.action) {
+          case 'play_card':
+            if (decision.cardToPlay && selectHandCard) {
+              // Найдем карту в руке игрока и выберем её
+              const currentPlayer = players.find(p => p.id === currentPlayerId);
+              if (currentPlayer) {
+                const cardInHand = currentPlayer.cards.find(c => 
+                  c.image === decision.cardToPlay?.image && c.open
+                );
+                if (cardInHand) {
+                  console.log(`🤖 [AI Stage2] Выбираем карту: ${cardInHand.image}`);
+                  selectHandCard(cardInHand);
+                  // Через 1 секунду играем карту
+                  setTimeout(() => {
+                    console.log(`🤖 [AI Stage2] Играем выбранную карту`);
+                    playSelectedCard();
+                  }, 1000);
+                }
+              }
+            }
+            break;
+          case 'draw_card':
+            // Во 2-й стадии это значит "взять карты со стола"
+            if (takeTableCards) {
+              console.log(`🤖 [AI Stage2] Берем карты со стола`);
+              takeTableCards();
+            }
+            break;
+        }
       } else {
-        // Во 2-й и 3-й стадиях используем обычную логику
+        // В 3-й стадии используем обычную логику
         switch (decision.action) {
           case 'draw_card':
             if (drawCard) drawCard();
@@ -191,13 +230,6 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
             break;
           case 'place_on_self':
             if (playSelectedCard) playSelectedCard();
-            break;
-          case 'play_card':
-            // TODO: преобразовать Card в StoreCard для selectHandCard
-            if (decision.cardToPlay && playSelectedCard) {
-              // Пока просто вызываем playSelectedCard
-              playSelectedCard();
-            }
             break;
         }
       }
@@ -246,43 +278,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
   const canClickDeck = turnPhase === 'showing_deck_hint' && currentPlayer?.id === currentPlayerId;
   const waitingForTarget = turnPhase === 'waiting_target_selection';
   
-  // Логика для 2-й стадии: может ли игрок побить верхнюю карту на столе
-  const canBeatTopCard = useMemo(() => {
-    // Проверяем только во 2-й стадии, когда есть карты на столе и это наш ход
-    if (gameStage !== 2 || !currentPlayer || !tableStack.length || currentPlayer.id !== currentPlayerId) {
-      return true; // В других случаях считаем что может побить (кнопка не нужна)
-    }
-    
-    const topCard = tableStack[tableStack.length - 1];
-    if (!topCard || !trumpSuit) return false;
-    
-    // Проверяем есть ли у игрока карты которые могут побить верхнюю
-    const { canBeatCard } = useGameStore.getState();
-    const hasBeatingCard = currentPlayer.cards.some(playerCard => 
-      playerCard.open && canBeatCard(topCard, playerCard, trumpSuit)
-    );
-    
-    console.log(`🃏 [canBeatTopCard] Анализ битья:`);
-    console.log(`🃏 [canBeatTopCard] - topCard: ${topCard?.image}`);
-    console.log(`🃏 [canBeatTopCard] - trumpSuit: ${trumpSuit}`);
-    console.log(`🃏 [canBeatTopCard] - открытых карт у игрока: ${currentPlayer.cards.filter(c => c.open).length}`);
-    console.log(`🃏 [canBeatTopCard] - может побить: ${hasBeatingCard}`);
-    
-    return hasBeatingCard;
-  }, [gameStage, currentPlayer, tableStack, trumpSuit, currentPlayerId]);
-  
-  const shouldShowTakeButton = gameStage === 2 && 
-                               tableStack.length > 0 && 
-                               currentPlayer?.id === currentPlayerId && 
-                               !canBeatTopCard;
-                               
-  console.log(`🃏 [shouldShowTakeButton] Проверка кнопки "Взять карту":`);
-  console.log(`🃏 [shouldShowTakeButton] - gameStage: ${gameStage}`);
-  console.log(`🃏 [shouldShowTakeButton] - tableStack.length: ${tableStack.length}`);
-  console.log(`🃏 [shouldShowTakeButton] - currentPlayer?.id: ${currentPlayer?.id}`);
-  console.log(`🃏 [shouldShowTakeButton] - currentPlayerId: ${currentPlayerId}`);
-  console.log(`🃏 [shouldShowTakeButton] - canBeatTopCard: ${canBeatTopCard}`);
-  console.log(`🃏 [shouldShowTakeButton] - ИТОГ shouldShowTakeButton: ${shouldShowTakeButton}`);
+  // УДАЛЕНО: Логика canBeatTopCard и shouldShowTakeButton - кнопка "Взять карту" теперь постоянная во 2-й стадии
 
   // Показываем заглушку если игра не активна
   if (!isGameActive) {
@@ -461,18 +457,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                     );
                   })}
                   
-                  {/* Кнопка "взять нижнюю карту" во 2-й стадии */}
-                  {shouldShowTakeButton && (
-                    <button 
-                      className={styles.takeBottomCardButton}
-                      onClick={() => {
-                        console.log('🃏 [GamePageContent] Взять нижнюю карту со стола');
-                        takeTableCards();
-                      }}
-                    >
-                      📥 Взять нижнюю карту
-                    </button>
-                  )}
+                  {/* Кнопка "взять нижнюю карту" перенесена в контейнер руки игрока */}
                 </div>
               )}
 
@@ -608,40 +593,58 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                     
                     {/* Контейнер для пеньков и открытой карты */}
                     <div className={styles.cardsContainer}>
-                      {/* Пеньки (подложка) */}
-                      {p.penki && p.penki.length > 0 && (
-                        <div className={styles.penkiRow}>
-                          {p.penki.map((penkiCard, pi) => {
-                            // Определяем направление для пеньков тоже
-                            const playerPosition = getCirclePosition(playerIndex, players.length);
-                            const isLeftSide = parseFloat(playerPosition.left) < 50;
-                            const penkiOffset = isLeftSide ? pi * 10 : -pi * 10;
-                            
-                            return (
-                            <div
-                              key={penkiCard.id}
-                              className={styles.penkiCard}
-                              style={{ 
-                                left: `${penkiOffset}px`,
-                                zIndex: pi + 1
-                              }}
-                              title={`Пенёк ${pi + 1} (активируется в 3-й стадии)`}
-                            >
-                              <Image
-                                src="/img/cards/back.png"
-                                alt="penki"
-                                width={isSmallMobile ? 44 : isMobile ? 50 : 55} /* Увеличено в 2 раза */
-                                height={isSmallMobile ? 64 : isMobile ? 72 : 80} /* Увеличено в 2 раза */
+                      {/* Пеньки (подложка) - показываем только на 3-й стадии */}
+                      {/* Пеньки - это скрытые карты, которые активируются только на 3-й стадии игры */}
+                      {/* Они имеют нормальный размер (не увеличены в 2 раза) и плавно появляются/исчезают */}
+                      <AnimatePresence mode="wait">
+                        {p.penki && p.penki.length > 0 && gameStage === 3 && (
+                          <motion.div 
+                            key="penki-visible"
+                            className={styles.penkiRow}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            {p.penki.map((penkiCard, pi) => {
+                              // Определяем направление для пеньков тоже
+                              const playerPosition = getCirclePosition(playerIndex, players.length);
+                              const isLeftSide = parseFloat(playerPosition.left) < 50;
+                              const penkiOffset = isLeftSide ? pi * 10 : -pi * 10;
+                              
+                              return (
+                              <motion.div
+                                key={penkiCard.id}
+                                className={`${styles.penkiCard} ${styles.visible}`}
                                 style={{ 
-                                  borderRadius: '8px',
-                                  opacity: 0.8
+                                  left: `${penkiOffset}px`,
+                                  zIndex: pi + 1
                                 }}
-                              />
-                            </div>
-                          );
-                          })}
-                        </div>
-                      )}
+                                title={`Пенёк ${pi + 1} (активируется в 3-й стадии)`}
+                                initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.8, y: 10 }}
+                                transition={{ 
+                                  duration: 0.4,
+                                  delay: pi * 0.1 
+                                }}
+                              >
+                                <Image
+                                  src="/img/cards/back.png"
+                                  alt="penki"
+                                  width={isSmallMobile ? 28 : isMobile ? 32 : 35} /* Уменьшено до нормального размера */
+                                  height={isSmallMobile ? 40 : isMobile ? 46 : 52} /* Уменьшено до нормального размера */
+                                  style={{ 
+                                    borderRadius: '8px',
+                                    opacity: 0.8
+                                  }}
+                                />
+                              </motion.div>
+                            );
+                            })}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                       
                       {/* Открытая карта поверх пеньков */}
                       {p.cards.length > 0 && (
@@ -768,6 +771,33 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
             <div className={styles.playerHand}>
               <div className={styles.handTitle}>
                 {stage2TurnPhase === 'selecting_card' ? '🎯 ВЫБЕРИТЕ КАРТУ' : '🎴 Ваши карты'} ({currentPlayer.cards.length})
+                
+                {/* Кнопка "Взять карту" - постоянная во 2-й стадии */}
+                {gameStage === 2 && tableStack.length > 0 && currentPlayer?.id === currentPlayerId && (
+                  <button 
+                    className={styles.takeCardFromTableButton}
+                    onClick={() => {
+                      console.log('🃏 [GamePageContent] Взять нижнюю карту со стола');
+                      takeTableCards();
+                    }}
+                    style={{
+                      marginLeft: '15px',
+                      padding: '8px 16px',
+                      background: '#dc2626',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => (e.target as HTMLButtonElement).style.background = '#b91c1c'}
+                    onMouseLeave={(e) => (e.target as HTMLButtonElement).style.background = '#dc2626'}
+                  >
+                    📥 Взять карту
+                  </button>
+                )}
               </div>
               <div className={styles.handCards}>
                 {currentPlayer.cards.map((card, index) => {
