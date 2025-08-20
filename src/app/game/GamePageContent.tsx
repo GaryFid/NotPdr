@@ -79,6 +79,17 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
   } = useGameStore();
 
   const [playerCount, setPlayerCount] = useState(initialPlayerCount);
+  
+  // Проверяем что все необходимые функции доступны
+  useEffect(() => {
+    console.log('🔧 [GamePageContent] Проверка доступности функций:', {
+      selectHandCard: !!selectHandCard,
+      playSelectedCard: !!playSelectedCard,
+      takeTableCards: !!takeTableCards,
+      makeMove: !!makeMove,
+      onDeckClick: !!onDeckClick
+    });
+  }, [selectHandCard, playSelectedCard, takeTableCards, makeMove, onDeckClick]);
   const [dealt, setDealt] = useState(false);
   const [gameInitialized, setGameInitialized] = useState(false);
   const [previousGameStage, setPreviousGameStage] = useState(gameStage);
@@ -130,9 +141,11 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
     players.forEach(player => {
       if (player.isBot) {
         const playerId = typeof player.id === 'string' ? parseInt(player.id) : player.id;
+        console.log(`🤖 [AI Init] Создаем AI для бота ${player.name} (ID: ${playerId}, difficulty: ${player.difficulty || 'medium'})`);
         newAiPlayers.set(playerId, new AIPlayer(playerId, player.difficulty || 'medium'));
       }
     });
+    console.log(`🤖 [AI Init] Всего AI создано: ${newAiPlayers.size}, для игроков:`, Array.from(newAiPlayers.keys()));
     setAiPlayers(newAiPlayers);
   }, [players]);
 
@@ -152,7 +165,12 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
     
     const playerIdNum = typeof currentPlayerId === 'string' ? parseInt(currentPlayerId) : currentPlayerId;
     const ai = aiPlayers.get(playerIdNum);
-    if (!ai) return;
+    if (!ai) {
+      console.log(`🚨 [AI useEffect] AI не найден для игрока ${playerIdNum}, доступные AI:`, Array.from(aiPlayers.keys()));
+      return;
+    }
+    
+    console.log(`🤖 [AI useEffect] Запускаем AI для игрока ${currentPlayer.name} (stage: ${gameStage}, phase: ${stage2TurnPhase})`);
     
     // Задержка перед ходом ИИ для реалистичности
     const makeAIMove = async () => {
@@ -189,9 +207,10 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
         }
       } else if (gameStage === 2) {
         // Во 2-й стадии AI использует систему selectHandCard + playSelectedCard
+        console.log(`🤖 [AI Stage2] Принято решение:`, decision);
         switch (decision.action) {
           case 'play_card':
-            if (decision.cardToPlay && selectHandCard) {
+            if (decision.cardToPlay && selectHandCard && playSelectedCard) {
               // Найдем карту в руке игрока и выберем её
               const currentPlayer = players.find(p => p.id === currentPlayerId);
               if (currentPlayer) {
@@ -206,8 +225,12 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                     console.log(`🤖 [AI Stage2] Играем выбранную карту`);
                     playSelectedCard();
                   }, 1000);
+                } else {
+                  console.log(`🚨 [AI Stage2] Карта не найдена в руке:`, decision.cardToPlay?.image);
                 }
               }
+            } else {
+              console.log(`🚨 [AI Stage2] Нет функций для игры карт:`, {selectHandCard: !!selectHandCard, playSelectedCard: !!playSelectedCard});
             }
             break;
           case 'draw_card':
@@ -215,8 +238,12 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
             if (takeTableCards) {
               console.log(`🤖 [AI Stage2] Берем карты со стола`);
               takeTableCards();
+            } else {
+              console.log(`🚨 [AI Stage2] Нет функции takeTableCards`);
             }
             break;
+          default:
+            console.log(`🚨 [AI Stage2] Неизвестное действие:`, decision.action);
         }
       } else {
         // В 3-й стадии используем обычную логику
@@ -236,8 +263,9 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
       }
     };
     
-    // Запускаем ход ИИ с небольшой задержкой
-    const timeoutId = setTimeout(makeAIMove, 1000);
+    // Запускаем ход ИИ с небольшой задержкой (меньше для 2-й стадии)
+    const delay = gameStage === 2 ? 500 : 1000;
+    const timeoutId = setTimeout(makeAIMove, delay);
     
     return () => clearTimeout(timeoutId);
   }, [currentPlayerId, isGameActive, players, gameStage, stage2TurnPhase, aiPlayers, tableStack]);

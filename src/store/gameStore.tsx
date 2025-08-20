@@ -970,15 +970,19 @@ export const useGameStore = create<GameState>()(
         
         // ИСПРАВЛЕНО: Обрабатываем как 1-ю так и 2-ю стадии
         if (gameStage === 2) {
-
+          console.log(`🎮 [processPlayerTurn Stage2] Обрабатываем ход для ${currentPlayer.name} (бот: ${currentPlayer.isBot})`);
+          
           // Для 2-й стадии устанавливаем фазу выбора карты
           set({ stage2TurnPhase: 'selecting_card' });
           
           if (currentPlayer.isBot) {
-            console.log(`🤖 [processPlayerTurn Stage2] Бот ${currentPlayer.name} автоматически выбирает карту`);
+            console.log(`🤖 [processPlayerTurn Stage2] Бот ${currentPlayer.name} должен автоматически выбрать карту`);
             // Для бота - логика обрабатывается через useEffect в GamePageContent
-            // Просто показываем уведомление
-            get().showNotification(`${currentPlayer.name} (бот) думает...`, 'info', 2000);
+            // Принудительно обновляем состояние чтобы useEffect сработал
+            set({ 
+              currentPlayerId: currentPlayer.id,
+              stage2TurnPhase: 'selecting_card'
+            });
           } else {
             get().showNotification(`${currentPlayer.name}: выберите карту для хода`, 'info', 5000);
           }

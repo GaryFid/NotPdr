@@ -35,16 +35,25 @@ export class AIPlayer {
   ): AIDecision {
     const { gameStage } = gameState;
     
+    console.log(`🤖 [AI makeDecision] Игрок ${this.playerId} принимает решение для стадии ${gameStage}`);
+    
+    let decision: AIDecision;
     switch (gameStage) {
       case 1:
-        return this.makeStage1Decision(gameState);
+        decision = this.makeStage1Decision(gameState);
+        break;
       case 2:
-        return this.makeStage2Decision(gameState);
+        decision = this.makeStage2Decision(gameState);
+        break;
       case 3:
-        return this.makeStage3Decision(gameState);
+        decision = this.makeStage3Decision(gameState);
+        break;
       default:
-        return { action: 'pass', confidence: 0 };
+        decision = { action: 'pass', confidence: 0 };
     }
+    
+    console.log(`🤖 [AI makeDecision] Игрок ${this.playerId} принял решение:`, decision);
+    return decision;
   }
   
   // Решения для 1-й стадии (раскладывание карт)
