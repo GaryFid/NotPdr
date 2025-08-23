@@ -28,72 +28,87 @@ const CARD_IMAGES = [
 ];
 const CARD_BACK = 'back.png';
 
-// Адаптивное позиционирование игроков вокруг овального стола
-const getCirclePosition = (index: number, total: number): { top: string; left: string } => {
-  // Получаем размеры viewport с учетом мобильных особенностей
+// Рассчитываем размеры и позицию стола
+const getTableDimensions = () => {
   const vw = Math.min(window.innerWidth, document.documentElement.clientWidth);
   const vh = Math.min(window.innerHeight, document.documentElement.clientHeight);
   
-  // Определяем тип устройства и ориентацию
   const isMobile = vw <= 768;
   const isSmallMobile = vw <= 480;
   const isLandscape = vw > vh;
   
-  // Безопасные зоны - отступы от краев экрана (в процентах)
-  const safeZones = {
-    top: isSmallMobile ? 12 : isMobile ? 10 : 8,
-    bottom: isSmallMobile ? 25 : isMobile ? 22 : 18, // больше снизу из-за UI
-    left: isSmallMobile ? 8 : isMobile ? 6 : 5,
-    right: isSmallMobile ? 8 : isMobile ? 6 : 5
-  };
+  // Размеры стола в пикселях (будет адаптирован к экрану)
+  let tableWidth, tableHeight;
   
-  // Рассчитываем доступную область для размещения игроков
-  const availableWidth = 100 - safeZones.left - safeZones.right;
-  const availableHeight = 100 - safeZones.top - safeZones.bottom;
-  
-  // Адаптивные радиусы овала в зависимости от количества игроков и размера экрана
-  let baseRadiusX, baseRadiusY;
-  
-  if (isLandscape) {
-    // Ландшафтная ориентация - больше по ширине
-    baseRadiusX = availableWidth * 0.35;
-    baseRadiusY = availableHeight * 0.25;
+  if (isSmallMobile) {
+    tableWidth = Math.min(vw * 0.4, 200);
+    tableHeight = Math.min(vh * 0.25, 150);
+  } else if (isMobile) {
+    tableWidth = Math.min(vw * 0.45, 280);
+    tableHeight = Math.min(vh * 0.3, 200);
   } else {
-    // Портретная ориентация - более вытянутый овал
-    baseRadiusX = availableWidth * 0.3;
-    baseRadiusY = availableHeight * 0.32;
+    tableWidth = Math.min(vw * 0.35, 350);
+    tableHeight = Math.min(vh * 0.35, 280);
   }
   
-  // Масштабирование в зависимости от количества игроков
-  const playerCountScale = Math.min(1.2, 0.8 + (total * 0.05));
-  const radiusX = baseRadiusX * playerCountScale;
-  const radiusY = baseRadiusY * playerCountScale;
-  
-  // Убеждаемся, что радиусы не превышают безопасные границы
-  const maxRadiusX = Math.min(radiusX, availableWidth * 0.45);
-  const maxRadiusY = Math.min(radiusY, availableHeight * 0.4);
-  
-  // Равномерное распределение игроков по овалу
-  // Начинаем снизу (270°) и идем против часовой стрелки
-  const startAngle = 270; // первый игрок снизу
-  const angleStep = 360 / Math.max(total, 1);
-  
-  // Небольшой отступ между игроками для лучшей видимости
-  const spacing = total >= 8 ? 0.95 : total >= 6 ? 0.97 : 1;
-  const angle = startAngle + (index * angleStep * spacing);
-  const radians = (angle * Math.PI) / 180;
-  
-  // Рассчитываем позицию на овале
-  const x = 50 + maxRadiusX * Math.cos(radians); // центр + смещение по X
-  const y = 50 + maxRadiusY * Math.sin(radians); // центр + смещение по Y
-  
-  // Финальная проверка границ и корректировка при необходимости
-  const finalX = Math.max(safeZones.left + 5, Math.min(100 - safeZones.right - 5, x));
-  const finalY = Math.max(safeZones.top + 5, Math.min(100 - safeZones.bottom - 5, y));
+  // Позиция стола (центр экрана)
+  const tableX = vw / 2;
+  const tableY = vh / 2;
   
   return {
-    left: `${finalX}%`,
-    top: `${finalY}%`,
+    width: tableWidth,
+    height: tableHeight,
+    centerX: tableX,
+    centerY: tableY,
+    // Радиусы овала стола
+    radiusX: tableWidth / 2,
+    radiusY: tableHeight / 2
+  };
+};
+
+// ПРАВИЛЬНОЕ позиционирование игроков ВОКРУГ стола
+const getCirclePosition = (index: number, total: number): { top: string; left: string } => {
+  const vw = Math.min(window.innerWidth, document.documentElement.clientWidth);
+  const vh = Math.min(window.innerHeight, document.documentElement.clientHeight);
+  
+  const isMobile = vw <= 768;
+  const isSmallMobile = vw <= 480;
+  
+  // Получаем размеры стола
+  const table = getTableDimensions();
+  
+  // Отступ игроков ОТ КРАЯ стола (в пикселях)
+  const playerOffset = isSmallMobile ? 60 : isMobile ? 80 : 100;
+  
+  // Радиусы орбиты игроков = радиусы стола + отступ
+  const playerOrbitX = table.radiusX + playerOffset;
+  const playerOrbitY = table.radiusY + playerOffset;
+  
+  // Равномерное распределение по кругу
+  const startAngle = 270; // первый игрок снизу
+  const angleStep = 360 / Math.max(total, 1);
+  const angle = startAngle + (index * angleStep);
+  const radians = (angle * Math.PI) / 180;
+  
+  // Рассчитываем позицию игрока относительно центра стола
+  const playerX = table.centerX + playerOrbitX * Math.cos(radians);
+  const playerY = table.centerY + playerOrbitY * Math.sin(radians);
+  
+  // Безопасные границы экрана
+  const safeMargin = isSmallMobile ? 40 : 60;
+  const minX = safeMargin;
+  const maxX = vw - safeMargin;
+  const minY = isSmallMobile ? 80 : 100; // больше сверху для UI
+  const maxY = vh - (isSmallMobile ? 120 : 150); // больше снизу для карт игрока
+  
+  // Ограничиваем позицию границами экрана
+  const finalX = Math.max(minX, Math.min(maxX, playerX));
+  const finalY = Math.max(minY, Math.min(maxY, playerY));
+  
+  // Конвертируем в проценты
+  return {
+    left: `${(finalX / vw) * 100}%`,
+    top: `${(finalY / vh) * 100}%`,
   };
 };
 
@@ -134,22 +149,11 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
   const [gameInitialized, setGameInitialized] = useState(false);
   const [previousGameStage, setPreviousGameStage] = useState(gameStage);
 
-  // Динамические масштабы для 5–9 игроков: меньше стол, чуть меньше сиденья, больше расстояние
-  const tableScale = useMemo(() => {
-    const n = players.length || playerCount;
-    if (n >= 9) return 0.78;
-    if (n === 8) return 0.82;
-    if (n === 7) return 0.86;
-    if (n === 6) return 0.9;
-    return 0.95; // 5 и меньше
-  }, [players.length, playerCount]);
-
+  // Масштабирование элементов игроков в зависимости от количества
   const seatScale = useMemo(() => {
     const n = players.length || playerCount;
-    if (n >= 9) return 0.82;
-    if (n === 8) return 0.86;
-    if (n === 7) return 0.9;
-    if (n === 6) return 0.94;
+    if (n >= 8) return 0.85;
+    if (n >= 6) return 0.9;
     return 1; // 5 и меньше
   }, [players.length, playerCount]);
 
@@ -487,7 +491,14 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
       ) : (
         <div className={styles.gameArea}>
           <div className={styles.tableBg}>
-            <div className={styles.tableCenter} style={{ transform: `translate(-50%, -50%) scale(${tableScale})` }}>
+            <div 
+              className={styles.tableCenter} 
+              style={{ 
+                transform: `translate(-50%, -50%)`,
+                width: `${getTableDimensions().width}px`,
+                height: `${getTableDimensions().height}px`
+              }}
+            >
               
               {/* Открытая карта из колоды (слева от колоды) */}
               {revealedDeckCard && (
