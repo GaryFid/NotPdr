@@ -37,18 +37,18 @@ const getTableDimensions = () => {
   const isSmallMobile = vw <= 480;
   const isLandscape = vw > vh;
   
-  // Размеры стола в пикселях (будет адаптирован к экрану)
+  // Размеры стола в пикселях (УМЕНЬШЕНЫ чтобы игроки были ВНЕ стола)
   let tableWidth, tableHeight;
   
   if (isSmallMobile) {
-    tableWidth = Math.min(vw * 0.4, 200);
-    tableHeight = Math.min(vh * 0.25, 150);
+    tableWidth = Math.min(vw * 0.25, 120); // Уменьшено с 0.4 и 200
+    tableHeight = Math.min(vh * 0.15, 90); // Уменьшено с 0.25 и 150
   } else if (isMobile) {
-    tableWidth = Math.min(vw * 0.45, 280);
-    tableHeight = Math.min(vh * 0.3, 200);
+    tableWidth = Math.min(vw * 0.3, 180); // Уменьшено с 0.45 и 280
+    tableHeight = Math.min(vh * 0.2, 130); // Уменьшено с 0.3 и 200
   } else {
-    tableWidth = Math.min(vw * 0.35, 350);
-    tableHeight = Math.min(vh * 0.35, 280);
+    tableWidth = Math.min(vw * 0.25, 220); // Уменьшено с 0.35 и 350
+    tableHeight = Math.min(vh * 0.25, 180); // Уменьшено с 0.35 и 280
   }
   
   // Позиция стола (центр экрана)
@@ -77,8 +77,8 @@ const getCirclePosition = (index: number, total: number): { top: string; left: s
   // Получаем размеры стола
   const table = getTableDimensions();
   
-  // Отступ игроков ОТ КРАЯ стола (в пикселях) - УВЕЛИЧЕНО чтобы игроки были ВНЕ стола
-  const playerOffset = isSmallMobile ? 120 : isMobile ? 140 : 160;
+  // Отступ игроков ОТ КРАЯ стола (в пикселях) - МАКСИМАЛЬНО УВЕЛИЧЕНО
+  const playerOffset = isSmallMobile ? 180 : isMobile ? 200 : 220;
   
   // Радиусы орбиты игроков = радиусы стола + отступ
   const playerOrbitX = table.radiusX + playerOffset;
@@ -106,6 +106,9 @@ const getCirclePosition = (index: number, total: number): { top: string; left: s
   const finalY = Math.max(minY, Math.min(maxY, playerY));
   
   // Конвертируем в проценты
+  // Debug информация для проверки
+  console.log(`🎯 Player ${index}: table.radiusX=${table.radiusX.toFixed(1)}, table.radiusY=${table.radiusY.toFixed(1)}, playerOffset=${playerOffset}, orbitX=${playerOrbitX.toFixed(1)}, orbitY=${playerOrbitY.toFixed(1)}`);
+  
   return {
     left: `${(finalX / vw) * 100}%`,
     top: `${(finalY / vh) * 100}%`,

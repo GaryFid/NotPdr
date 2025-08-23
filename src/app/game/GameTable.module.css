@@ -132,12 +132,7 @@
   top: 45%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 75vw;
-  height: 55vh;
-  max-width: 350px;
-  max-height: 450px;
-  min-width: 280px;
-  min-height: 350px;
+  /* Размеры теперь контролируются из JavaScript для точной адаптивности */
   border: 3px solid #4338ca;
   border-radius: 50%;
   background: 
@@ -1418,11 +1413,8 @@
   }
   
   .tableCenter {
-    width: 80vw;
-    height: 60vh;
-    max-width: 300px;
-    max-height: 400px;
     top: 40%; /* Центрируем вертикальный овал */
+    /* Размеры контролируются из JavaScript */
   }
   
   .playerSeat {
@@ -1495,11 +1487,8 @@
   }
   
   .tableCenter {
-    width: 85vw;
-    height: 50vh;
-    max-width: 280px;
-    max-height: 320px;
     top: 35%; /* Еще выше для маленьких экранов */
+    /* Размеры контролируются из JavaScript */
   }
   
   .playerSeat {
@@ -1624,11 +1613,8 @@
   }
   
   .tableCenter {
-    width: 45vw;
-    height: 65vh;
-    max-width: 250px;
-    max-height: 350px;
     top: 42%;
+    /* Размеры контролируются из JavaScript */
   }
   
   .playerSeat {
@@ -2036,10 +2022,8 @@
   }
   
   .tableCenter {
-    width: 450px;
-    height: 350px;
-    max-width: none;
-    max-height: none;
+    /* Размеры контролируются из JavaScript */
+    border-radius: 50%; /* Обязательно для овальной формы */
   }
   
   .playerSeat {
@@ -2157,8 +2141,8 @@
   }
   
   .tableCenter {
-    width: 500px;
-    height: 400px;
+    /* Размеры контролируются из JavaScript */
+    border: 3px solid #4338ca; /* Цвет границы стола */
   }
   
   .playerSeat {
@@ -2276,8 +2260,8 @@
   }
   
   .tableCenter {
-    width: 550px;
-    height: 450px;
+    /* Размеры контролируются из JavaScript */
+    position: absolute; /* Обязательно для позиционирования */
   }
   
   .playerSeat {
