@@ -77,8 +77,8 @@ const getCirclePosition = (index: number, total: number): { top: string; left: s
   // Получаем размеры стола
   const table = getTableDimensions();
   
-  // Отступ игроков ОТ КРАЯ стола (в пикселях) - МАКСИМАЛЬНО УВЕЛИЧЕНО
-  const playerOffset = isSmallMobile ? 180 : isMobile ? 200 : 220;
+  // Отступ игроков ОТ КРАЯ стола (в пикселях) - КАРДИНАЛЬНО УВЕЛИЧЕНО как в примере
+  const playerOffset = isSmallMobile ? 280 : isMobile ? 320 : 380;
   
   // Радиусы орбиты игроков = радиусы стола + отступ
   const playerOrbitX = table.radiusX + playerOffset;
@@ -106,9 +106,6 @@ const getCirclePosition = (index: number, total: number): { top: string; left: s
   const finalY = Math.max(minY, Math.min(maxY, playerY));
   
   // Конвертируем в проценты
-  // Debug информация для проверки
-  console.log(`🎯 Player ${index}: table.radiusX=${table.radiusX.toFixed(1)}, table.radiusY=${table.radiusY.toFixed(1)}, playerOffset=${playerOffset}, orbitX=${playerOrbitX.toFixed(1)}, orbitY=${playerOrbitY.toFixed(1)}`);
-  
   return {
     left: `${(finalX / vw) * 100}%`,
     top: `${(finalY / vh) * 100}%`,
@@ -568,37 +565,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                 )}
               </div>
 
-              {/* Стопка карт на столе (Stage 2) */}
-              {Array.isArray(tableStack) && tableStack.length > 0 && (
-                <div className={styles.tableStack}>
-                  <div className={styles.tableLabel}>Стол: {tableStack.length}</div>
-                  {tableStack.map((c, idx) => {
-                    const isTop = idx === tableStack.length - 1;
-                    const size = c.open ? { w: 73, h: 104 } : { w: 60, h: 85 }; // Уменьшено в 1.5 раза
-                    return (
-                      <div
-                        key={c.id ?? idx}
-                        className={`${styles.tableCard} ${isTop ? styles.tableCardTop : ''}`}
-                        style={{
-                          transform: `translate(${idx * 8}px, ${-idx * 2}px) rotate(${(idx % 5) - 2}deg)`
-                        }}
-                        title={c.open && c.image ? c.image : 'Карта на столе'}
-                      >
-                        <Image
-                          src={c.open && c.image ? `/img/cards/${c.image}` : '/img/cards/back.png'}
-                          alt={c.open ? 'table card' : 'back'}
-                          width={size.w}
-                          height={size.h}
-                          className={styles.tableCardImage}
-                          draggable={false}
-                        />
-                      </div>
-                    );
-                  })}
-                  
-                  {/* Кнопка "взять нижнюю карту" перенесена в контейнер руки игрока */}
-                </div>
-              )}
+              {/* УБРАНО: Стопка карт на столе загромождала центр. В примере ее нет в центре. */}
 
               {/* Центральная кнопка "КЛИКНИ!" для 1-й стадии */}
               {gameStage === 1 && canClickDeck && (
@@ -700,33 +667,21 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                           </div>
                         )}
                       </div>
-                      <div style={{ textAlign: 'center' }}>
-                        <span 
-                          className={styles.playerName} 
-                          style={{ 
-                            fontSize: screenInfo.isSmallMobile ? '11px' : screenInfo.isMobile ? '12px' : '14px', 
-                            fontWeight: 600,
-                            color: isCurrentPlayer ? '#ffd700' : 'white',
-                            textShadow: isCurrentPlayer ? '0 0 10px #ffd700' : 'none',
-                            display: 'block'
-                          }}
-                        >
-                          {p.name}
-                          {isCurrentPlayer && <span style={{ marginLeft: 4 }}>👑</span>}
-                        </span>
-                        {p.cards.length > 3 && (
-                          <span 
-                            style={{ 
-                              fontSize: '11px', 
-                              color: '#94a3b8',
-                              display: 'block',
-                              marginTop: '2px'
-                            }}
-                          >
-                            +{p.cards.length - 3} карт
-                          </span>
-                        )}
-                      </div>
+                      {/* Имя РЯДОМ с аватаром (без обертки div) */}
+                      <span 
+                        className={styles.playerName} 
+                        style={{ 
+                          fontSize: screenInfo.isSmallMobile ? '11px' : screenInfo.isMobile ? '12px' : '14px', 
+                          fontWeight: 600,
+                          color: isCurrentPlayer ? '#ffd700' : 'white',
+                          textShadow: isCurrentPlayer ? '0 0 10px #ffd700' : 'none',
+                          whiteSpace: 'nowrap' /* Имя в одну строку */
+                        }}
+                      >
+                        {p.name}
+                        {isCurrentPlayer && <span style={{ marginLeft: 4 }}>👑</span>}
+                      </span>
+                      {/* Счетчик карт перенесен к картам */}
                       {isTargetAvailable && <span style={{color:'#ffd700',marginLeft:4}}>🎯</span>}
                     </div>
                     

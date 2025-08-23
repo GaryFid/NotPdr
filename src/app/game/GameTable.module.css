@@ -190,9 +190,9 @@
 /* Компактный контейнер для аватара и имени */
 .avatarWrap {
   display: flex;
-  flex-direction: column;
+  flex-direction: row; /* ИЗМЕНЕНО: аватар и ник РЯДОМ как в примере */
   align-items: center;
-  gap: 1px;
+  gap: 8px; /* Увеличено расстояние между аватаром и ником */
   margin-bottom: 4px;
   padding: 3px 5px;
   background: 
@@ -1088,8 +1088,8 @@
 }
 
 .centralButton {
-  background: linear-gradient(135deg, #ffd700 0%, #ffb300 100%);
-  color: #000;
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); /* ЗЕЛЕНЫЙ как в примере */
+  color: #fff; /* Белый текст на зеленом фоне */
   border: none;
   border-radius: 8px;
   font-weight: bold;
@@ -1104,9 +1104,9 @@
 }
 
 .centralButton:hover {
-  background: linear-gradient(135deg, #ffb300 0%, #ff8f00 100%);
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); /* Темнее зеленый при hover */
   transform: scale(1.1);
-  box-shadow: 0 6px 16px rgba(255, 215, 0, 0.4);
+  box-shadow: 0 6px 16px rgba(34, 197, 94, 0.4); /* Зеленая тень */
 }
 
 /* Кнопки действий с картой из колоды */
