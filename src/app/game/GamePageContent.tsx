@@ -77,8 +77,8 @@ const getCirclePosition = (index: number, total: number): { top: string; left: s
   // Получаем размеры стола
   const table = getTableDimensions();
   
-  // Отступ игроков ОТ КРАЯ стола (в пикселях)
-  const playerOffset = isSmallMobile ? 60 : isMobile ? 80 : 100;
+  // Отступ игроков ОТ КРАЯ стола (в пикселях) - УВЕЛИЧЕНО чтобы игроки были ВНЕ стола
+  const playerOffset = isSmallMobile ? 120 : isMobile ? 140 : 160;
   
   // Радиусы орбиты игроков = радиусы стола + отступ
   const playerOrbitX = table.radiusX + playerOffset;
@@ -507,8 +507,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                     <div 
                       className={styles.cardBackdrop} 
                       style={{ 
-                        width: screenInfo.isSmallMobile ? 65 : screenInfo.isMobile ? 72 : 80, 
-                        height: screenInfo.isSmallMobile ? 97 : screenInfo.isMobile ? 108 : 120,
+                        width: screenInfo.isSmallMobile ? 43 : screenInfo.isMobile ? 48 : 53, 
+                        height: screenInfo.isSmallMobile ? 65 : screenInfo.isMobile ? 72 : 80,
                         background: 'white',
                         borderRadius: '8px',
                         position: 'absolute',
@@ -518,8 +518,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                     <Image 
                       src={revealedDeckCard.image ? `/img/cards/${revealedDeckCard.image}` : '/img/cards/back.png'} 
                       alt="revealed card" 
-                      width={screenInfo.isSmallMobile ? 65 : screenInfo.isMobile ? 72 : 80} 
-                      height={screenInfo.isSmallMobile ? 97 : screenInfo.isMobile ? 108 : 120}
+                      width={screenInfo.isSmallMobile ? 43 : screenInfo.isMobile ? 48 : 53} 
+                      height={screenInfo.isSmallMobile ? 65 : screenInfo.isMobile ? 72 : 80}
                       className={styles.revealedCardImage}
                     />
                   </div>
@@ -546,8 +546,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                     <Image 
                       src="/img/cards/back.png" 
                       alt="deck" 
-                      width={screenInfo.isSmallMobile ? 56 : screenInfo.isMobile ? 63 : 70} 
-                      height={screenInfo.isSmallMobile ? 80 : screenInfo.isMobile ? 90 : 100}
+                      width={screenInfo.isSmallMobile ? 37 : screenInfo.isMobile ? 42 : 47} 
+                      height={screenInfo.isSmallMobile ? 53 : screenInfo.isMobile ? 60 : 67}
                       className={styles.deckCard}
                     />
                   )}
@@ -571,7 +571,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                   <div className={styles.tableLabel}>Стол: {tableStack.length}</div>
                   {tableStack.map((c, idx) => {
                     const isTop = idx === tableStack.length - 1;
-                    const size = c.open ? { w: 110, h: 156 } : { w: 90, h: 128 };
+                    const size = c.open ? { w: 73, h: 104 } : { w: 60, h: 85 }; // Уменьшено в 1.5 раза
                     return (
                       <div
                         key={c.id ?? idx}
@@ -768,8 +768,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                                 <Image
                                   src="/img/cards/back.png"
                                   alt="penki"
-                                  width={screenInfo.isSmallMobile ? 28 : screenInfo.isMobile ? 32 : 35} /* Уменьшено до нормального размера */
-                                  height={screenInfo.isSmallMobile ? 40 : screenInfo.isMobile ? 46 : 52} /* Уменьшено до нормального размера */
+                                  width={screenInfo.isSmallMobile ? 19 : screenInfo.isMobile ? 21 : 23} /* Уменьшено в 1.5 раза */
+                                  height={screenInfo.isSmallMobile ? 27 : screenInfo.isMobile ? 31 : 35} /* Уменьшено в 1.5 раза */
                                   style={{ 
                                     borderRadius: '8px',
                                     opacity: 0.8
@@ -835,11 +835,11 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                               >
                                 <div
                                   className={`${styles.cardOnPenki} ${card.open ? styles.open : styles.closed} ${(isClickableTarget || isClickableOwnCard) && isTopCard ? styles.targetCard : ''}`}
-                                  style={{ 
+                                                                     style={{ 
                                     cursor: (isClickableTarget || isClickableOwnCard) && isTopCard ? 'pointer' : 'default',
                                     transform: (isClickableTarget || isClickableOwnCard) && isTopCard ? 'scale(1.05)' : 'scale(1)',
-                                    width: card.open ? 105 : 70,
-                                    height: card.open ? 157 : 105,
+                                    width: card.open ? 70 : 47, // Уменьшено в 1.5 раза
+                                    height: card.open ? 105 : 70, // Уменьшено в 1.5 раза
                                    }}
                                   onClick={() => {
                                     console.log(`🎯 [GamePageContent] КЛИК по карте ${p.name}, isTopCard: ${isTopCard}`);
@@ -876,12 +876,12 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                                     }
                                     alt={card.open ? 'card' : 'back'}
                                     width={card.open ? 
-                                      (screenInfo.isSmallMobile ? 84 : screenInfo.isMobile ? 95 : 105) : 
-                                      (screenInfo.isSmallMobile ? 56 : screenInfo.isMobile ? 63 : 70)
+                                      (screenInfo.isSmallMobile ? 56 : screenInfo.isMobile ? 63 : 70) : // Уменьшено в 1.5 раза
+                                      (screenInfo.isSmallMobile ? 37 : screenInfo.isMobile ? 42 : 47) // Уменьшено в 1.5 раза
                                     }
                                     height={card.open ? 
-                                      (screenInfo.isSmallMobile ? 126 : screenInfo.isMobile ? 142 : 157) : 
-                                      (screenInfo.isSmallMobile ? 84 : screenInfo.isMobile ? 95 : 105)
+                                      (screenInfo.isSmallMobile ? 84 : screenInfo.isMobile ? 95 : 105) : // Уменьшено в 1.5 раза
+                                      (screenInfo.isSmallMobile ? 56 : screenInfo.isMobile ? 63 : 70) // Уменьшено в 1.5 раза
                                     }
                                     draggable={false}
                                     style={{
@@ -947,8 +947,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                   const step = card.open ? mobileSteps.open : mobileSteps.closed;
                   const cardOffset = index * step;
                   const mobileCardSizes = {
-                    open: screenInfo.isSmallMobile ? { w: 70, h: 105 } : screenInfo.isMobile ? { w: 77, h: 115 } : { w: 84, h: 126 },
-                    closed: screenInfo.isSmallMobile ? { w: 58, h: 87 } : screenInfo.isMobile ? { w: 64, h: 96 } : { w: 70, h: 105 }
+                    open: screenInfo.isSmallMobile ? { w: 47, h: 70 } : screenInfo.isMobile ? { w: 51, h: 77 } : { w: 56, h: 84 }, // Уменьшено в 1.5 раза
+                    closed: screenInfo.isSmallMobile ? { w: 39, h: 58 } : screenInfo.isMobile ? { w: 43, h: 64 } : { w: 47, h: 70 } // Уменьшено в 1.5 раза
                   };
                   const size = card.open ? mobileCardSizes.open : mobileCardSizes.closed;
                   
