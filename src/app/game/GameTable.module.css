@@ -1255,10 +1255,10 @@
   z-index: 10;
 }
 
-/* Карта игрока - компактный размер */
+/* Карта игрока - увеличенный размер для лучшей видимости */
 .cardOnPenki {
-  width: 55px;
-  height: 80px;
+  width: 82px; /* Увеличено в 1.5 раза */
+  height: 120px; /* Увеличено в 1.5 раза */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1269,7 +1269,7 @@
   transition: all 0.3s ease;
   cursor: pointer;
   transform-style: preserve-3d;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 .cardOnPenki:hover {
@@ -1305,15 +1305,15 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 60px;
-  width: 85px;
+  height: 90px; /* Увеличено в 1.5 раза */
+  width: 127px; /* Увеличено в 1.5 раза */
   perspective: 1000px;
 }
 
 .penkiCard {
   position: absolute;
-  width: 45px;
-  height: 65px;
+  width: 67px; /* Увеличено в 1.5 раза */
+  height: 97px; /* Увеличено в 1.5 раза */
   background: 
     linear-gradient(145deg, #1e293b 0%, #334155 100%);
   border-radius: 8px;
@@ -1372,18 +1372,18 @@
   }
   
   .cardOnPenki {
-    width: 40px;
-    height: 58px;
+    width: 60px; /* Увеличено в 1.5 раза */
+    height: 87px; /* Увеличено в 1.5 раза */
   }
   
   .penkiRow {
-    height: 35px;
-    width: 50px;
+    height: 52px; /* Увеличено в 1.5 раза */
+    width: 75px; /* Увеличено в 1.5 раза */
   }
   
   .penkiCard {
-    width: 30px;
-    height: 42px;
+    width: 45px; /* Увеличено в 1.5 раза */
+    height: 63px; /* Увеличено в 1.5 раза */
   }
   
   .activeCardContainer {
@@ -1393,16 +1393,16 @@
   
   .playerHand {
     padding: 8px 12px;
-    min-height: 80px;
+    min-height: 120px; /* Увеличено для больших карт */
     border-radius: 10px;
     width: 90%;
-    max-width: 340px;
+    max-width: 400px; /* Увеличено для больших карт */
     bottom: 70px;
   }
   
   .handCard {
-    width: 55px;
-    height: 80px;
+    width: 82px; /* Увеличено в 1.5 раза */
+    height: 120px; /* Увеличено в 1.5 раза */
   }
   
   .handTitle {
@@ -1411,7 +1411,7 @@
   }
   
   .handCards {
-    min-height: 65px;
+    min-height: 105px; /* Увеличено для больших карт */
   }
 }
 
@@ -1439,28 +1439,28 @@
   }
   
   .cardOnPenki {
-    width: 35px;
-    height: 50px;
+    width: 52px; /* Увеличено в 1.5 раза */
+    height: 75px; /* Увеличено в 1.5 раза */
   }
   
   .penkiRow {
-    height: 28px;
-    width: 40px;
+    height: 42px; /* Увеличено в 1.5 раза */
+    width: 60px; /* Увеличено в 1.5 раза */
   }
   
   .penkiCard {
-    width: 25px;
-    height: 35px;
+    width: 37px; /* Увеличено в 1.5 раза */
+    height: 52px; /* Увеличено в 1.5 раза */
   }
   
   .handCard {
-    width: 45px;
-    height: 65px;
+    width: 67px; /* Увеличено в 1.5 раза */
+    height: 97px; /* Увеличено в 1.5 раза */
   }
   
   .playerHand {
     padding: 5px 8px;
-    min-height: 55px;
+    min-height: 87px; /* Увеличено для больших карт */
     width: 95%;
   }
   
@@ -1470,7 +1470,7 @@
   }
   
   .handCards {
-    min-height: 45px;
+    min-height: 75px; /* Увеличено для больших карт */
   }
   
   .gameHeader {

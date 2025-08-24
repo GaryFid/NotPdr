@@ -78,17 +78,37 @@ const getCirclePosition = (index: number, total: number): { top: string; left: s
   const table = getTableDimensions();
   
   // Отступ игроков ОТ КРАЯ стола (в пикселях) - игроки СНАРУЖИ стола
-  const playerOffset = isSmallMobile ? 250 : isMobile ? 300 : 400;
+  const baseOffset = isSmallMobile ? 250 : isMobile ? 300 : 400;
   
-  // Радиусы орбиты игроков = радиусы стола + отступ
-  const playerOrbitX = table.radiusX + playerOffset;
-  const playerOrbitY = table.radiusY + playerOffset;
+  // Разные отступы для верхних и нижних игроков
+  const getPlayerOffset = (playerIndex: number, totalPlayers: number) => {
+    const startAngle = 270; // первый игрок снизу
+    const angleStep = 360 / Math.max(totalPlayers, 1);
+    const angle = startAngle + (playerIndex * angleStep);
+    const normalizedAngle = ((angle % 360) + 360) % 360;
+    
+    // Верхняя половина (углы от 180 до 360 градусов) - больший отступ
+    if (normalizedAngle >= 180 && normalizedAngle <= 360) {
+      return baseOffset * 2; // В 2 раза больше для верхних
+    }
+    // Нижняя половина (углы от 0 до 180 градусов) - меньший отступ  
+    else {
+      return baseOffset * 0.5; // В 0.5 раза меньше для нижних
+    }
+  };
+  
+  // Радиусы орбиты игроков будут вычисляться индивидуально для каждого игрока
   
   // Равномерное распределение по кругу
   const startAngle = 270; // первый игрок снизу
   const angleStep = 360 / Math.max(total, 1);
   const angle = startAngle + (index * angleStep);
   const radians = (angle * Math.PI) / 180;
+  
+  // Получаем индивидуальный отступ для этого игрока
+  const playerOffset = getPlayerOffset(index, total);
+  const playerOrbitX = table.radiusX + playerOffset;
+  const playerOrbitY = table.radiusY + playerOffset;
   
   // Рассчитываем позицию игрока относительно центра стола
   const playerX = table.centerX + playerOrbitX * Math.cos(radians);
@@ -724,8 +744,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                                 <Image
                                   src="/img/cards/back.png"
                                   alt="penki"
-                                  width={screenInfo.isSmallMobile ? 22 : screenInfo.isMobile ? 28 : 35}
-                                  height={screenInfo.isSmallMobile ? 32 : screenInfo.isMobile ? 40 : 50}
+                                  width={screenInfo.isSmallMobile ? 33 : screenInfo.isMobile ? 42 : 52} /* Увеличено в 1.5 раза */
+                                  height={screenInfo.isSmallMobile ? 48 : screenInfo.isMobile ? 60 : 75} /* Увеличено в 1.5 раза */
                                   style={{ 
                                     borderRadius: '8px',
                                     opacity: 0.8
@@ -794,8 +814,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                                   style={{ 
                                     cursor: (isClickableTarget || isClickableOwnCard) && isTopCard ? 'pointer' : 'default',
                                     transform: (isClickableTarget || isClickableOwnCard) && isTopCard ? 'scale(1.02)' : 'scale(1)',
-                                    width: card.open ? 55 : 40,
-                                    height: card.open ? 80 : 58
+                                    width: card.open ? 82 : 60, // Увеличено в 1.5 раза
+                                    height: card.open ? 120 : 87 // Увеличено в 1.5 раза
                                   }}
                                   onClick={() => {
                                     console.log(`🎯 [GamePageContent] КЛИК по карте ${p.name}, isTopCard: ${isTopCard}`);
@@ -832,12 +852,12 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                                     }
                                     alt={card.open ? 'card' : 'back'}
                                     width={card.open ? 
-                                      (screenInfo.isSmallMobile ? 35 : screenInfo.isMobile ? 40 : 55) :
-                                      (screenInfo.isSmallMobile ? 25 : screenInfo.isMobile ? 30 : 40)
+                                      (screenInfo.isSmallMobile ? 52 : screenInfo.isMobile ? 60 : 82) : // Увеличено в 1.5 раза
+                                      (screenInfo.isSmallMobile ? 37 : screenInfo.isMobile ? 45 : 60) // Увеличено в 1.5 раза
                                     }
                                     height={card.open ? 
-                                      (screenInfo.isSmallMobile ? 50 : screenInfo.isMobile ? 58 : 80) :
-                                      (screenInfo.isSmallMobile ? 35 : screenInfo.isMobile ? 42 : 58)
+                                      (screenInfo.isSmallMobile ? 75 : screenInfo.isMobile ? 87 : 120) : // Увеличено в 1.5 раза
+                                      (screenInfo.isSmallMobile ? 52 : screenInfo.isMobile ? 63 : 87) // Увеличено в 1.5 раза
                                     }
                                     draggable={false}
                                     style={{
@@ -903,8 +923,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                   const step = card.open ? mobileSteps.open : mobileSteps.closed;
                   const cardOffset = index * step;
                   const mobileCardSizes = {
-                    open: screenInfo.isSmallMobile ? { w: 47, h: 70 } : screenInfo.isMobile ? { w: 51, h: 77 } : { w: 56, h: 84 }, // Уменьшено в 1.5 раза
-                    closed: screenInfo.isSmallMobile ? { w: 39, h: 58 } : screenInfo.isMobile ? { w: 43, h: 64 } : { w: 47, h: 70 } // Уменьшено в 1.5 раза
+                    open: screenInfo.isSmallMobile ? { w: 70, h: 105 } : screenInfo.isMobile ? { w: 76, h: 115 } : { w: 84, h: 126 }, // Увеличено в 1.5 раза
+                    closed: screenInfo.isSmallMobile ? { w: 58, h: 87 } : screenInfo.isMobile ? { w: 64, h: 96 } : { w: 70, h: 105 } // Увеличено в 1.5 раза
                   };
                   const size = card.open ? mobileCardSizes.open : mobileCardSizes.closed;
                   
