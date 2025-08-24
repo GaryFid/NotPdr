@@ -66,54 +66,23 @@ const getTableDimensions = () => {
   };
 };
 
-// УНИВЕРСАЛЬНОЕ круговое позиционирование игроков
+// ФИКСИРОВАННЫЕ позиции игроков (настроено пользователем через DevTools)
 const getCirclePosition = (index: number, totalPlayers: number): { top: string; left: string } => {
-  // Определяем размеры экрана для адаптивности
-  const vw = Math.min(window.innerWidth, document.documentElement.clientWidth);
-  const vh = Math.min(window.innerHeight, document.documentElement.clientHeight);
-  const isSmallMobile = vw <= 480;
-  const isMobile = vw <= 768;
+  // Ваши точные позиции ПО ЧАСОВОЙ СТРЕЛКЕ (снизу слева → вправо → вверх → влево)
+  const fixedPositions = [
+    { left: '-52.4997%', top: '119.7888%' },    // Игрок 1 (снизу слева) - НАЧАЛО
+    { left: '10.9545%', top: '125.0384%' },     // Игрок 2 (снизу центр)
+    { left: '75.0455%', top: '121.0384%' },     // Игрок 3 (снизу справа)
+    { left: '110.5003%', top: '49.7888%' },     // Игрок 4 (справа центр)
+    { left: '114.6837%', top: '-39.1274%' },    // Игрок 5 (сверху справа)
+    { left: '65.6382%', top: '-89.6818%' },     // Игрок 6 (сверху центр-права)
+    { left: '5%', top: '-79.2089%' },           // Игрок 7 (сверху центр-лева)
+    { left: '-57.3618%', top: '-49.6818%' },    // Игрок 8 (сверху слева)
+    { left: '-28%', top: '35%' },               // Игрок 9 (слева центр) - ВАША КОРРЕКТИРОВКА
+  ];
   
-  // Адаптивный радиус эллипса в зависимости от экрана и количества игроков
-  let radiusX, radiusY;
-  
-  if (isSmallMobile) {
-    // iPhone и маленькие экраны - компактное расположение
-    radiusX = totalPlayers <= 4 ? 35 : totalPlayers <= 6 ? 40 : 45; // % от ширины экрана
-    radiusY = totalPlayers <= 4 ? 30 : totalPlayers <= 6 ? 35 : 40; // % от высоты экрана
-  } else if (isMobile) {
-    // Планшеты и средние экраны
-    radiusX = totalPlayers <= 4 ? 38 : totalPlayers <= 6 ? 42 : 46;
-    radiusY = totalPlayers <= 4 ? 32 : totalPlayers <= 6 ? 36 : 40;
-  } else {
-    // Десктоп - больше места
-    radiusX = totalPlayers <= 4 ? 42 : totalPlayers <= 6 ? 46 : 50;
-    radiusY = totalPlayers <= 4 ? 35 : totalPlayers <= 6 ? 38 : 42;
-  }
-  
-  // Угол для каждого игрока (в радианах)
-  // Начинаем снизу (270°) и идем ПО ЧАСОВОЙ СТРЕЛКЕ
-  const angleStep = (2 * Math.PI) / totalPlayers;
-  const startAngle = (3 * Math.PI) / 2; // 270° (снизу)
-  const angle = startAngle + (index * angleStep);
-  
-  // Рассчитываем позицию относительно центра экрана
-  const centerX = 50; // 50% от ширины экрана
-  const centerY = 50; // 50% от высоты экрана
-  
-  const x = centerX + radiusX * Math.cos(angle);
-  const y = centerY + radiusY * Math.sin(angle);
-  
-  // Ограничиваем позиции, чтобы игроки не вылезали за границы
-  const clampedX = Math.max(5, Math.min(95, x));
-  const clampedY = Math.max(5, Math.min(95, y));
-  
-  console.log(`🎯 [getCirclePosition] Игрок ${index + 1}/${totalPlayers}: угол=${(angle * 180 / Math.PI).toFixed(1)}°, позиция=(${clampedX.toFixed(1)}%, ${clampedY.toFixed(1)}%)`);
-  
-  return {
-    left: `${clampedX.toFixed(2)}%`,
-    top: `${clampedY.toFixed(2)}%`
-  };
+  // Возвращаем вашу точную позицию или дефолтную для дополнительных игроков
+  return fixedPositions[index] || { left: '50%', top: '50%' };
 };
 
 function getFirstPlayerIdx(players: Player[]): number {
