@@ -106,15 +106,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
     selectHandCard, playSelectedCard, takeTableCards
   } = useGameStore();
 
-  // ОТЛАДКА: Следим за изменениями tableStack
-  useEffect(() => {
-    console.log(`🃏 [TableStack Monitor] tableStack изменился:`, {
-      length: tableStack?.length || 0,
-      cards: tableStack?.map(c => c.image) || [],
-      gameStage,
-      stage2TurnPhase
-    });
-  }, [tableStack, gameStage, stage2TurnPhase]);
+  // Мониторинг tableStack убран - система работает корректно
 
   const [playerCount, setPlayerCount] = useState(initialPlayerCount);
   
@@ -563,28 +555,9 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
               {/* КАРТЫ НА СТОЛЕ для 2-й стадии (дурак) */}
               {gameStage === 2 && (
                 <div className={styles.tableCardsContainer}>
-                  {/* ОТЛАДОЧНАЯ ИНФОРМАЦИЯ прямо на экране */}
-                  <div style={{
-                    position: 'absolute',
-                    top: '-40px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    background: 'rgba(0, 0, 0, 0.8)',
-                    color: 'white',
-                    padding: '4px 8px',
-                    borderRadius: '8px',
-                    fontSize: '10px',
-                    zIndex: 400,
-                    whiteSpace: 'nowrap'
-                  }}>
-                    DEBUG: Stage {gameStage} | tableStack: {tableStack?.length || 0} | Phase: {stage2TurnPhase}
-                  </div>
+                  {/* Отладочная информация убрана - отображение работает корректно */}
                   
-                  {/* ОТЛАДКА: Показываем состояние стола */}
-                  {(() => {
-                    console.log(`🃏 [TableCards Debug] gameStage: ${gameStage}, tableStack.length: ${tableStack?.length || 0}, cards:`, tableStack?.map(c => c.image) || []);
-                    return null;
-                  })()}
+                  {/* Консольная отладка убрана - стол работает корректно */}
                   
                   {tableStack && tableStack.length > 0 ? (
                     <>
@@ -660,7 +633,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                         fontWeight: 600
                       }}
                     >
-                      {gameStage === 2 ? `⭕ Стол пуст (tableStack: ${tableStack?.length || 0})` : ''}
+                      {gameStage === 2 ? '⭕ Стол пуст - ждем карты' : ''}
                     </div>
                   )}
                 </div>

@@ -770,8 +770,8 @@
     linear-gradient(145deg, #0f172a 0%, #1e293b 100%),
     radial-gradient(circle at top right, rgba(99, 102, 241, 0.1), transparent);
   border: 2px solid rgba(99, 102, 241, 0.3);
-  border-radius: 12px;
-  padding: 8px 12px;
+  border-radius: 8px; /* Уменьшен с 12px */
+  padding: 5px 8px; /* Уменьшен с 8px 12px */
   box-shadow: 
     0 10px 20px rgba(0, 0, 0, 0.5),
     0 0 20px rgba(99, 102, 241, 0.15),
@@ -779,13 +779,13 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(15px);
   position: fixed;
-  bottom: 75px;
+  bottom: 10px;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(-50%); /* Убран scale - уменьшаем сам контейнер */
   overflow: visible;
-  min-height: 90px;
-  width: 80%;
-  max-width: 400px;
+  min-height: 60px; /* Уменьшен с 90px (90/1.5 = 60) */
+  width: 53%; /* Уменьшен с 80% (80/1.5 ≈ 53) */
+  max-width: 267px; /* Уменьшен с 400px (400/1.5 ≈ 267) */
   z-index: 100;
 }
 
@@ -953,9 +953,7 @@
   min-height: 80px;
   pointer-events: none; /* Карты на столе не кликабельны */
   
-  /* ОТЛАДКА: временная рамка для видимости */
-  border: 2px dashed rgba(255, 255, 0, 0.3);
-  background: rgba(255, 0, 0, 0.1);
+  /* Отладка убрана - контейнер работает корректно */
 }
 
 .tableCard {
@@ -970,8 +968,7 @@
   padding: 4px; /* Небольшой отступ для рамки */
   pointer-events: auto; /* Включаем взаимодействие */
   
-  /* ОТЛАДКА: временная рамка */
-  border: 2px solid rgba(0, 255, 0, 0.5);
+  /* Отладка убрана - карты отображаются корректно */
 }
 
 .tableCardTop {
@@ -1509,12 +1506,13 @@
   }
   
   .playerHand {
-    padding: 8px 12px;
-    min-height: 120px; /* Увеличено для больших карт */
-    border-radius: 10px;
-    width: 90%;
-    max-width: 400px; /* Увеличено для больших карт */
-    bottom: 70px;
+    padding: 5px 8px; /* Уменьшен с 8px 12px */
+    min-height: 80px; /* Уменьшен с 120px (120/1.5 = 80) */
+    border-radius: 7px; /* Уменьшен с 10px */
+    width: 60%; /* Уменьшен с 90% (90/1.5 = 60) */
+    max-width: 267px; /* Уменьшен с 400px (400/1.5 ≈ 267) */
+    bottom: 8px;
+    transform: translateX(-50%); /* Убран scale */
   }
   
   .handCard {
@@ -1576,9 +1574,11 @@
   }
   
   .playerHand {
-    padding: 5px 8px;
-    min-height: 87px; /* Увеличено для больших карт */
-    width: 95%;
+    padding: 3px 5px; /* Уменьшен с 5px 8px */
+    min-height: 58px; /* Уменьшен с 87px (87/1.5 ≈ 58) */
+    width: 63%; /* Уменьшен с 95% (95/1.5 ≈ 63) */
+    bottom: 5px;
+    transform: translateX(-50%); /* Убран scale */
   }
   
   .handTitle {
@@ -1676,9 +1676,11 @@
   }
   
   .playerHand {
-    max-height: 75px;
-    width: 85%;
-    padding: 6px 12px;
+    max-height: 50px; /* Уменьшен с 75px (75/1.5 = 50) */
+    width: 57%; /* Уменьшен с 85% (85/1.5 ≈ 57) */
+    padding: 4px 8px; /* Уменьшен с 6px 12px */
+    bottom: 3px;
+    transform: translateX(-50%); /* Убран scale */
   }
   
   .handCard {
@@ -2086,10 +2088,11 @@
   }
   
   .playerHand {
-    max-width: 700px;
-    padding: 18px 25px;
-    min-height: 150px;
-    bottom: 100px;
+    max-width: 467px; /* Уменьшен с 700px (700/1.5 ≈ 467) */
+    padding: 12px 17px; /* Уменьшен с 18px 25px */
+    min-height: 100px; /* Уменьшен с 150px (150/1.5 = 100) */
+    bottom: 15px;
+    transform: translateX(-50%); /* Убран scale */
   }
   
   .handCard {
@@ -2205,10 +2208,11 @@
   }
   
   .playerHand {
-    max-width: 800px;
-    padding: 20px 30px;
-    min-height: 160px;
-    bottom: 120px;
+    max-width: 533px; /* Уменьшен с 800px (800/1.5 ≈ 533) */
+    padding: 13px 20px; /* Уменьшен с 20px 30px */
+    min-height: 107px; /* Уменьшен с 160px (160/1.5 ≈ 107) */
+    bottom: 18px;
+    transform: translateX(-50%); /* Убран scale */
   }
   
   .handCard {
@@ -2324,10 +2328,11 @@
   }
   
   .playerHand {
-    max-width: 900px;
-    padding: 22px 35px;
-    min-height: 170px;
-    bottom: 140px;
+    max-width: 600px; /* Уменьшен с 900px (900/1.5 = 600) */
+    padding: 15px 23px; /* Уменьшен с 22px 35px */
+    min-height: 113px; /* Уменьшен с 170px (170/1.5 ≈ 113) */
+    bottom: 20px;
+    transform: translateX(-50%); /* Убран scale */
   }
   
   .handCard {

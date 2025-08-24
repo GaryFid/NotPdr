@@ -143,7 +143,7 @@ export class AIPlayer {
     console.log(`🤖 [AI Stage2] Анализ ситуации для игрока ${this.playerId}:`);
     console.log(`🤖 [AI Stage2] - tableStack.length: ${tableStack?.length || 0}`);
     console.log(`🤖 [AI Stage2] - handCards.length: ${handCards.length}`);
-    console.log(`🤖 [AI Stage2] - handCards:`, handCards.map(c => c.image));
+    console.log(`🤖 [AI Stage2] - handCards:`, handCards.map((c: any) => c.image));
     console.log(`🤖 [AI Stage2] - trumpSuit: ${trumpSuit}`);
     console.log(`🤖 [AI Stage2] - difficulty: ${this.difficulty}`);
     
