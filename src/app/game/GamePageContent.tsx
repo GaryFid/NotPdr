@@ -66,71 +66,23 @@ const getTableDimensions = () => {
   };
 };
 
-// ПРАВИЛЬНОЕ позиционирование игроков ВОКРУГ стола
+// ФИКСИРОВАННОЕ позиционирование игроков (настроено через DevTools)
 const getCirclePosition = (index: number, total: number): { top: string; left: string } => {
-  const vw = Math.min(window.innerWidth, document.documentElement.clientWidth);
-  const vh = Math.min(window.innerHeight, document.documentElement.clientHeight);
+  // Фиксированные позиции для идеального расположения (настроено пользователем)
+  const fixedPositions = [
+    { left: '-17.3618%', top: '-29.6818%' },  // Игрок 1
+    { left: '-2.4997%', top: '99.7888%' },    // Игрок 2
+    { left: '35.9545%', top: '105.0384%' },   // Игрок 3
+    { left: '82.0455%', top: '101.0384%' },   // Игрок 4
+    { left: '110.5003%', top: '49.7888%' },   // Игрок 5
+    { left: '104.6837%', top: '-19.1274%' },  // Игрок 6
+    { left: '62.6382%', top: '-59.6818%' },   // Игрок 7
+    { left: '15%', top: '-59.2089%' },        // Игрок 8
+    { left: '-15%', top: '25%' },             // Игрок 9 (добавлен для завершения круга)
+  ];
   
-  const isMobile = vw <= 768;
-  const isSmallMobile = vw <= 480;
-  
-  // Получаем размеры стола
-  const table = getTableDimensions();
-  
-  // Адаптивный отступ в зависимости от количества игроков
-  const getSmartOffset = (totalPlayers: number) => {
-    // Базовые отступы в зависимости от размера экрана
-    const baseOffsets = {
-      mobile: isSmallMobile ? 120 : 140,
-      tablet: isMobile ? 160 : 180,
-      desktop: 200
-    };
-    
-    const base = isSmallMobile ? baseOffsets.mobile : isMobile ? baseOffsets.tablet : baseOffsets.desktop;
-    
-    // Коэффициент уменьшения отступа при большом количестве игроков
-    if (totalPlayers <= 4) return base * 1.5;
-    if (totalPlayers <= 6) return base * 1.2;
-    if (totalPlayers <= 8) return base * 1.0;
-    return base * 0.8; // Для 9 игроков - меньший отступ
-  };
-  
-  // Получаем адаптивный отступ
-  const smartOffset = getSmartOffset(total);
-  
-  // Радиусы орбиты игроков будут вычисляться индивидуально для каждого игрока
-  
-  // Равномерное распределение по кругу
-  const startAngle = 270; // первый игрок снизу
-  const angleStep = 360 / Math.max(total, 1);
-  const angle = startAngle + (index * angleStep);
-  const radians = (angle * Math.PI) / 180;
-  
-  // Отступ всех игроков одинаковый - без различий по высоте
-  const playerOrbitX = table.radiusX + smartOffset;
-  const playerOrbitY = table.radiusY + smartOffset;
-  
-  // Рассчитываем позицию игрока относительно центра стола
-  const playerX = table.centerX + playerOrbitX * Math.cos(radians);
-  const playerY = table.centerY + playerOrbitY * Math.sin(radians);
-  
-  // Безопасные границы экрана - адаптивные
-  const playerWidth = 85; // ширина игрока с картами
-  const safeMargin = playerWidth / 2; // половина ширины игрока
-  const minX = safeMargin;
-  const maxX = vw - safeMargin;
-  const minY = safeMargin + 50; // место для заголовка
-  const maxY = vh - safeMargin - 120; // место для карт снизу
-  
-  // Ограничиваем позицию границами экрана
-  const finalX = Math.max(minX, Math.min(maxX, playerX));
-  const finalY = Math.max(minY, Math.min(maxY, playerY));
-  
-  // Конвертируем в проценты
-  return {
-    left: `${(finalX / vw) * 100}%`,
-    top: `${(finalY / vh) * 100}%`,
-  };
+  // Возвращаем позицию для текущего игрока или дефолтную
+  return fixedPositions[index] || { left: '50%', top: '50%' };
 };
 
 function getFirstPlayerIdx(players: Player[]): number {
@@ -645,7 +597,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                       position: 'absolute',
                       left: position.left,
                       top: position.top,
-                      transform: `translate(-50%, -50%) scale(${seatScale})`, // Центр + масштаб под кол-во игроков
+                      transform: `translate(-50%, -50%) scale(0.85)`, // Фиксированный масштаб как в DevTools
                     }}
                   >
                     {/* Аватар и имя по центру */}
