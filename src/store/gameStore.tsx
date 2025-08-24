@@ -1509,16 +1509,26 @@ export const useGameStore = create<GameState>()(
            const isBeating = tableStack.length > 0 && stage2TurnPhase === 'waiting_beat';
            const actionType = isBeating ? 'побил карту' : 'сыграл карту';
            
+           const newTableStack = [...tableStack, playedCard];
+           
+           console.log(`🃏 [playSelectedCard] ✅ ДОБАВЛЯЕМ КАРТУ НА СТОЛ:`);
+           console.log(`🃏 [playSelectedCard] - Карта: ${playedCard.image}`);
+           console.log(`🃏 [playSelectedCard] - Было карт на столе: ${tableStack.length}`);
+           console.log(`🃏 [playSelectedCard] - Стало карт на столе: ${newTableStack.length}`);
+           console.log(`🃏 [playSelectedCard] - Новый tableStack:`, newTableStack.map(c => c.image));
+           
            set({
              players: [...players],
-             tableStack: [...tableStack, playedCard],
+             tableStack: newTableStack,
              selectedHandCard: null,
              roundInProgress: true,
              currentRoundInitiator: roundInProgress ? get().currentRoundInitiator : currentPlayerId,
              stage2TurnPhase: 'waiting_beat'
            });
            
-           get().showNotification(`${currentPlayer.name} ${actionType} (на столе: ${tableStack.length + 1}/${maxCardsOnTable})`, isBeating ? 'success' : 'info', 3000);
+           console.log(`🃏 [playSelectedCard] 🎯 СОСТОЯНИЕ ОБНОВЛЕНО! Проверяем store.tableStack.length: ${get().tableStack.length}`);
+           
+           get().showNotification(`${currentPlayer.name} ${actionType} (на столе: ${newTableStack.length}/${maxCardsOnTable})`, isBeating ? 'success' : 'info', 3000);
            
                      // Проверяем переход в 3-ю стадию после розыгрыша карты
           get().checkStage3Transition(currentPlayerId);

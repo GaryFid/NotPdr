@@ -106,6 +106,16 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
     selectHandCard, playSelectedCard, takeTableCards
   } = useGameStore();
 
+  // ОТЛАДКА: Следим за изменениями tableStack
+  useEffect(() => {
+    console.log(`🃏 [TableStack Monitor] tableStack изменился:`, {
+      length: tableStack?.length || 0,
+      cards: tableStack?.map(c => c.image) || [],
+      gameStage,
+      stage2TurnPhase
+    });
+  }, [tableStack, gameStage, stage2TurnPhase]);
+
   const [playerCount, setPlayerCount] = useState(initialPlayerCount);
   
   // Проверяем что все необходимые функции доступны
@@ -247,6 +257,29 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
     const currentPlayer = players.find(p => p.id === currentPlayerId);
     if (!currentPlayer || !currentPlayer.isBot) return;
     
+    // СТРОГИЕ ПРОВЕРКИ: ИИ может ходить только в свой ход!
+    console.log(`🤖 [AI Check] Проверка хода для бота ${currentPlayer.name}:`);
+    console.log(`🤖 [AI Check] - gameStage: ${gameStage}, turnPhase: ${turnPhase}, stage2TurnPhase: ${stage2TurnPhase}`);
+    console.log(`🤖 [AI Check] - currentPlayerId: ${currentPlayerId}, player.id: ${currentPlayer.id}`);
+    
+    // Проверяем что это действительно ход этого бота
+    if (gameStage === 2) {
+      if (stage2TurnPhase !== 'selecting_card') {
+        console.log(`🚫 [AI Check] Бот не может ходить в фазу 2-й стадии: ${stage2TurnPhase}`);
+        return;
+      }
+      // Дополнительная проверка: игрок должен быть текущим
+      if (currentPlayer.id !== currentPlayerId) {
+        console.log(`🚫 [AI Check] ID игрока не совпадает с текущим ID хода`);
+        return;
+      }
+    } else if (gameStage === 1) {
+      if (turnPhase !== 'analyzing_hand' && turnPhase !== 'waiting_deck_action') {
+        console.log(`🚫 [AI Check] Бот не может ходить в фазу 1-й стадии: ${turnPhase}`);
+        return;
+      }
+    }
+    
     const playerIdNum = typeof currentPlayerId === 'string' ? parseInt(currentPlayerId) : currentPlayerId;
     const ai = aiPlayers.get(playerIdNum);
     if (!ai) {
@@ -254,7 +287,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
       return;
     }
     
-    console.log(`🤖 [AI useEffect] Запускаем AI для игрока ${currentPlayer.name} (stage: ${gameStage}, phase: ${stage2TurnPhase})`);
+    console.log(`✅ [AI Check] ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ! Запускаем AI для игрока ${currentPlayer.name}`);
     
     // Задержка перед ходом ИИ для реалистичности
     const makeAIMove = async () => {
@@ -298,19 +331,27 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
               // Найдем карту в руке игрока и выберем её
               const currentPlayer = players.find(p => p.id === currentPlayerId);
               if (currentPlayer) {
+                console.log(`🤖 [AI Stage2] Ищем карту ${decision.cardToPlay?.image} среди:`, currentPlayer.cards.map(c => `${c.image}(${c.open ? 'open' : 'closed'})`));
+                
                 const cardInHand = currentPlayer.cards.find(c => 
                   c.image === decision.cardToPlay?.image && c.open
                 );
                 if (cardInHand) {
-                  console.log(`🤖 [AI Stage2] Выбираем карту: ${cardInHand.image}`);
+                  console.log(`🤖 [AI Stage2] ✅ Выбираем карту: ${cardInHand.image}`);
                   selectHandCard(cardInHand);
-                  // Через 1 секунду играем карту
+                  // Играем карту с небольшой задержкой
                   setTimeout(() => {
-                    console.log(`🤖 [AI Stage2] Играем выбранную карту`);
+                    console.log(`🤖 [AI Stage2] ✅ Играем выбранную карту`);
                     playSelectedCard();
-                  }, 1000);
+                  }, 800);
                 } else {
-                  console.log(`🚨 [AI Stage2] Карта не найдена в руке:`, decision.cardToPlay?.image);
+                  console.log(`🚨 [AI Stage2] Карта не найдена в руке или закрыта:`, decision.cardToPlay?.image);
+                  console.log(`🚨 [AI Stage2] Доступные карты:`, currentPlayer.cards.filter(c => c.open).map(c => c.image));
+                  // Fallback: берем карты со стола
+                  if (takeTableCards) {
+                    console.log(`🤖 [AI Stage2] Fallback: берем карты со стола`);
+                    takeTableCards();
+                  }
                 }
               }
             } else {
@@ -520,31 +561,108 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
               )}
 
               {/* КАРТЫ НА СТОЛЕ для 2-й стадии (дурак) */}
-              {gameStage === 2 && tableStack && tableStack.length > 0 && (
+              {gameStage === 2 && (
                 <div className={styles.tableCardsContainer}>
-                  {tableStack.map((card, index) => (
-                    <div
-                      key={`table-card-${index}`}
-                      className={`${styles.tableCard} ${index === tableStack.length - 1 ? styles.tableCardTop : ''}`}
-                      style={{
-                        left: `${-15 + index * 15}px`, // Смещение каждой карты для видимости
-                        top: `${-10 + index * 5}px`,
-                        zIndex: 100 + index
+                  {/* ОТЛАДОЧНАЯ ИНФОРМАЦИЯ прямо на экране */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '-40px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: 'rgba(0, 0, 0, 0.8)',
+                    color: 'white',
+                    padding: '4px 8px',
+                    borderRadius: '8px',
+                    fontSize: '10px',
+                    zIndex: 400,
+                    whiteSpace: 'nowrap'
+                  }}>
+                    DEBUG: Stage {gameStage} | tableStack: {tableStack?.length || 0} | Phase: {stage2TurnPhase}
+                  </div>
+                  
+                  {/* ОТЛАДКА: Показываем состояние стола */}
+                  {(() => {
+                    console.log(`🃏 [TableCards Debug] gameStage: ${gameStage}, tableStack.length: ${tableStack?.length || 0}, cards:`, tableStack?.map(c => c.image) || []);
+                    return null;
+                  })()}
+                  
+                  {tableStack && tableStack.length > 0 ? (
+                    <>
+                      <AnimatePresence mode="popLayout">
+                        {tableStack.map((card, index) => (
+                          <motion.div
+                            key={`table-card-${card.id}-${index}`}
+                            initial={{ 
+                              opacity: 0, 
+                              scale: 0.8, 
+                              y: -50,
+                              rotateX: -90 
+                            }}
+                            animate={{ 
+                              opacity: 1, 
+                              scale: 1, 
+                              y: 0,
+                              rotateX: 0,
+                              transition: {
+                                type: "spring",
+                                stiffness: 200,
+                                damping: 15,
+                                delay: index * 0.1
+                              }
+                            }}
+                            exit={{ 
+                              opacity: 0, 
+                              scale: 0.8,
+                              y: 50,
+                              transition: { duration: 0.3 }
+                            }}
+                            className={`${styles.tableCard} ${index === tableStack.length - 1 ? styles.tableCardTop : ''}`}
+                            style={{
+                              left: `${-20 + index * 25}px`, // Больше смещение для лучшей видимости
+                              top: `${-15 + index * 8}px`,
+                              zIndex: 200 + index // Высокий z-index
+                            }}
+                          >
+                            <Image 
+                              src={card.image ? `/img/cards/${card.image}` : '/img/cards/back.png'} 
+                              alt={`table card ${index}: ${card.image}`}
+                              width={screenInfo.isVerySmallMobile ? 50 : screenInfo.isSmallMobile ? 55 : screenInfo.isMobile ? 60 : 70} 
+                              height={screenInfo.isVerySmallMobile ? 72 : screenInfo.isSmallMobile ? 79 : screenInfo.isMobile ? 87 : 102}
+                              className={styles.tableCardImage}
+                              priority
+                            />
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
+                      
+                      {/* Лейбл для карт на столе */}
+                      <motion.div 
+                        className={styles.tableLabel}
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        style={{ zIndex: 300 }}
+                      >
+                        🃏 Карты на столе: {tableStack.length}
+                      </motion.div>
+                    </>
+                  ) : (
+                    /* Показываем когда стол пустой */
+                    <div 
+                      className={styles.tableLabel} 
+                      style={{ 
+                        opacity: 0.7, 
+                        fontSize: '14px',
+                        zIndex: 300,
+                        background: 'rgba(255, 165, 0, 0.8)',
+                        color: 'white',
+                        padding: '8px 12px',
+                        borderRadius: '12px',
+                        fontWeight: 600
                       }}
                     >
-                      <Image 
-                        src={card.image ? `/img/cards/${card.image}` : '/img/cards/back.png'} 
-                        alt={`table card ${index}`}
-                        width={screenInfo.isVerySmallMobile ? 45 : screenInfo.isSmallMobile ? 50 : screenInfo.isMobile ? 55 : 60} 
-                        height={screenInfo.isVerySmallMobile ? 65 : screenInfo.isSmallMobile ? 72 : screenInfo.isMobile ? 79 : 87}
-                        className={styles.tableCardImage}
-                      />
+                      {gameStage === 2 ? `⭕ Стол пуст (tableStack: ${tableStack?.length || 0})` : ''}
                     </div>
-                  ))}
-                  {/* Лейбл для карт на столе */}
-                  <div className={styles.tableLabel}>
-                    Карты на столе ({tableStack.length})
-                  </div>
+                  )}
                 </div>
               )}
 
@@ -812,12 +930,17 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                                 }}
                               >
                                 <div
-                                  className={`${styles.cardOnPenki} ${card.open ? styles.open : styles.closed} ${(isClickableTarget || isClickableOwnCard) && isTopCard ? styles.targetCard : ''}`}
+                                  className={`${styles.cardOnPenki} ${
+                                    // Во 2-й стадии карты ботов всегда показываются как закрытые
+                                    gameStage === 2 && p.id !== currentPlayerId ? styles.closed :
+                                    card.open ? styles.open : styles.closed
+                                  } ${(isClickableTarget || isClickableOwnCard) && isTopCard ? styles.targetCard : ''}`}
                                   style={{ 
                                     cursor: (isClickableTarget || isClickableOwnCard) && isTopCard ? 'pointer' : 'default',
                                     transform: (isClickableTarget || isClickableOwnCard) && isTopCard ? 'scale(1.02)' : 'scale(1)',
-                                    width: card.open ? 82 : 60, // Увеличено в 1.5 раза
-                                    height: card.open ? 120 : 87 // Увеличено в 1.5 раза
+                                    // Во 2-й стадии карты ботов имеют размер закрытых карт
+                                    width: (gameStage === 2 && p.id !== currentPlayerId) ? 60 : (card.open ? 82 : 60), // Увеличено в 1.5 раза
+                                    height: (gameStage === 2 && p.id !== currentPlayerId) ? 87 : (card.open ? 120 : 87) // Увеличено в 1.5 раза
                                   }}
                                   onClick={() => {
                                     console.log(`🎯 [GamePageContent] КЛИК по карте ${p.name}, isTopCard: ${isTopCard}`);
@@ -852,14 +975,25 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                                       // В 1-й стадии показываем как обычно
                                       (card.open && card.image ? `/img/cards/${card.image}` : `/img/cards/back.png`)
                                     }
-                                    alt={card.open ? 'card' : 'back'}
-                                    width={card.open ? 
-                                      (screenInfo.isSmallMobile ? 52 : screenInfo.isMobile ? 60 : 82) : // Увеличено в 1.5 раза
-                                      (screenInfo.isSmallMobile ? 37 : screenInfo.isMobile ? 45 : 60) // Увеличено в 1.5 раза
+                                    alt={
+                                      (gameStage === 2 && p.id !== currentPlayerId) ? 'back' :
+                                      (card.open ? 'card' : 'back')
                                     }
-                                    height={card.open ? 
-                                      (screenInfo.isSmallMobile ? 75 : screenInfo.isMobile ? 87 : 120) : // Увеличено в 1.5 раза
-                                      (screenInfo.isSmallMobile ? 52 : screenInfo.isMobile ? 63 : 87) // Увеличено в 1.5 раза
+                                    width={
+                                      // Во 2-й стадии карты ботов всегда как закрытые по размеру
+                                      (gameStage === 2 && p.id !== currentPlayerId) ?
+                                        (screenInfo.isSmallMobile ? 37 : screenInfo.isMobile ? 45 : 60) :
+                                      card.open ? 
+                                        (screenInfo.isSmallMobile ? 52 : screenInfo.isMobile ? 60 : 82) : // Увеличено в 1.5 раза
+                                        (screenInfo.isSmallMobile ? 37 : screenInfo.isMobile ? 45 : 60) // Увеличено в 1.5 раза
+                                    }
+                                    height={
+                                      // Во 2-й стадии карты ботов всегда как закрытые по размеру
+                                      (gameStage === 2 && p.id !== currentPlayerId) ?
+                                        (screenInfo.isSmallMobile ? 52 : screenInfo.isMobile ? 63 : 87) :
+                                      card.open ? 
+                                        (screenInfo.isSmallMobile ? 75 : screenInfo.isMobile ? 87 : 120) : // Увеличено в 1.5 раза
+                                        (screenInfo.isSmallMobile ? 52 : screenInfo.isMobile ? 63 : 87) // Увеличено в 1.5 раза
                                     }
                                     draggable={false}
                                     style={{
@@ -880,11 +1014,13 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
             </div>
           </div>
 
-          {/* Контейнер карт игрока внизу - только во 2-й и 3-й стадиях */}
-          {isGameActive && currentPlayer && currentPlayer.cards.length > 0 && gameStage >= 2 && (
+          {/* Контейнер карт игрока внизу - только во 2-й и 3-й стадиях И ТОЛЬКО для человека */}
+          {isGameActive && currentPlayer && !currentPlayer.isBot && currentPlayer.cards.length > 0 && gameStage >= 2 && (
             <div className={styles.playerHand}>
               <div className={styles.handTitle}>
-                {stage2TurnPhase === 'selecting_card' ? '🎯 ВЫБЕРИТЕ КАРТУ' : '🎴 Ваши карты'} ({currentPlayer.cards.length})
+                {gameStage === 2 && stage2TurnPhase === 'selecting_card' && currentPlayer.id === currentPlayerId ? 
+                  '🎯 ВЫБЕРИТЕ КАРТУ' : 
+                  '🎴 Ваши карты'} ({currentPlayer.cards.length})
                 
                 {/* Кнопка "Взять карту" - постоянная во 2-й стадии */}
                 {gameStage === 2 && tableStack.length > 0 && currentPlayer?.id === currentPlayerId && (
@@ -915,7 +1051,11 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
               </div>
               <div className={styles.handCards}>
                 {currentPlayer.cards.map((card, index) => {
-                  const isSelectableStage2 = card.open && stage2TurnPhase === 'selecting_card';
+                  const isSelectableStage2 = card.open && 
+                    gameStage === 2 && 
+                    stage2TurnPhase === 'selecting_card' && 
+                    currentPlayer.id === currentPlayerId && 
+                    !currentPlayer.isBot;
                   const isSelected = selectedHandCard?.id === card.id;
                   const baseStep = 10;
                   const mobileSteps = {
@@ -958,9 +1098,15 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                         height: `${size.h}px`,
                       }}
                       onClick={() => {
-                        // Разрешаем клики только во 2-й стадии
-                        if (isSelectableStage2 && gameStage === 2) {
+                        // Разрешаем клики только в свой ход во 2-й стадии
+                        if (isSelectableStage2 && 
+                            gameStage === 2 && 
+                            currentPlayer.id === currentPlayerId && 
+                            !currentPlayer.isBot) {
+                          console.log(`🎯 [HandCard Click] Игрок выбирает карту: ${card.image}`);
                           selectHandCard(card);
+                        } else {
+                          console.log(`🚫 [HandCard Click] Клик заблокирован: isSelectableStage2=${isSelectableStage2}, gameStage=${gameStage}, isCurrentPlayer=${currentPlayer.id === currentPlayerId}, isBot=${currentPlayer.isBot}`);
                         }
                       }}
                     >

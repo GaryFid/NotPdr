@@ -140,11 +140,18 @@ export class AIPlayer {
     
     const handCards = currentPlayer.cards.filter((c: Card) => c.open);
     
-    console.log(`🤖 [AI Stage2] Анализ ситуации:`);
+    console.log(`🤖 [AI Stage2] Анализ ситуации для игрока ${this.playerId}:`);
     console.log(`🤖 [AI Stage2] - tableStack.length: ${tableStack?.length || 0}`);
     console.log(`🤖 [AI Stage2] - handCards.length: ${handCards.length}`);
+    console.log(`🤖 [AI Stage2] - handCards:`, handCards.map(c => c.image));
     console.log(`🤖 [AI Stage2] - trumpSuit: ${trumpSuit}`);
     console.log(`🤖 [AI Stage2] - difficulty: ${this.difficulty}`);
+    
+    // Проверяем есть ли вообще карты для игры
+    if (handCards.length === 0) {
+      console.log(`🤖 [AI Stage2] ❌ Нет открытых карт для игры`);
+      return { action: 'pass', confidence: 0 };
+    }
     
     if (!tableStack || tableStack.length === 0) {
       // Начинаем атаку - играем самую слабую карту
