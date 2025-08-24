@@ -14,7 +14,7 @@ const tokens = [
 ]
 
 interface MainMenuProps {
-  onNavigate: (page: 'game' | 'invite' | 'shop' | 'profile' | 'menu') => void
+  onNavigate: (page: 'game' | 'invite' | 'shop' | 'profile' | 'rules' | 'menu') => void
   balance?: number
 }
 
@@ -197,6 +197,14 @@ export function MainMenu({ onNavigate }: MainMenuProps) {
           <button onClick={() => onNavigate('profile')} className="menu-action-card">
             <User className="menu-action-icon" />
             <span className="menu-action-label">ПРОФИЛЬ</span>
+          </button>
+        </div>
+
+        {/* Кнопка Правила игры */}
+        <div className="rules-section">
+          <button onClick={() => onNavigate('rules')} className="rules-button">
+            <Book className="rules-icon" />
+            <span className="rules-label">ПРАВИЛА ИГРЫ</span>
           </button>
         </div>
 

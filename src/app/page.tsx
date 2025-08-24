@@ -16,7 +16,7 @@ export default function Home() {
     } else if (page === 'game') {
       window.location.href = '/game-setup';
     } else if (page === 'invite') {
-      window.location.href = '/invite';
+      window.location.href = '/friends';
     } else if (page === 'shop') {
       window.location.href = '/shop';
     } else if (page === 'menu') {

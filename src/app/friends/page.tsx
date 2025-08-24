@@ -1,92 +1,237 @@
 'use client'
-import { Box, Flex, Text, Button, Input, Grid, Image, VStack, HStack } from '@chakra-ui/react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { FaArrowLeft, FaUserPlus, FaSearch, FaCheck, FaTimes } from 'react-icons/fa';
+import { ArrowLeft, UserPlus, Search, Check, X, User, Users, Gamepad2 } from 'lucide-react';
 import BottomNav from '../../components/BottomNav';
 
 export default function FriendsPage() {
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  const onlineFriends = [
+    { id: 1, name: 'Shadow', status: 'В игре', avatar: '🎮', lastSeen: null },
+    { id: 2, name: 'Phoenix', status: 'В сети', avatar: '🔥', lastSeen: null }
+  ];
+  
+  const allFriends = [
+    { id: 3, name: 'Tiger', status: 'Был(а) 2 часа назад', avatar: '🐅', lastSeen: '2 часа назад' },
+    { id: 4, name: 'Wolf', status: 'Был(а) вчера', avatar: '🐺', lastSeen: 'вчера' }
+  ];
+  
+  const friendRequests = [
+    { id: 5, name: 'Dragon', message: 'Хочет добавить вас в друзья', avatar: '🐉' }
+  ];
+  
+  const suggestedFriends = [
+    { id: 6, name: 'Eagle', mutualFriends: 3, avatar: '🦅' },
+    { id: 7, name: 'Falcon', mutualFriends: 1, avatar: '🦅' }
+  ];
+
   return (
-    <Box minH="100vh" bgGradient="linear(to-br, #0f2027, #2c5364)" pb={20}>
-      <Flex direction="column" align="center" maxW="420px" mx="auto" w="100%" px={4}>
+    <div className="main-menu-container">
+      <div className="main-menu-inner">
         {/* Header */}
-        <Flex as="header" align="center" justify="space-between" w="100%" px={0} py={3} borderBottomWidth={1} borderColor="#232b3e" bg="transparent" position="sticky" top={0} zIndex={20} mb={2}>
-          <Button variant="ghost" color="white" _hover={{ color: '#ffd700' }} onClick={() => history.back()}>
-            <FaArrowLeft style={{marginRight: 8}} />
-            <Text display={{ base: 'none', sm: 'inline' }}>Назад</Text>
-          </Button>
-          <Text fontSize="2xl" fontWeight="bold" color="#ffd700">Друзья</Text>
-          <Button variant="ghost" color="white" _hover={{ color: '#ffd700' }}><FaUserPlus /></Button>
-        </Flex>
-        {/* Поиск */}
-        <Box bg="#232b3e" borderRadius="xl" boxShadow="lg" p={4} w="100%" mt={4} mb={4}>
-          <Box position="relative">
-            <FaSearch style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: '#a0aec0' }} />
-            <Input placeholder="Поиск друзей..." pl={10} pr={4} py={2} borderRadius="lg" bg="#181f2a" color="white" _placeholder={{ color: 'gray.400' }} _focus={{ borderColor: '#ffd700' }} />
-          </Box>
-        </Box>
-        {/* Онлайн */}
-        <Box bg="#232b3e" borderRadius="xl" boxShadow="lg" p={6} w="100%" mb={4}>
-          <Text color="#ffd700" fontWeight={600} fontSize="md" mb={4}>Онлайн</Text>
-          <VStack align="stretch" gap={3}>
-            {[1,2].map(i => (
-              <Flex key={i} align="center" gap={3}>
-                <Image src="/img/default-avatar.png" alt="Аватар" boxSize={12} borderRadius="full" objectFit="cover" />
-                <Box flex={1}>
-                  <Text fontWeight={600} color="white">Игрок #{i}</Text>
-                  <Text fontSize="xs" color={i===1 ? 'green.400' : 'gray.400'}>{i===1?'В игре':'В сети'}</Text>
-                </Box>
-                <Button px={4} py={2} borderRadius="lg" bg="#ffd700" color="#232b3e" fontWeight="bold" _hover={{ bg: 'yellow.400' }}>Играть</Button>
-              </Flex>
+        <div className="menu-header">
+          <button onClick={() => window.history.back()} className="px-3 py-1 rounded-lg border border-red-400 text-red-200 font-semibold text-base hover:bg-red-400/10 transition-all">
+            <ArrowLeft className="inline w-4 h-4 mr-1" />
+            Назад
+          </button>
+          <span className="menu-title">ДРУЗЬЯ</span>
+          <button className="friends-add-btn">
+            <UserPlus className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Search */}
+        <motion.div 
+          className="friends-search"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="search-container">
+            <Search className="search-icon" />
+            <input 
+              type="text" 
+              placeholder="Поиск друзей..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input"
+            />
+          </div>
+        </motion.div>
+
+        {/* Online Friends */}
+        <motion.div 
+          className="friends-section"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          <h3 className="friends-section-title">
+            <span className="online-indicator">🟢</span>
+            ОНЛАЙН ({onlineFriends.length})
+          </h3>
+          <div className="friends-list">
+            {onlineFriends.map((friend, index) => (
+              <motion.div 
+                key={friend.id}
+                className="friend-card online"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+              >
+                <div className="friend-avatar">
+                  <span className="friend-avatar-emoji">{friend.avatar}</span>
+                </div>
+                <div className="friend-info">
+                  <h4 className="friend-name">{friend.name}</h4>
+                  <p className={`friend-status ${friend.status === 'В игре' ? 'in-game' : 'online'}`}>
+                    {friend.status}
+                  </p>
+                </div>
+                <motion.button 
+                  className="friend-action-btn play"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Gamepad2 className="action-icon" />
+                  Играть
+                </motion.button>
+              </motion.div>
             ))}
-          </VStack>
-        </Box>
-        {/* Все друзья */}
-        <Box bg="#232b3e" borderRadius="xl" boxShadow="lg" p={6} w="100%" mb={4}>
-          <Text color="#ffd700" fontWeight={600} fontSize="md" mb={4}>Все друзья</Text>
-          <VStack align="stretch" gap={3}>
-            {[3,4].map(i => (
-              <Flex key={i} align="center" gap={3}>
-                <Image src="/img/default-avatar.png" alt="Аватар" boxSize={12} borderRadius="full" objectFit="cover" />
-                <Box flex={1}>
-                  <Text fontWeight={600} color="white">Игрок #{i}</Text>
-                  <Text fontSize="xs" color="gray.400">{i===3?'Был(а) 2 часа назад':'Был(а) вчера'}</Text>
-                </Box>
-                <Button px={4} py={2} borderRadius="lg" bgGradient="linear(to-r, #ffd700, #ffb900)" color="#232b3e" fontWeight="bold" _hover={{ bgGradient: 'linear(to-r, yellow.400, yellow.300)' }}>Профиль</Button>
-              </Flex>
+          </div>
+        </motion.div>
+
+        {/* All Friends */}
+        <motion.div 
+          className="friends-section"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <h3 className="friends-section-title">
+            <Users className="section-icon" />
+            ВСЕ ДРУЗЬЯ ({allFriends.length})
+          </h3>
+          <div className="friends-list">
+            {allFriends.map((friend, index) => (
+              <motion.div 
+                key={friend.id}
+                className="friend-card offline"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+              >
+                <div className="friend-avatar">
+                  <span className="friend-avatar-emoji">{friend.avatar}</span>
+                </div>
+                <div className="friend-info">
+                  <h4 className="friend-name">{friend.name}</h4>
+                  <p className="friend-status offline">{friend.status}</p>
+                </div>
+                <motion.button 
+                  className="friend-action-btn profile"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <User className="action-icon" />
+                  Профиль
+                </motion.button>
+              </motion.div>
             ))}
-          </VStack>
-        </Box>
-        {/* Запросы в друзья */}
-        <Box bg="#232b3e" borderRadius="xl" boxShadow="lg" p={6} w="100%" mb={4}>
-          <Text color="#ffd700" fontWeight={600} fontSize="md" mb={4}>Запросы в друзья</Text>
-          <Flex align="center" gap={3}>
-            <Image src="/img/default-avatar.png" alt="Аватар" boxSize={12} borderRadius="full" objectFit="cover" />
-            <Box flex={1}>
-              <Text fontWeight={600} color="white">Игрок #5</Text>
-              <Text fontSize="xs" color="gray.400">Хочет добавить вас в друзья</Text>
-            </Box>
-            <HStack gap={2}>
-              <Button p={2} borderRadius="lg" bg="green.500" color="white" _hover={{ bg: 'green.600' }}><FaCheck /></Button>
-              <Button p={2} borderRadius="lg" bgGradient="linear(to-r, #ffd700, #ffb900)" color="#232b3e" _hover={{ bgGradient: 'linear(to-r, yellow.400, yellow.300)' }}><FaTimes /></Button>
-            </HStack>
-          </Flex>
-        </Box>
-        {/* Возможные друзья */}
-        <Box bg="#232b3e" borderRadius="xl" boxShadow="lg" p={6} w="100%" mb={4}>
-          <Text color="#ffd700" fontWeight={600} fontSize="md" mb={4}>Возможные друзья</Text>
-          <Grid templateColumns={{ base: '1fr 1fr', md: '1fr 1fr' }} gap={4}>
-            {[6,7].map(i => (
-              <VStack key={i} bg="#181f2a" borderRadius="xl" p={4} align="center" textAlign="center" w="100%">
-                <Image src="/img/default-avatar.png" alt="Аватар" boxSize={20} borderRadius="full" objectFit="cover" mb={3} />
-                <Text color="white" fontWeight={600} mb={1}>Игрок #{i}</Text>
-                <Text fontSize="xs" color="gray.400" mb={2}>{i===6?'3 общих друга':'1 общий друг'}</Text>
-                <Button w="full" px={4} py={2} borderRadius="lg" bg="#ffd700" color="#232b3e" fontWeight="bold" _hover={{ bg: 'yellow.400' }}>Добавить</Button>
-              </VStack>
+          </div>
+        </motion.div>
+
+        {/* Friend Requests */}
+        <motion.div 
+          className="friends-section"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
+          <h3 className="friends-section-title">
+            <UserPlus className="section-icon" />
+            ЗАПРОСЫ В ДРУЗЬЯ ({friendRequests.length})
+          </h3>
+          <div className="friends-list">
+            {friendRequests.map((request, index) => (
+              <motion.div 
+                key={request.id}
+                className="friend-card request"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+              >
+                <div className="friend-avatar">
+                  <span className="friend-avatar-emoji">{request.avatar}</span>
+                </div>
+                <div className="friend-info">
+                  <h4 className="friend-name">{request.name}</h4>
+                  <p className="friend-status request">{request.message}</p>
+                </div>
+                <div className="request-actions">
+                  <motion.button 
+                    className="request-btn accept"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Check className="request-icon" />
+                  </motion.button>
+                  <motion.button 
+                    className="request-btn decline"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <X className="request-icon" />
+                  </motion.button>
+                </div>
+              </motion.div>
             ))}
-          </Grid>
-        </Box>
+          </div>
+        </motion.div>
+
+        {/* Suggested Friends */}
+        <motion.div 
+          className="friends-section suggested"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+        >
+          <h3 className="friends-section-title">
+            <Search className="section-icon" />
+            ВОЗМОЖНЫЕ ДРУЗЬЯ
+          </h3>
+          <div className="suggested-grid">
+            {suggestedFriends.map((suggestion, index) => (
+              <motion.div 
+                key={suggestion.id}
+                className="suggested-card"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+              >
+                <div className="suggested-avatar">
+                  <span className="suggested-avatar-emoji">{suggestion.avatar}</span>
+                </div>
+                <h4 className="suggested-name">{suggestion.name}</h4>
+                <p className="suggested-mutual">
+                  {suggestion.mutualFriends} общ{suggestion.mutualFriends === 1 ? 'ий друг' : 'их друга'}
+                </p>
+                <motion.button 
+                  className="suggested-add-btn"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <UserPlus className="add-icon" />
+                  Добавить
+                </motion.button>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
         <BottomNav />
-      </Flex>
-    </Box>
+      </div>
+    </div>
   );
 }
