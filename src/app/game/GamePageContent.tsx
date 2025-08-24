@@ -77,25 +77,26 @@ const getCirclePosition = (index: number, total: number): { top: string; left: s
   // Получаем размеры стола
   const table = getTableDimensions();
   
-  // Отступ игроков ОТ КРАЯ стола (в пикселях) - игроки ДАЛЕКО СНАРУЖИ стола
-  const baseOffset = isSmallMobile ? 400 : isMobile ? 500 : 600;
-  
-  // Разные отступы для верхних и нижних игроков
-  const getPlayerOffset = (playerIndex: number, totalPlayers: number) => {
-    const startAngle = 270; // первый игрок снизу
-    const angleStep = 360 / Math.max(totalPlayers, 1);
-    const angle = startAngle + (playerIndex * angleStep);
-    const normalizedAngle = ((angle % 360) + 360) % 360;
+  // Адаптивный отступ в зависимости от количества игроков
+  const getSmartOffset = (totalPlayers: number) => {
+    // Базовые отступы в зависимости от размера экрана
+    const baseOffsets = {
+      mobile: isSmallMobile ? 120 : 140,
+      tablet: isMobile ? 160 : 180,
+      desktop: 200
+    };
     
-    // Верхняя половина (углы от 180 до 360 градусов) - ОЧЕНЬ больший отступ
-    if (normalizedAngle >= 180 && normalizedAngle <= 360) {
-      return baseOffset * 3; // В 3 раза больше для верхних
-    }
-    // Нижняя половина (углы от 0 до 180 градусов) - меньший отступ  
-    else {
-      return baseOffset * 0.7; // В 0.7 раза меньше для нижних
-    }
+    const base = isSmallMobile ? baseOffsets.mobile : isMobile ? baseOffsets.tablet : baseOffsets.desktop;
+    
+    // Коэффициент уменьшения отступа при большом количестве игроков
+    if (totalPlayers <= 4) return base * 1.5;
+    if (totalPlayers <= 6) return base * 1.2;
+    if (totalPlayers <= 8) return base * 1.0;
+    return base * 0.8; // Для 9 игроков - меньший отступ
   };
+  
+  // Получаем адаптивный отступ
+  const smartOffset = getSmartOffset(total);
   
   // Радиусы орбиты игроков будут вычисляться индивидуально для каждого игрока
   
@@ -105,21 +106,21 @@ const getCirclePosition = (index: number, total: number): { top: string; left: s
   const angle = startAngle + (index * angleStep);
   const radians = (angle * Math.PI) / 180;
   
-  // Получаем индивидуальный отступ для этого игрока
-  const playerOffset = getPlayerOffset(index, total);
-  const playerOrbitX = table.radiusX + playerOffset;
-  const playerOrbitY = table.radiusY + playerOffset;
+  // Отступ всех игроков одинаковый - без различий по высоте
+  const playerOrbitX = table.radiusX + smartOffset;
+  const playerOrbitY = table.radiusY + smartOffset;
   
   // Рассчитываем позицию игрока относительно центра стола
   const playerX = table.centerX + playerOrbitX * Math.cos(radians);
   const playerY = table.centerY + playerOrbitY * Math.sin(radians);
   
-  // Безопасные границы экрана
-  const safeMargin = isSmallMobile ? 20 : 30;
+  // Безопасные границы экрана - адаптивные
+  const playerWidth = 85; // ширина игрока с картами
+  const safeMargin = playerWidth / 2; // половина ширины игрока
   const minX = safeMargin;
   const maxX = vw - safeMargin;
-  const minY = isSmallMobile ? 60 : 70; // меньше сверху
-  const maxY = vh - (isSmallMobile ? 100 : 120); // меньше снизу
+  const minY = safeMargin + 50; // место для заголовка
+  const maxY = vh - safeMargin - 120; // место для карт снизу
   
   // Ограничиваем позицию границами экрана
   const finalX = Math.max(minX, Math.min(maxX, playerX));
