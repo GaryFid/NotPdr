@@ -133,7 +133,7 @@
   left: 50%;
   transform: translate(-50%, -50%);
   /* Размеры теперь контролируются из JavaScript для точной адаптивности */
-  border: 3px solid #4338ca;
+  border: 4px solid #4338ca;
   border-radius: 50%;
   background: 
     radial-gradient(ellipse at center, 
@@ -141,28 +141,13 @@
       rgba(15, 23, 42, 0.98) 70%, 
       rgba(6, 10, 20, 1) 100%);
   box-shadow: 
-    0 0 80px rgba(99, 102, 241, 0.3),
-    inset 0 0 60px rgba(30, 41, 59, 0.8),
-    0 20px 60px rgba(0, 0, 0, 0.8);
-  animation: tableGlow 4s ease-in-out infinite alternate;
+    0 0 60px rgba(99, 102, 241, 0.2),
+    inset 0 0 40px rgba(30, 41, 59, 0.6),
+    0 15px 40px rgba(0, 0, 0, 0.6);
+  /* Убрана анимация tableGlow */
 }
 
-@keyframes tableGlow {
-  0% {
-    box-shadow: 
-      0 0 60px 15px rgba(99, 102, 241, 0.15),
-      0 0 0 3px #475569,
-      0 0 0 6px rgba(99, 102, 241, 0.3),
-      inset 0 0 50px rgba(99, 102, 241, 0.1);
-  }
-  100% {
-    box-shadow: 
-      0 0 80px 20px rgba(139, 92, 246, 0.25),
-      0 0 0 3px #5b21b6,
-      0 0 0 6px rgba(139, 92, 246, 0.4),
-      inset 0 0 60px rgba(139, 92, 246, 0.15);
-  }
-}
+/* Удалена анимация tableGlow - слишком отвлекает */
 
 /* Правильное позиционирование игроков */
 .playerSeat {
@@ -190,30 +175,22 @@
 /* Компактный контейнер для аватара и имени */
 .avatarWrap {
   display: flex;
-  flex-direction: row; /* ИЗМЕНЕНО: аватар и ник РЯДОМ как в примере */
+  flex-direction: row;
   align-items: center;
-  gap: 8px; /* Увеличено расстояние между аватаром и ником */
-  margin-bottom: 4px;
-  padding: 3px 5px;
-  background: 
-    linear-gradient(145deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.9) 100%);
-  border-radius: 8px;
-  border: 1px solid rgba(99, 102, 241, 0.3);
-  box-shadow: 
-    0 2px 8px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(99, 102, 241, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(20px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: 6px;
+  margin-bottom: 6px;
+  padding: 4px 8px;
+  background: rgba(15, 23, 42, 0.85);
+  border-radius: 12px;
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
 }
 
 .avatarWrap:hover {
-  border-color: rgba(99, 102, 241, 0.6);
-  box-shadow: 
-    0 15px 35px rgba(0, 0, 0, 0.5),
-    0 0 30px rgba(99, 102, 241, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  transform: translateY(-2px);
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .avatarContainer {
@@ -224,8 +201,8 @@
 }
 
 .avatar {
-  width: 55px;
-  height: 55px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   box-shadow: 
     0 2px 6px rgba(0, 0, 0, 0.4),
@@ -235,26 +212,13 @@
   object-fit: cover;
 }
 
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-    box-shadow: 0 0 12px rgba(255,215,0,0.6), 0 0 25px rgba(255,215,0,0.2);
-  }
-  50% {
-    transform: scale(1.03);
-    box-shadow: 0 0 18px rgba(255,215,0,0.8), 0 0 35px rgba(255,215,0,0.3);
-  }
-  100% {
-    transform: scale(1);
-    box-shadow: 0 0 12px rgba(255,215,0,0.6), 0 0 25px rgba(255,215,0,0.2);
-  }
-}
+/* Удалена анимация pulse - слишком отвлекает */
 
 /* Mobile adaptations */
 @media (max-width: 768px) {
   .avatar {
-    width: 45px;
-    height: 45px;
+    width: 40px;
+    height: 40px;
   }
   
   .botBadge {
@@ -277,8 +241,8 @@
 
 @media (max-width: 480px) {
   .avatar {
-    width: 38px;
-    height: 38px;
+    width: 35px;
+    height: 35px;
   }
   
   .botBadge {
@@ -391,40 +355,18 @@
   border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
-.avatar::after {
-  content: '';
-  position: absolute;
-  top: -1px;
-  left: -1px;
-  right: -1px;
-  bottom: -1px;
-  border-radius: 50%;
-  background: linear-gradient(45deg, #6366f1, transparent, #8b5cf6);
-  z-index: -1;
-  animation: avatarRotate 10s linear infinite;
-}
-
-@keyframes avatarRotate {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+/* Удалена вращающаяся рамка аватара - слишком отвлекает */
 
 .playerName {
   color: #e2e8f0;
   font-weight: 600;
-  font-size: 10px;
-  text-shadow: 
-    0 1px 4px rgba(0, 0, 0, 0.8),
-    0 0 10px rgba(99, 102, 241, 0.3);
-  letter-spacing: 0.2px;
+  font-size: 12px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  letter-spacing: 0.1px;
   text-align: center;
-  min-width: 45px;
-  padding: 2px 6px;
-  margin-top: 2px;
-  background: rgba(15, 23, 42, 0.3);
-  border-radius: 6px;
-  border: 1px solid rgba(99, 102, 241, 0.2);
-  backdrop-filter: blur(10px);
+  min-width: 50px;
+  white-space: nowrap;
+  margin-left: 4px;
 }
 
 /* Улучшенное отображение карт игроков - УДАЛЕНО, заменено на cardsContainer */
@@ -1313,10 +1255,10 @@
   z-index: 10;
 }
 
-/* Карта игрока - уменьшенного размера для лучшей видимости */
+/* Карта игрока - оптимальный размер */
 .cardOnPenki {
-  width: 60px; /* Уменьшено в 1.5 раза */
-  height: 85px; /* Уменьшено в 1.5 раза */
+  width: 70px;
+  height: 100px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1324,14 +1266,14 @@
   border: none;
   box-shadow: none;
   padding: 0;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.3s ease;
   cursor: pointer;
   transform-style: preserve-3d;
   border-radius: 8px;
 }
 
 .cardOnPenki:hover {
-  transform: translateY(-4px) scale(1.1) rotateY(3deg);
+  transform: translateY(-3px) scale(1.05);
   z-index: 20 !important;
 }
 
@@ -1357,21 +1299,21 @@
   border: 1px solid #64748b;
 }
 
-/* Обновленное позиционирование пеньков (увеличено для больших карт) */
+/* Позиционирование пеньков */
 .penkiRow {
   position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 53px; /* Уменьшено в 1.5 раза */
-  width: 73px; /* Уменьшено в 1.5 раза */
+  height: 60px;
+  width: 85px;
   perspective: 1000px;
 }
 
 .penkiCard {
   position: absolute;
-  width: 37px; /* Уменьшено в 1.5 раза */
-  height: 53px; /* Уменьшено в 1.5 раза */
+  width: 45px;
+  height: 65px;
   background: 
     linear-gradient(145deg, #1e293b 0%, #334155 100%);
   border-radius: 8px;
@@ -1380,8 +1322,8 @@
     0 0 0 1px rgba(99, 102, 241, 0.2);
   border: 1px solid #64748b;
   transition: all 0.3s ease;
-  opacity: 0; /* По умолчанию скрыты */
-  visibility: hidden; /* По умолчанию скрыты */
+  opacity: 0;
+  visibility: hidden;
 }
 
 /* Показываем пеньки только на 3-й стадии */
@@ -1409,27 +1351,20 @@
 @media (max-width: 768px) {
   .tableBg {
     height: 70vh;
-    margin: -20px auto 0 auto; /* Поднимаем стол выше */
+    margin: 0 auto;
   }
   
   .tableCenter {
-    top: 40%; /* Центрируем вертикальный овал */
-    /* Размеры контролируются из JavaScript */
+    top: 45%;
   }
   
   .playerSeat {
-    width: 85px;
+    width: 100px;
   }
   
   .playerName {
-    font-size: 8px;
-    padding: 2px 4px;
-    min-width: 35px;
-  }
-  
-  .avatar {
-    width: 7px;
-    height: 7px;
+    font-size: 10px;
+    min-width: 40px;
   }
   
   .cardsContainer {
@@ -1437,73 +1372,66 @@
   }
   
   .cardOnPenki {
-    width: 28px; /* Уменьшено в 1.5 раза */
-    height: 40px; /* Уменьшено в 1.5 раза */
+    width: 50px;
+    height: 70px;
   }
   
   .penkiRow {
-    height: 27px; /* Уменьшено в 1.5 раза */
-    width: 40px; /* Уменьшено в 1.5 раза */
+    height: 40px;
+    width: 60px;
   }
   
   .penkiCard {
-    width: 28px; /* Уменьшено в 1.5 раза */
-    height: 40px; /* Уменьшено в 1.5 раза */
+    width: 35px;
+    height: 50px;
   }
   
   .activeCardContainer {
-    top: 25px; /* УВЕЛИЧЕНО - отступ от аватара для мобильных */
-    left: 3px; /* Минимальное смещение для мобильных */
+    top: 30px;
+    left: 5px;
   }
   
   .playerHand {
-    padding: 6px 10px;
-    min-height: 70px;
+    padding: 8px 12px;
+    min-height: 80px;
     border-radius: 10px;
     width: 90%;
-    max-width: 320px;
-    bottom: 65px;
+    max-width: 340px;
+    bottom: 70px;
   }
   
   .handCard {
-    width: 56px;
-    height: 84px;
+    width: 60px;
+    height: 85px;
   }
   
   .handTitle {
-    font-size: 12px;
+    font-size: 13px;
     margin-bottom: 6px;
   }
   
   .handCards {
-    min-height: 63px;
+    min-height: 70px;
   }
 }
 
 @media (max-width: 480px) {
   .tableBg {
     height: 65vh;
-    margin: -30px auto 0 auto; /* Максимально высоко для маленьких экранов */
+    margin: 0 auto;
   }
   
   .tableCenter {
-    top: 35%; /* Еще выше для маленьких экранов */
-    /* Размеры контролируются из JavaScript */
+    top: 40%;
   }
   
   .playerSeat {
-    width: 75px;
+    width: 80px;
   }
   
   .playerName {
-    font-size: 7px;
-    padding: 1px 2px;
-    min-width: 30px;
-  }
-  
-  .avatar {
-    width: 6px;
-    height: 6px;
+    font-size: 9px;
+    min-width: 35px;
   }
   
   .cardsContainer {
@@ -1511,29 +1439,29 @@
   }
   
   .cardOnPenki {
-    width: 22px; /* Уменьшено в 1.5 раза */
-    height: 32px; /* Уменьшено в 1.5 раза */
+    width: 40px;
+    height: 55px;
   }
   
   .penkiRow {
-    height: 21px; /* Уменьшено в 1.5 раза */
-    width: 33px; /* Уменьшено в 1.5 раза */
+    height: 30px;
+    width: 45px;
   }
   
   .penkiCard {
-    width: 27px; /* Уменьшено в 1.5 раза */
-    height: 39px; /* Уменьшено в 1.5 раза */
+    width: 28px;
+    height: 40px;
   }
   
   .handCard {
-    width: 49px;
-    height: 70px;
+    width: 50px;
+    height: 72px;
   }
   
   .playerHand {
     padding: 6px 10px;
-    max-height: 70px;
-    width: 98%;
+    min-height: 60px;
+    width: 95%;
   }
   
   .handTitle {
@@ -1542,32 +1470,28 @@
   }
   
   .handCards {
-    min-height: 49px;
+    min-height: 50px;
   }
   
   .gameHeader {
-    top: 2px;
-    gap: 4px;
+    top: 5px;
+    gap: 8px;
   }
   
   .stageInfo, .deckInfo {
-    padding: 4px 8px;
-    font-size: 10px;
+    padding: 5px 10px;
+    font-size: 11px;
   }
   
-  /* Еще более компактная центральная кнопка */
   .centralButton {
-    width: 35px !important;
-    height: 20px !important;
-    font-size: 7px !important;
+    width: 40px !important;
+    height: 24px !important;
+    font-size: 8px !important;
   }
   
-  /* Компактные кнопки действий для маленьких экранов */
   .deckActionButtons {
-    top: 75%;
-    gap: 4px;
-    flex-direction: column;
-    align-items: center;
+    top: 70%;
+    gap: 6px;
   }
   
   .deckActionButton {
@@ -1576,32 +1500,20 @@
     border-radius: 8px;
   }
   
-  /* Улучшенная читаемость текста на малых экранах */
   .cardRank {
-    width: 16px;
-    height: 16px;
-    font-size: 9px;
-    top: -6px;
-    right: -6px;
+    width: 18px;
+    height: 18px;
+    font-size: 10px;
+    top: -8px;
+    right: -8px;
   }
   
   .deckCount {
-    width: 20px;
-    height: 20px;
-    font-size: 9px;
-    top: -10px;
-    right: -10px;
-  }
-  
-  /* Мобильные кнопки действий */
-  .deckActionButtons {
-    top: 70%;
-    gap: 6px;
-  }
-  
-  .deckActionButton {
-    padding: 8px 14px;
+    width: 24px;
+    height: 24px;
     font-size: 11px;
+    top: -12px;
+    right: -12px;
   }
 }
 
