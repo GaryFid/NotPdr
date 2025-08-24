@@ -256,7 +256,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
     
     // Проверяем что это действительно ход этого бота
     if (gameStage === 2) {
-      if (stage2TurnPhase !== 'selecting_card') {
+      // Разрешаем ИИ ходить в фазах 'selecting_card' и 'waiting_beat'
+      if (stage2TurnPhase !== 'selecting_card' && stage2TurnPhase !== 'waiting_beat') {
         console.log(`🚫 [AI Check] Бот не может ходить в фазу 2-й стадии: ${stage2TurnPhase}`);
         return;
       }
@@ -633,7 +634,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                         fontWeight: 600
                       }}
                     >
-                      {gameStage === 2 ? '⭕ Стол пуст - ждем карты' : ''}
+                      {gameStage === 2 ? '⚔️ БИТВА' : ''}
                     </div>
                   )}
                 </div>
@@ -852,7 +853,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                       </AnimatePresence>
                       
                       {/* Открытая карта поверх пеньков */}
-                      {p.cards.length > 0 && (
+                      {p.cards.length > 0 && !(gameStage === 2 && p.id !== currentPlayerId) && (
                         <div className={styles.activeCardContainer}>
                           {p.cards.slice(-3).map((card, ci) => { // Показываем только последние 3 карты
                             const visibleCards = p.cards.slice(-3);

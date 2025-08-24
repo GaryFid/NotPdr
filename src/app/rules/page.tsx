@@ -172,7 +172,7 @@ export default function RulesPage() {
                     <h5 className="algorithm-title">Алгоритм хода:</h5>
                     <ol className="algorithm-steps">
                       <li>Выберите верхнюю карту</li>
-                      <li>Проверьте: ранг > ранг последней карты на столе</li>
+                      <li>Проверьте: ранг &gt; ранг последней карты на столе</li>
                       <li>Если да - положите карту на стол</li>
                       <li>Если нет - возьмите карту из колоды</li>
                     </ol>
@@ -253,7 +253,7 @@ export default function RulesPage() {
                     <h5 className="algorithm-title">Стадия 1 - Алгоритм:</h5>
                     <ol className="algorithm-steps">
                       <li><strong>Проверить верхнюю карту:</strong> можно ли положить на стол?</li>
-                      <li><strong>Если да:</strong> ранг карты > ранг на столе → положить</li>
+                      <li><strong>Если да:</strong> ранг карты &gt; ранг на столе → положить</li>
                       <li><strong>Если нет:</strong> взять карту из колоды</li>
                       <li><strong>Переход хода</strong> к следующему игроку</li>
                     </ol>

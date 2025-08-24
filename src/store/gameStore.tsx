@@ -518,9 +518,9 @@ export const useGameStore = create<GameState>()(
         const currentPlayerName = players.find(p => p.id === currentPlayerId)?.name || currentPlayerId;
         console.log(`🔄 [nextTurn] Передача хода от ${currentPlayerName} (не может больше ходить)`);
         
-        // Находим следующего игрока
+        // Находим следующего игрока (против часовой стрелки)
         const currentIndex = players.findIndex(p => p.id === currentPlayerId)
-        const nextIndex = (currentIndex + 1) % players.length
+        const nextIndex = (currentIndex - 1 + players.length) % players.length
         const nextPlayerId = players[nextIndex].id
         const nextPlayer = players[nextIndex]
         
@@ -531,8 +531,8 @@ export const useGameStore = create<GameState>()(
         
         let newRound = currentRound
         
-        // Если круг завершен (вернулись к первому игроку)
-        if (nextIndex === 0) {
+        // Если круг завершен (вернулись к последнему игроку при движении против часовой стрелки)
+        if (nextIndex === players.length - 1) {
           newRound = currentRound + 1
         }
         
