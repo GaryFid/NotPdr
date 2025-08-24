@@ -423,23 +423,32 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
 
   return (
     <div className={styles.gameContainer}>
-      {/* Заголовок игры - только во время игры */}
-      {isGameActive && (
-        <div className={styles.gameHeader}>
-          <div className={styles.stageInfo}>
-            {gameStage >= 2 && trumpSuit && (
-              <span className={styles.trumpIcon}>
-                {trumpSuit === 'hearts' ? '♥️' : 
-                 trumpSuit === 'diamonds' ? '♦️' : 
-                 trumpSuit === 'clubs' ? '♣️' : 
-                 trumpSuit === 'spades' ? '♠️' : ''}
-              </span>
-            )}
-            Стадия {gameStage}
-          </div>
-          <div className={styles.deckInfo}>
-            Колода: {deck.length}
-          </div>
+      {/* Информация о козыре - только со 2-й стадии рядом с бургер меню */}
+      {isGameActive && gameStage >= 2 && trumpSuit && (
+        <div style={{
+          position: 'fixed',
+          top: '15px',
+          right: '70px', // Рядом с бургер меню
+          zIndex: 1100,
+          background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+          color: '#fff',
+          padding: '5px 10px', // Уменьшено в 2 раза
+          borderRadius: '12px',
+          fontSize: '12px', // Уменьшено в 2 раза
+          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px',
+          boxShadow: '0 5px 12px rgba(99, 102, 241, 0.4)',
+          backdropFilter: 'blur(8px)'
+        }}>
+          <span style={{ fontSize: '14px' }}>
+            {trumpSuit === 'hearts' ? '♥️' : 
+             trumpSuit === 'diamonds' ? '♦️' : 
+             trumpSuit === 'clubs' ? '♣️' : 
+             trumpSuit === 'spades' ? '♠️' : ''}
+          </span>
+          Козырь
         </div>
       )}
 
@@ -495,6 +504,35 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                       height={screenInfo.isSmallMobile ? 65 : screenInfo.isMobile ? 72 : 80}
                       className={styles.revealedCardImage}
                     />
+                  </div>
+                </div>
+              )}
+
+              {/* КАРТЫ НА СТОЛЕ для 2-й стадии (дурак) */}
+              {gameStage === 2 && tableStack && tableStack.length > 0 && (
+                <div className={styles.tableCardsContainer}>
+                  {tableStack.map((card, index) => (
+                    <div
+                      key={`table-card-${index}`}
+                      className={`${styles.tableCard} ${index === tableStack.length - 1 ? styles.tableCardTop : ''}`}
+                      style={{
+                        left: `${-15 + index * 15}px`, // Смещение каждой карты для видимости
+                        top: `${-10 + index * 5}px`,
+                        zIndex: 100 + index
+                      }}
+                    >
+                      <Image 
+                        src={card.image ? `/img/cards/${card.image}` : '/img/cards/back.png'} 
+                        alt={`table card ${index}`}
+                        width={screenInfo.isSmallMobile ? 50 : screenInfo.isMobile ? 55 : 60} 
+                        height={screenInfo.isSmallMobile ? 72 : screenInfo.isMobile ? 79 : 87}
+                        className={styles.tableCardImage}
+                      />
+                    </div>
+                  ))}
+                  {/* Лейбл для карт на столе */}
+                  <div className={styles.tableLabel}>
+                    Карты на столе ({tableStack.length})
                   </div>
                 </div>
               )}
@@ -941,8 +979,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                 <button onClick={() => window.location.reload()} className={styles.menuItem}>
                   🔄 Обновить
                 </button>
-                <button onClick={() => console.log('Чат открыт')} className={styles.menuItem}>
-                  💬 Чат
+                <button onClick={() => endGame()} className={styles.menuItem}>
+                  🚫 Закончить игру
                 </button>
               </div>
             </div>

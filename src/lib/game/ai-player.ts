@@ -59,7 +59,12 @@ export class AIPlayer {
   // Решения для 1-й стадии (раскладывание карт)
   private makeStage1Decision(gameState: any): AIDecision {
     const { players, availableTargets, revealedDeckCard } = gameState;
-    const currentPlayer = players[this.playerId];
+    const currentPlayer = players.find((p: Player) => parseInt(p.id) === this.playerId);
+    
+    if (!currentPlayer) {
+      console.error(`🔴 [AI Stage1] Не найден игрок с ID ${this.playerId}`);
+      return { action: 'draw_card', confidence: 0.6 };
+    }
     
     // Если есть открытая карта из колоды
     if (revealedDeckCard) {
@@ -121,7 +126,18 @@ export class AIPlayer {
   // Решения для 2-й стадии (дурак)
   private makeStage2Decision(gameState: any): AIDecision {
     const { players, tableStack, trumpSuit } = gameState;
-    const currentPlayer = players[this.playerId];
+    const currentPlayer = players.find((p: Player) => parseInt(p.id) === this.playerId);
+    
+    if (!currentPlayer) {
+      console.error(`🔴 [AI Stage2] Не найден игрок с ID ${this.playerId}`);
+      return { action: 'pass', confidence: 0 };
+    }
+    
+    if (!currentPlayer.cards) {
+      console.error(`🔴 [AI Stage2] У игрока ${this.playerId} нет карт`);
+      return { action: 'pass', confidence: 0 };
+    }
+    
     const handCards = currentPlayer.cards.filter((c: Card) => c.open);
     
     console.log(`🤖 [AI Stage2] Анализ ситуации:`);
@@ -173,7 +189,12 @@ export class AIPlayer {
   // Решения для 3-й стадии (пеньки)
   private makeStage3Decision(gameState: any): AIDecision {
     const { players, availableTargets, revealedDeckCard } = gameState;
-    const currentPlayer = players[this.playerId];
+    const currentPlayer = players.find((p: Player) => parseInt(p.id) === this.playerId);
+    
+    if (!currentPlayer) {
+      console.error(`🔴 [AI Stage3] Не найден игрок с ID ${this.playerId}`);
+      return { action: 'draw_card', confidence: 0.6 };
+    }
     
     console.log(`🤖 [AI Stage3] Анализ ситуации 3-й стадии:`);
     console.log(`🤖 [AI Stage3] - player.cards.length: ${currentPlayer.cards.length}`);

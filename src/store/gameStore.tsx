@@ -1413,18 +1413,39 @@ export const useGameStore = create<GameState>()(
            });
          },
          
-         // Выбор карты в руке (двойной клик)
-         selectHandCard: (card: Card) => {
-           const { selectedHandCard } = get();
-           
-           if (selectedHandCard?.id === card.id) {
-             // Второй клик - играем карту
-             get().playSelectedCard();
-           } else {
-             // Первый клик - выбираем карту
-             set({ selectedHandCard: card });
-           }
-         },
+                 // Выбор карты в руке (двойной клик)
+        selectHandCard: (card: Card) => {
+          const { selectedHandCard, currentPlayerId, players, gameStage } = get();
+          
+          // БЕЗОПАСНОСТЬ: Проверяем что карта принадлежит текущему игроку
+          const currentPlayer = players.find(p => p.id === currentPlayerId);
+          if (!currentPlayer) {
+            console.warn(`🚫 [selectHandCard] Текущий игрок не найден`);
+            return;
+          }
+          
+          const cardBelongsToCurrentPlayer = currentPlayer.cards.some(c => c.id === card.id);
+          if (!cardBelongsToCurrentPlayer) {
+            console.warn(`🚫 [selectHandCard] Карта ${card.id} не принадлежит текущему игроку ${currentPlayer.name}`);
+            return;
+          }
+          
+          // Дополнительная проверка для 2-й стадии
+          if (gameStage === 2 && currentPlayer.isBot) {
+            console.warn(`🚫 [selectHandCard] Попытка управлять ботом ${currentPlayer.name} во 2-й стадии`);
+            return;
+          }
+          
+          console.log(`✅ [selectHandCard] Игрок ${currentPlayer.name} выбирает карту ${card.image}`);
+          
+          if (selectedHandCard?.id === card.id) {
+            // Второй клик - играем карту
+            get().playSelectedCard();
+          } else {
+            // Первый клик - выбираем карту
+            set({ selectedHandCard: card });
+          }
+        },
          
          // Розыгрыш выбранной карты
          playSelectedCard: () => {
