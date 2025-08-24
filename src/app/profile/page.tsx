@@ -1,37 +1,60 @@
 'use client'
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Trophy, Medal, Users, RotateCcw, User, Star, Award, Target } from 'lucide-react';
+import { ArrowLeft, Trophy, Medal, Users, User, Star, Award, Target, Camera, Upload } from 'lucide-react';
 import BottomNav from '../../components/BottomNav';
 
 export default function ProfilePage() {
   const [stats, setStats] = useState({
-    rating: 1234,
-    gamesPlayed: 42,
-    wins: 27,
-    losses: 15,
-    winRate: 65,
+    rating: 0,
+    gamesPlayed: 0,
+    wins: 0,
+    losses: 0,
+    winRate: 0,
     achievements: [
-      { id: 1, name: 'Первая победа', description: 'Выиграйте свою первую игру', unlocked: true, icon: Trophy },
+      { id: 1, name: 'Первая победа', description: 'Выиграйте свою первую игру', unlocked: false, icon: Trophy },
       { id: 2, name: 'Ветеран', description: 'Сыграйте 100 игр', unlocked: false, icon: Medal },
-      { id: 3, name: 'Мастер', description: 'Выиграйте 50 игр', unlocked: true, icon: Award },
+      { id: 3, name: 'Мастер', description: 'Выиграйте 50 игр', unlocked: false, icon: Award },
       { id: 4, name: 'Легенда', description: 'Достигните рейтинга 2000', unlocked: false, icon: Star }
     ]
   });
 
-  const handleResetAchievements = () => {
-    if (window.confirm('Вы уверены, что хотите сбросить все достижения?')) {
-      setStats(prev => ({
-        ...prev,
-        rating: 0,
-        gamesPlayed: 0,
-        wins: 0,
-        losses: 0,
-        winRate: 0,
-        achievements: prev.achievements.map(ach => ({ ...ach, unlocked: false }))
-      }));
+  const [avatarUrl, setAvatarUrl] = useState('😎');
+
+  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Проверяем размер файла (максимум 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Файл слишком большой. Максимальный размер: 5MB');
+        return;
+      }
+      
+      // Проверяем тип файла
+      if (!file.type.startsWith('image/')) {
+        alert('Пожалуйста, выберите изображение');
+        return;
+      }
+
+      // Создаем URL для предварительного просмотра
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setAvatarUrl(result);
+        // Сохраняем в localStorage (в будущем будет загрузка на сервер и сохранение в БД)
+        localStorage.setItem('userAvatar', result);
+      };
+      reader.readAsDataURL(file);
     }
   };
+
+  // Загружаем сохраненный аватар при инициализации
+  useEffect(() => {
+    const savedAvatar = localStorage.getItem('userAvatar');
+    if (savedAvatar) {
+      setAvatarUrl(savedAvatar);
+    }
+  }, []);
 
   return (
     <div className="main-menu-container">
@@ -54,21 +77,48 @@ export default function ProfilePage() {
           transition={{ duration: 0.5 }}
         >
           <div className="profile-avatar">
-            <User className="profile-avatar-icon" />
+            {avatarUrl.startsWith('data:') || avatarUrl.startsWith('http') ? (
+              <img src={avatarUrl} alt="Avatar" className="profile-avatar-image" />
+            ) : (
+              <span className="profile-avatar-emoji">{avatarUrl}</span>
+            )}
           </div>
           <h2 className="profile-name">Игрок</h2>
           <p className="profile-status">🟢 Онлайн</p>
           
-          {/* Friends Button */}
-          <motion.button 
-            className="friends-button"
-            onClick={() => window.location.href = '/friends'}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Users className="friends-icon" />
-            <span>ДРУЗЬЯ</span>
-          </motion.button>
+          {/* Avatar and Friends Buttons */}
+          <div className="profile-buttons">
+            {/* Friends Button */}
+            <motion.button 
+              className="friends-button"
+              onClick={() => window.location.href = '/friends'}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Users className="friends-icon" />
+              <span>ДРУЗЬЯ</span>
+            </motion.button>
+
+            {/* Change Avatar Button */}
+            <motion.div className="avatar-change-container">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                style={{ display: 'none' }}
+                id="avatar-upload"
+              />
+              <motion.label
+                htmlFor="avatar-upload"
+                className="avatar-change-button"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Camera className="avatar-change-icon" />
+                <span>АВАТАР</span>
+              </motion.label>
+            </motion.div>
+          </div>
         </motion.div>
 
         {/* Stats Grid */}
@@ -112,15 +162,6 @@ export default function ProfilePage() {
         >
           <div className="achievements-header">
             <h3 className="achievements-title">ДОСТИЖЕНИЯ</h3>
-            <motion.button 
-              className="reset-button"
-              onClick={handleResetAchievements}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <RotateCcw className="reset-icon" />
-              Сбросить
-            </motion.button>
           </div>
           
           <div className="achievements-grid">
