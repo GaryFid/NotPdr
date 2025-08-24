@@ -77,8 +77,8 @@ const getCirclePosition = (index: number, total: number): { top: string; left: s
   // Получаем размеры стола
   const table = getTableDimensions();
   
-  // Отступ игроков ОТ КРАЯ стола (в пикселях) - увеличенный отступ
-  const playerOffset = isSmallMobile ? 150 : isMobile ? 180 : 220;
+  // Отступ игроков ОТ КРАЯ стола (в пикселях) - игроки СНАРУЖИ стола
+  const playerOffset = isSmallMobile ? 250 : isMobile ? 300 : 400;
   
   // Радиусы орбиты игроков = радиусы стола + отступ
   const playerOrbitX = table.radiusX + playerOffset;
