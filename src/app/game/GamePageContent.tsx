@@ -37,18 +37,18 @@ const getTableDimensions = () => {
   const isSmallMobile = vw <= 480;
   const isLandscape = vw > vh;
   
-  // Размеры стола в пикселях (УВЕЛИЧЕНЫ для лучшей видимости)
+  // Размеры стола в пикселях (ОПТИМАЛЬНЫЕ для видимости)
   let tableWidth, tableHeight;
   
   if (isSmallMobile) {
-    tableWidth = Math.min(vw * 0.65, 260); // 65% от ширины экрана
-    tableHeight = Math.min(vh * 0.35, 210); // 35% от высоты экрана
+    tableWidth = Math.min(vw * 0.5, 200); // 50% от ширины экрана
+    tableHeight = Math.min(vh * 0.25, 150); // 25% от высоты экрана
   } else if (isMobile) {
-    tableWidth = Math.min(vw * 0.6, 360); // 60% от ширины экрана
-    tableHeight = Math.min(vh * 0.35, 280); // 35% от высоты экрана
+    tableWidth = Math.min(vw * 0.45, 280); // 45% от ширины экрана
+    tableHeight = Math.min(vh * 0.25, 200); // 25% от высоты экрана
   } else {
-    tableWidth = Math.min(vw * 0.5, 500); // 50% от ширины экрана для десктопа
-    tableHeight = Math.min(vh * 0.4, 400); // 40% от высоты экрана
+    tableWidth = Math.min(vw * 0.35, 400); // 35% от ширины экрана для десктопа
+    tableHeight = Math.min(vh * 0.3, 320); // 30% от высоты экрана
   }
   
   // Позиция стола (центр экрана)
@@ -77,8 +77,8 @@ const getCirclePosition = (index: number, total: number): { top: string; left: s
   // Получаем размеры стола
   const table = getTableDimensions();
   
-  // Отступ игроков ОТ КРАЯ стола (в пикселях) - оптимальное расстояние
-  const playerOffset = isSmallMobile ? 60 : isMobile ? 80 : 100;
+  // Отступ игроков ОТ КРАЯ стола (в пикселях) - увеличенный отступ
+  const playerOffset = isSmallMobile ? 150 : isMobile ? 180 : 220;
   
   // Радиусы орбиты игроков = радиусы стола + отступ
   const playerOrbitX = table.radiusX + playerOffset;
@@ -95,11 +95,11 @@ const getCirclePosition = (index: number, total: number): { top: string; left: s
   const playerY = table.centerY + playerOrbitY * Math.sin(radians);
   
   // Безопасные границы экрана
-  const safeMargin = isSmallMobile ? 40 : 60;
+  const safeMargin = isSmallMobile ? 20 : 30;
   const minX = safeMargin;
   const maxX = vw - safeMargin;
-  const minY = isSmallMobile ? 80 : 100; // больше сверху для UI
-  const maxY = vh - (isSmallMobile ? 120 : 150); // больше снизу для карт игрока
+  const minY = isSmallMobile ? 60 : 70; // меньше сверху
+  const maxY = vh - (isSmallMobile ? 100 : 120); // меньше снизу
   
   // Ограничиваем позицию границами экрана
   const finalX = Math.max(minX, Math.min(maxX, playerX));
@@ -635,13 +635,13 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                           <div 
                             className={styles.avatar}
                             style={{ 
-                              width: screenInfo.isSmallMobile ? 35 : screenInfo.isMobile ? 40 : 48,
-                              height: screenInfo.isSmallMobile ? 35 : screenInfo.isMobile ? 40 : 48,
+                              width: screenInfo.isSmallMobile ? 30 : screenInfo.isMobile ? 35 : 40,
+                              height: screenInfo.isSmallMobile ? 30 : screenInfo.isMobile ? 35 : 40,
                               borderRadius: '50%',
                               backgroundImage: `url(${p.avatar})`,
                               backgroundSize: 'cover',
-                              border: isCurrentPlayer ? '3px solid #ffd700' : '2px solid rgba(255,255,255,0.2)',
-                              boxShadow: isCurrentPlayer ? '0 0 15px #ffd700' : 'none'
+                              border: isCurrentPlayer ? '2px solid #ffd700' : '1px solid rgba(255,255,255,0.2)',
+                              boxShadow: isCurrentPlayer ? '0 0 10px #ffd700' : 'none'
                             }}
                           />
                         ) : (
@@ -649,13 +649,13 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                           <Image 
                             src={p.avatar || '/img/player-avatar.svg'} 
                             alt="avatar" 
-                            width={screenInfo.isSmallMobile ? 35 : screenInfo.isMobile ? 40 : 48} 
-                            height={screenInfo.isSmallMobile ? 35 : screenInfo.isMobile ? 40 : 48} 
+                            width={screenInfo.isSmallMobile ? 30 : screenInfo.isMobile ? 35 : 40} 
+                            height={screenInfo.isSmallMobile ? 30 : screenInfo.isMobile ? 35 : 40} 
                             className={styles.avatar}
                             style={{
                               borderRadius: '50%',
-                              border: isCurrentPlayer ? '3px solid #ffd700' : '2px solid rgba(255,255,255,0.2)',
-                              boxShadow: isCurrentPlayer ? '0 0 15px #ffd700' : 'none'
+                              border: isCurrentPlayer ? '2px solid #ffd700' : '1px solid rgba(255,255,255,0.2)',
+                              boxShadow: isCurrentPlayer ? '0 0 10px #ffd700' : 'none'
                             }}
                           />
                         )}
@@ -794,8 +794,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                                   style={{ 
                                     cursor: (isClickableTarget || isClickableOwnCard) && isTopCard ? 'pointer' : 'default',
                                     transform: (isClickableTarget || isClickableOwnCard) && isTopCard ? 'scale(1.02)' : 'scale(1)',
-                                    width: card.open ? 70 : 50,
-                                    height: card.open ? 100 : 70
+                                    width: card.open ? 55 : 40,
+                                    height: card.open ? 80 : 58
                                   }}
                                   onClick={() => {
                                     console.log(`🎯 [GamePageContent] КЛИК по карте ${p.name}, isTopCard: ${isTopCard}`);
@@ -832,12 +832,12 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                                     }
                                     alt={card.open ? 'card' : 'back'}
                                     width={card.open ? 
-                                      (screenInfo.isSmallMobile ? 40 : screenInfo.isMobile ? 50 : 70) :
-                                      (screenInfo.isSmallMobile ? 30 : screenInfo.isMobile ? 35 : 50)
+                                      (screenInfo.isSmallMobile ? 35 : screenInfo.isMobile ? 40 : 55) :
+                                      (screenInfo.isSmallMobile ? 25 : screenInfo.isMobile ? 30 : 40)
                                     }
                                     height={card.open ? 
-                                      (screenInfo.isSmallMobile ? 55 : screenInfo.isMobile ? 70 : 100) :
-                                      (screenInfo.isSmallMobile ? 40 : screenInfo.isMobile ? 50 : 70)
+                                      (screenInfo.isSmallMobile ? 50 : screenInfo.isMobile ? 58 : 80) :
+                                      (screenInfo.isSmallMobile ? 35 : screenInfo.isMobile ? 42 : 58)
                                     }
                                     draggable={false}
                                     style={{
