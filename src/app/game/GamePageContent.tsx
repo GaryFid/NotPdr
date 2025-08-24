@@ -77,8 +77,8 @@ const getCirclePosition = (index: number, total: number): { top: string; left: s
   // Получаем размеры стола
   const table = getTableDimensions();
   
-  // Отступ игроков ОТ КРАЯ стола (в пикселях) - игроки СНАРУЖИ стола
-  const baseOffset = isSmallMobile ? 250 : isMobile ? 300 : 400;
+  // Отступ игроков ОТ КРАЯ стола (в пикселях) - игроки ДАЛЕКО СНАРУЖИ стола
+  const baseOffset = isSmallMobile ? 400 : isMobile ? 500 : 600;
   
   // Разные отступы для верхних и нижних игроков
   const getPlayerOffset = (playerIndex: number, totalPlayers: number) => {
@@ -87,13 +87,13 @@ const getCirclePosition = (index: number, total: number): { top: string; left: s
     const angle = startAngle + (playerIndex * angleStep);
     const normalizedAngle = ((angle % 360) + 360) % 360;
     
-    // Верхняя половина (углы от 180 до 360 градусов) - больший отступ
+    // Верхняя половина (углы от 180 до 360 градусов) - ОЧЕНЬ больший отступ
     if (normalizedAngle >= 180 && normalizedAngle <= 360) {
-      return baseOffset * 2; // В 2 раза больше для верхних
+      return baseOffset * 3; // В 3 раза больше для верхних
     }
     // Нижняя половина (углы от 0 до 180 градусов) - меньший отступ  
     else {
-      return baseOffset * 0.5; // В 0.5 раза меньше для нижних
+      return baseOffset * 0.7; // В 0.7 раза меньше для нижних
     }
   };
   
