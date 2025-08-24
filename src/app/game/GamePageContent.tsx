@@ -66,23 +66,54 @@ const getTableDimensions = () => {
   };
 };
 
-// ФИКСИРОВАННОЕ позиционирование игроков (настроено через DevTools)
-const getCirclePosition = (index: number, total: number): { top: string; left: string } => {
-  // Фиксированные позиции ПО ЧАСОВОЙ СТРЕЛКЕ (слева направо)
-  const fixedPositions = [
-    { left: '-52.4997%', top: '119.7888%' },    // Игрок 1 (начало - снизу слева)
-    { left: '10.9545%', top: '125.0384%' },   // Игрок 2 (снизу центр)
-    { left: '75.0455%', top: '121.0384%' },   // Игрок 3 (снизу справа)
-    { left: '110.5003%', top: '49.7888%' },   // Игрок 4 (справа центр)
-    { left: '114.6837%', top: '-39.1274%' },  // Игрок 5 (сверху справа)
-    { left: '65.6382%', top: '-89.6818%' },   // Игрок 6 (сверху центр-права)
-    { left: '5%', top: '-79.2089%' },        // Игрок 7 (сверху центр-лева)
-    { left: '-57.3618%', top: '-49.6818%' },  // Игрок 8 (сверху слева)
-    { left: '-58%', top: '35%' },             // Игрок 9 (слева центр)
-  ];
+// УНИВЕРСАЛЬНОЕ круговое позиционирование игроков
+const getCirclePosition = (index: number, totalPlayers: number): { top: string; left: string } => {
+  // Определяем размеры экрана для адаптивности
+  const vw = Math.min(window.innerWidth, document.documentElement.clientWidth);
+  const vh = Math.min(window.innerHeight, document.documentElement.clientHeight);
+  const isSmallMobile = vw <= 480;
+  const isMobile = vw <= 768;
   
-  // Возвращаем позицию для текущего игрока или дефолтную
-  return fixedPositions[index] || { left: '50%', top: '50%' };
+  // Адаптивный радиус эллипса в зависимости от экрана и количества игроков
+  let radiusX, radiusY;
+  
+  if (isSmallMobile) {
+    // iPhone и маленькие экраны - компактное расположение
+    radiusX = totalPlayers <= 4 ? 35 : totalPlayers <= 6 ? 40 : 45; // % от ширины экрана
+    radiusY = totalPlayers <= 4 ? 30 : totalPlayers <= 6 ? 35 : 40; // % от высоты экрана
+  } else if (isMobile) {
+    // Планшеты и средние экраны
+    radiusX = totalPlayers <= 4 ? 38 : totalPlayers <= 6 ? 42 : 46;
+    radiusY = totalPlayers <= 4 ? 32 : totalPlayers <= 6 ? 36 : 40;
+  } else {
+    // Десктоп - больше места
+    radiusX = totalPlayers <= 4 ? 42 : totalPlayers <= 6 ? 46 : 50;
+    radiusY = totalPlayers <= 4 ? 35 : totalPlayers <= 6 ? 38 : 42;
+  }
+  
+  // Угол для каждого игрока (в радианах)
+  // Начинаем снизу (270°) и идем ПО ЧАСОВОЙ СТРЕЛКЕ
+  const angleStep = (2 * Math.PI) / totalPlayers;
+  const startAngle = (3 * Math.PI) / 2; // 270° (снизу)
+  const angle = startAngle + (index * angleStep);
+  
+  // Рассчитываем позицию относительно центра экрана
+  const centerX = 50; // 50% от ширины экрана
+  const centerY = 50; // 50% от высоты экрана
+  
+  const x = centerX + radiusX * Math.cos(angle);
+  const y = centerY + radiusY * Math.sin(angle);
+  
+  // Ограничиваем позиции, чтобы игроки не вылезали за границы
+  const clampedX = Math.max(5, Math.min(95, x));
+  const clampedY = Math.max(5, Math.min(95, y));
+  
+  console.log(`🎯 [getCirclePosition] Игрок ${index + 1}/${totalPlayers}: угол=${(angle * 180 / Math.PI).toFixed(1)}°, позиция=(${clampedX.toFixed(1)}%, ${clampedY.toFixed(1)}%)`);
+  
+  return {
+    left: `${clampedX.toFixed(2)}%`,
+    top: `${clampedY.toFixed(2)}%`
+  };
 };
 
 function getFirstPlayerIdx(players: Player[]): number {
@@ -141,7 +172,10 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
   const [screenInfo, setScreenInfo] = useState({
     isMobile: false,
     isSmallMobile: false,
+    isVerySmallMobile: false,
     isLandscape: false,
+    isIPhone: false,
+    isAndroid: false,
     viewportWidth: 0,
     viewportHeight: 0,
     safeArea: { top: 0, bottom: 0, left: 0, right: 0 }
@@ -156,7 +190,12 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
       const vh = Math.min(window.innerHeight, document.documentElement.clientHeight);
       const isMobile = vw <= 768;
       const isSmallMobile = vw <= 480;
+      const isVerySmallMobile = vw <= 375; // iPhone SE и подобные
       const isLandscape = vw > vh;
+      
+      // Особая проверка для iPhone
+      const isIPhone = /iPhone|iPod/.test(navigator.userAgent);
+      const isAndroid = /Android/.test(navigator.userAgent);
       
       // Определяем safe areas для iOS и Android
       const safeAreaTop = 
@@ -167,14 +206,17 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
       const newScreenInfo = {
         isMobile,
         isSmallMobile,
+        isVerySmallMobile,
         isLandscape,
+        isIPhone,
+        isAndroid,
         viewportWidth: vw,
         viewportHeight: vh,
         safeArea: {
           top: safeAreaTop,
-          bottom: isSmallMobile ? 100 : isMobile ? 80 : 60, // UI снизу
-          left: 0,
-          right: 0
+          bottom: isVerySmallMobile ? 120 : isSmallMobile ? 100 : isMobile ? 80 : 60, // Больше места для iPhone
+          left: isIPhone ? 10 : 0, // Отступы по бокам для iPhone
+          right: isIPhone ? 10 : 0
         }
       };
       
@@ -489,8 +531,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                     <div 
                       className={styles.cardBackdrop} 
                       style={{ 
-                        width: screenInfo.isSmallMobile ? 43 : screenInfo.isMobile ? 48 : 53, 
-                        height: screenInfo.isSmallMobile ? 65 : screenInfo.isMobile ? 72 : 80,
+                        width: screenInfo.isVerySmallMobile ? 38 : screenInfo.isSmallMobile ? 43 : screenInfo.isMobile ? 48 : 53, 
+                        height: screenInfo.isVerySmallMobile ? 58 : screenInfo.isSmallMobile ? 65 : screenInfo.isMobile ? 72 : 80,
                         background: 'white',
                         borderRadius: '8px',
                         position: 'absolute',
@@ -500,8 +542,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                     <Image 
                       src={revealedDeckCard.image ? `/img/cards/${revealedDeckCard.image}` : '/img/cards/back.png'} 
                       alt="revealed card" 
-                      width={screenInfo.isSmallMobile ? 43 : screenInfo.isMobile ? 48 : 53} 
-                      height={screenInfo.isSmallMobile ? 65 : screenInfo.isMobile ? 72 : 80}
+                      width={screenInfo.isVerySmallMobile ? 38 : screenInfo.isSmallMobile ? 43 : screenInfo.isMobile ? 48 : 53} 
+                      height={screenInfo.isVerySmallMobile ? 58 : screenInfo.isSmallMobile ? 65 : screenInfo.isMobile ? 72 : 80}
                       className={styles.revealedCardImage}
                     />
                   </div>
@@ -524,8 +566,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                       <Image 
                         src={card.image ? `/img/cards/${card.image}` : '/img/cards/back.png'} 
                         alt={`table card ${index}`}
-                        width={screenInfo.isSmallMobile ? 50 : screenInfo.isMobile ? 55 : 60} 
-                        height={screenInfo.isSmallMobile ? 72 : screenInfo.isMobile ? 79 : 87}
+                        width={screenInfo.isVerySmallMobile ? 45 : screenInfo.isSmallMobile ? 50 : screenInfo.isMobile ? 55 : 60} 
+                        height={screenInfo.isVerySmallMobile ? 65 : screenInfo.isSmallMobile ? 72 : screenInfo.isMobile ? 79 : 87}
                         className={styles.tableCardImage}
                       />
                     </div>
@@ -557,8 +599,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                     <Image 
                       src="/img/cards/back.png" 
                       alt="deck" 
-                      width={screenInfo.isSmallMobile ? 37 : screenInfo.isMobile ? 42 : 47} 
-                      height={screenInfo.isSmallMobile ? 53 : screenInfo.isMobile ? 60 : 67}
+                      width={screenInfo.isVerySmallMobile ? 32 : screenInfo.isSmallMobile ? 37 : screenInfo.isMobile ? 42 : 47} 
+                      height={screenInfo.isVerySmallMobile ? 48 : screenInfo.isSmallMobile ? 53 : screenInfo.isMobile ? 60 : 67}
                       className={styles.deckCard}
                     />
                   )}
@@ -646,8 +688,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                           <div 
                             className={styles.avatar}
                             style={{ 
-                              width: screenInfo.isSmallMobile ? 30 : screenInfo.isMobile ? 35 : 40,
-                              height: screenInfo.isSmallMobile ? 30 : screenInfo.isMobile ? 35 : 40,
+                              width: screenInfo.isVerySmallMobile ? 26 : screenInfo.isSmallMobile ? 28 : screenInfo.isMobile ? 32 : 40,
+                              height: screenInfo.isVerySmallMobile ? 26 : screenInfo.isSmallMobile ? 28 : screenInfo.isMobile ? 32 : 40,
                               borderRadius: '50%',
                               backgroundImage: `url(${p.avatar})`,
                               backgroundSize: 'cover',
@@ -660,8 +702,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                           <Image 
                             src={p.avatar || '/img/player-avatar.svg'} 
                             alt="avatar" 
-                            width={screenInfo.isSmallMobile ? 30 : screenInfo.isMobile ? 35 : 40} 
-                            height={screenInfo.isSmallMobile ? 30 : screenInfo.isMobile ? 35 : 40} 
+                            width={screenInfo.isVerySmallMobile ? 26 : screenInfo.isSmallMobile ? 28 : screenInfo.isMobile ? 32 : 40} 
+                            height={screenInfo.isVerySmallMobile ? 26 : screenInfo.isSmallMobile ? 28 : screenInfo.isMobile ? 32 : 40} 
                             className={styles.avatar}
                             style={{
                               borderRadius: '50%',
@@ -680,7 +722,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                       <span 
                         className={styles.playerName} 
                         style={{ 
-                          fontSize: screenInfo.isSmallMobile ? '11px' : screenInfo.isMobile ? '12px' : '14px', 
+                          fontSize: screenInfo.isVerySmallMobile ? '9px' : screenInfo.isSmallMobile ? '10px' : screenInfo.isMobile ? '12px' : '14px', 
                           fontWeight: 600,
                           color: isCurrentPlayer ? '#ffd700' : 'white',
                           textShadow: isCurrentPlayer ? '0 0 10px #ffd700' : 'none',
@@ -914,8 +956,20 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                   const step = card.open ? mobileSteps.open : mobileSteps.closed;
                   const cardOffset = index * step;
                   const mobileCardSizes = {
-                    open: screenInfo.isSmallMobile ? { w: 70, h: 105 } : screenInfo.isMobile ? { w: 76, h: 115 } : { w: 84, h: 126 }, // Увеличено в 1.5 раза
-                    closed: screenInfo.isSmallMobile ? { w: 58, h: 87 } : screenInfo.isMobile ? { w: 64, h: 96 } : { w: 70, h: 105 } // Увеличено в 1.5 раза
+                    open: screenInfo.isVerySmallMobile 
+                      ? { w: 60, h: 90 } 
+                      : screenInfo.isSmallMobile 
+                        ? { w: 70, h: 105 } 
+                        : screenInfo.isMobile 
+                          ? { w: 76, h: 115 } 
+                          : { w: 84, h: 126 }, // Адаптивно для очень маленьких экранов
+                    closed: screenInfo.isVerySmallMobile 
+                      ? { w: 50, h: 75 } 
+                      : screenInfo.isSmallMobile 
+                        ? { w: 58, h: 87 } 
+                        : screenInfo.isMobile 
+                          ? { w: 64, h: 96 } 
+                          : { w: 70, h: 105 }
                   };
                   const size = card.open ? mobileCardSizes.open : mobileCardSizes.closed;
                   

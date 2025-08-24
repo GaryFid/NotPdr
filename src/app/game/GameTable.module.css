@@ -239,51 +239,148 @@
   }
 }
 
-@media (max-width: 480px) {
+/* ОЧЕНЬ МАЛЕНЬКИЕ ЭКРАНЫ (iPhone SE и подобные) */
+@media (max-width: 375px) {
+  .gameContainer {
+    padding: 0;
+    overflow: hidden;
+  }
+  
+  .playerSeat {
+    width: 60px !important; /* Еще компактнее для очень маленьких экранов */
+  }
+  
   .avatar {
-    width: 30px;
-    height: 30px;
+    width: 24px;
+    height: 24px;
   }
   
   .botBadge {
-    width: 16px;
-    height: 16px;
-    font-size: 9px;
+    width: 12px;
+    height: 12px;
+    font-size: 7px;
   }
   
   .playerName {
-    font-size: 11px !important;
-  }
-  
-  .avatarWrap {
-    padding: 1px 3px;
-  }
-  
-  .gameHeader {
-    top: 8px;
-    gap: 10px;
-  }
-  
-  .stageInfo, .deckInfo {
-    padding: 6px 12px;
-    font-size: 12px;
+    font-size: 8px !important;
+    max-width: 50px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   
   .handCards {
-    bottom: 15px;
-    max-height: 140px;
+    bottom: 8px;
+    max-height: 100px;
+    padding: 3px;
   }
   
   .tableCenter {
-    padding: 10px;
+    border-width: 2px;
+  }
+  
+  .tableCardsContainer {
+    transform: scale(0.8);
+  }
+  
+  .tableLabel {
+    font-size: 8px;
+    padding: 1px 4px;
+  }
+}
+
+/* СПЕЦИАЛЬНАЯ АДАПТАЦИЯ ДЛЯ iPhone */
+@media (max-width: 480px) and (min-width: 376px) {
+  .gameContainer {
+    padding: 0;
+    overflow: hidden;
+  }
+  
+  .playerSeat {
+    width: 70px !important; /* Компактнее для iPhone */
+  }
+  
+  .avatar {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .botBadge {
+    width: 14px;
+    height: 14px;
+    font-size: 8px;
+  }
+  
+  .playerName {
+    font-size: 10px !important;
+    max-width: 60px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .avatarWrap {
+    padding: 1px 2px;
+    gap: 2px;
+  }
+  
+  .gameHeader {
+    top: 5px;
+    gap: 8px;
+  }
+  
+  .stageInfo, .deckInfo {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+  
+  .handCards {
+    bottom: 10px;
+    max-height: 120px;
+    padding: 5px;
+  }
+  
+  .handCard {
+    border-radius: 6px;
+  }
+  
+  .tableCenter {
+    padding: 8px;
+    border-width: 3px; /* Тоньше для iPhone */
   }
   
   .deckStack {
-    transform: scale(0.9);
+    transform: scale(0.85);
   }
   
   .revealedCardContainer {
-    transform: scale(0.9);
+    transform: scale(0.85);
+  }
+  
+  .tableCardsContainer {
+    transform: scale(0.9); /* Карты на столе меньше для iPhone */
+  }
+  
+  .tableCard {
+    padding: 2px;
+  }
+  
+  .tableLabel {
+    font-size: 9px;
+    padding: 2px 6px;
+  }
+  
+  /* Компактные карты в руке */
+  .cardOnPenki {
+    border-radius: 6px !important;
+  }
+  
+  /* Адаптация пеньков */
+  .penkiCard {
+    border-radius: 5px;
+  }
+  
+  /* Минимальные отступы для iPhone */
+  .cardsContainer {
+    gap: 3px;
   }
 }
 
