@@ -165,7 +165,7 @@ export default function RulesPage() {
                       <span><strong>Масти:</strong> Не важны в первой стадии</span>
                     </div>
                     <div className="rule-point">
-                      <span><strong>Переход:</strong> Когда у всех игроков остается по 2 карты</span>
+                      <span><strong>Переход:</strong> Когда заканчивается колода по середине стола</span>
                     </div>
                   </div>
                   <div className="algorithm-box">
