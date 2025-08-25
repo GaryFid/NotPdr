@@ -137,7 +137,7 @@ export default function RulesPage() {
                     })}
                   </div>
                   <p className="rule-description">
-                    В первой стадии масти не важны. Во второй стадии действует правило: <strong>"Пики можно бить только пиками"</strong>
+                    В первой стадии масти не важны. Во второй стадии действует правило: <strong>"Пики только Пикями!"</strong>
                   </p>
                 </div>
               </div>
@@ -173,7 +173,7 @@ export default function RulesPage() {
                     <ol className="algorithm-steps">
                       <li>Выберите верхнюю карту</li>
                       <li>Проверьте: ранг &gt; ранг последней карты на столе</li>
-                      <li>Если да - положите карту на стол</li>
+                      <li>Если да - положите карту на карту соперника</li>
                       <li>Если нет - возьмите карту из колоды</li>
                     </ol>
                   </div>
@@ -196,7 +196,10 @@ export default function RulesPage() {
                       <span><strong>Масти:</strong> Действует правило мастей</span>
                     </div>
                     <div className="rule-point">
-                      <span><strong>Козырь:</strong> Определяется случайно</span>
+                      <span><strong>Козырь:</strong> Последняя масть, кроме пики</span>
+                    </div>
+                    <div className="rule-point">
+                      <span><strong>Пики только Пикями!</strong></span>
                     </div>
                     <div className="rule-point">
                       <span><strong>"Последняя!":</strong> Объявлять при одной карте</span>
@@ -223,16 +226,19 @@ export default function RulesPage() {
                   <h3 className="rule-title">ТРЕТЬЯ СТАДИЯ</h3>
                 </div>
                 <div className="rule-content">
-                  <h4 className="stage-subtitle">Финальный раунд</h4>
+                  <h4 className="stage-subtitle">Открытие пеньков</h4>
                   <div className="rule-points">
                     <div className="rule-point">
-                      <span><strong>Условие:</strong> Когда остается 2-3 игрока</span>
+                      <span><strong>Условие:</strong> Когда во 2-й стадии нет открытых карт с 1-й стадии</span>
                     </div>
                     <div className="rule-point">
-                      <span><strong>Особенности:</strong> Ускоренная игра, дополнительные правила</span>
+                      <span><strong>Особенности:</strong> Игрок открывает пеньки и играет ими</span>
                     </div>
                     <div className="rule-point">
-                      <span><strong>Победа:</strong> Первый игрок без карт побеждает</span>
+                      <span><strong>Победа:</strong> Побеждает тот, кто первый остался без карт</span>
+                    </div>
+                    <div className="rule-point">
+                      <span><strong>Поражение:</strong> Проигравший - если у всех закончились карты, а у данного игрока еще есть</span>
                     </div>
                   </div>
                 </div>

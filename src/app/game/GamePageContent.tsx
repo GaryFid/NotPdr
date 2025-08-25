@@ -793,7 +793,21 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                         {p.name}
                         {isCurrentPlayer && <span style={{ marginLeft: 4 }}>👑</span>}
                       </span>
-                      {/* Счетчик карт перенесен к картам */}
+                      {/* Счетчик карт для ботов во 2-й стадии */}
+                      {gameStage === 2 && p.isBot && (
+                        <span style={{
+                          color: '#00ff88',
+                          marginLeft: 4,
+                          fontSize: '12px',
+                          fontWeight: 'bold',
+                          background: 'rgba(0, 255, 136, 0.1)',
+                          padding: '2px 6px',
+                          borderRadius: '8px',
+                          border: '1px solid rgba(0, 255, 136, 0.3)'
+                        }}>
+                          🃏 {p.cards.filter(c => c.open).length}
+                        </span>
+                      )}
                       {isTargetAvailable && <span style={{color:'#ffd700',marginLeft:4}}>🎯</span>}
                     </div>
                     
@@ -853,7 +867,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                       </AnimatePresence>
                       
                       {/* Открытая карта поверх пеньков */}
-                      {p.cards.length > 0 && !(gameStage === 2 && p.id !== currentPlayerId) && (
+                      {p.cards.length > 0 && (gameStage === 1 || gameStage === 3 || (gameStage === 2 && p.id === currentPlayerId)) && (
                         <div className={styles.activeCardContainer}>
                           {p.cards.slice(-3).map((card, ci) => { // Показываем только последние 3 карты
                             const visibleCards = p.cards.slice(-3);
