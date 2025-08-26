@@ -88,6 +88,9 @@ interface GameState {
   stats: GameStats
   settings: GameSettings
   
+  // Игровая валюта
+  gameCoins: number
+  
   // UI состояние
   selectedCard: Card | null
   showCardDetails: boolean
@@ -155,6 +158,10 @@ interface GameState {
   // Статистика
   updateStats: (stats: Partial<GameStats>) => void
   addAchievement: (achievementId: string) => void
+  
+  // Игровая валюта
+  addCoins: (amount: number) => void
+  spendCoins: (amount: number) => boolean
   
   // UI
   showNotification: (message: string, type: 'success' | 'error' | 'warning' | 'info', duration?: number) => void
@@ -245,6 +252,9 @@ export const useGameStore = create<GameState>()(
         autoPlay: false,
         difficulty: 'medium'
       },
+      
+      // Игровая валюта (500 монет для новых пользователей)
+      gameCoins: 500,
       
       selectedCard: null,
       showCardDetails: false,
@@ -647,6 +657,27 @@ export const useGameStore = create<GameState>()(
             }
           })
           get().showNotification('Новое достижение!', 'success')
+        }
+      },
+      
+      // Игровая валюта
+      addCoins: (amount) => {
+        const { gameCoins } = get()
+        const newAmount = gameCoins + amount
+        set({ gameCoins: newAmount })
+        get().showNotification(`+${amount} монет! Баланс: ${newAmount}`, 'success', 2000)
+      },
+      
+      spendCoins: (amount) => {
+        const { gameCoins } = get()
+        if (gameCoins >= amount) {
+          const newAmount = gameCoins - amount
+          set({ gameCoins: newAmount })
+          get().showNotification(`-${amount} монет. Баланс: ${newAmount}`, 'info', 2000)
+          return true
+        } else {
+          get().showNotification(`Недостаточно монет! Нужно: ${amount}, у вас: ${gameCoins}`, 'error', 3000)
+          return false
         }
       },
       

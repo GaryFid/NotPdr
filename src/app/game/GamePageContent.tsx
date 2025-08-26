@@ -101,6 +101,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
     isGameActive, gameStage, turnPhase, stage2TurnPhase,
     players, currentPlayerId, deck, availableTargets,
     selectedHandCard, revealedDeckCard, tableStack, trumpSuit,
+    gameCoins,
     startGame, endGame, 
     drawCard, makeMove, onDeckClick, placeCardOnSelfByRules,
     selectHandCard, playSelectedCard, takeTableCards
@@ -1153,6 +1154,17 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                 </div>
               </button>
               <div className={styles.burgerDropdown}>
+                {/* Баланс игровых монет */}
+                <div className={styles.menuCoinsBalance}>
+                  <div className={styles.coinsIcon}>🪙</div>
+                  <div className={styles.coinsInfo}>
+                    <div className={styles.coinsAmount}>{gameCoins.toLocaleString()}</div>
+                    <div className={styles.coinsLabel}>Монет</div>
+                  </div>
+                </div>
+                
+                <div className={styles.menuDivider}></div>
+                
                 <button onClick={() => window.history.back()} className={styles.menuItem}>
                   ← Назад
                 </button>

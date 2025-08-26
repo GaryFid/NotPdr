@@ -1,30 +1,23 @@
 'use client'
 import { useState } from 'react';
-import { ArrowLeft, Play, Users, Zap, Settings } from 'lucide-react';
+import { ArrowLeft, Play } from 'lucide-react';
 import { useGameStore } from '../../store/gameStore';
 import { useRouter } from 'next/navigation';
 
 export default function GameSetupPage() {
   const [selectedPlayers, setSelectedPlayers] = useState(5);
-  const [selectedMode, setSelectedMode] = useState('classic');
-  const [addBots, setAddBots] = useState(true);
-  const [testMode, setTestMode] = useState(false);
+
   const [isStarting, setIsStarting] = useState(false);
 
   const { startGame: startGameInStore } = useGameStore();
   const router = useRouter();
 
   const playerOptions = [5, 6, 7, 8, 9];
-  const modes = [
-    { key: 'classic', icon: Users, label: 'Классический.' },
-    { key: 'quick', icon: Zap, label: 'Быстрая' },
-    { key: 'custom', icon: Settings, label: 'Своя' },
-  ];
 
   const startGame = async () => {
     try {
       console.log('🎮 Начинаем запуск игры...');
-      console.log('Параметры:', { selectedPlayers, selectedMode, addBots, testMode });
+      console.log('Параметры:', { selectedPlayers });
       
       setIsStarting(true);
       
@@ -151,118 +144,9 @@ export default function GameSetupPage() {
           </div>
         </div>
 
-        {/* Режим игры */}
-        <div style={{ marginBottom: '24px' }}>
-          <div className="menu-actions-title">РЕЖИМ ИГРЫ</div>
-          <div style={{ 
-            display: 'flex', 
-            gap: '12px', 
-            marginTop: '12px' 
-          }}>
-            {modes.map(mode => {
-              const IconComponent = mode.icon;
-              return (
-                <button 
-                  key={mode.key}
-                  onClick={() => setSelectedMode(mode.key)}
-                  className={selectedMode === mode.key ? 'menu-balance-card' : 'menu-action-card'}
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '16px 12px',
-                    fontSize: '1rem',
-                    fontWeight: '600',
-                    transform: selectedMode === mode.key ? 'scale(1.05)' : 'scale(1)',
-                    color: selectedMode === mode.key ? '#0f172a' : '#e2e8f0',
-                    transition: 'all 0.3s ease'
-                  }}
-                >
-                  <IconComponent size={24} style={{ marginBottom: '8px' }} />
-                  <span style={{ fontSize: '0.9rem' }}>{mode.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
 
-        {/* Дополнительные настройки */}
-        <div style={{ marginBottom: '32px' }}>
-          <div className="menu-actions-title">ДОПОЛНИТЕЛЬНЫЕ НАСТРОЙКИ</div>
-          <div style={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            gap: '12px',
-            marginTop: '12px'
-          }}>
-            <label style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              color: '#e2e8f0',
-              fontSize: '1rem',
-              fontWeight: '500',
-              cursor: 'pointer',
-              padding: '8px',
-              borderRadius: '8px',
-              transition: 'background 0.3s ease'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.background = 'rgba(34, 197, 94, 0.1)';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.background = 'transparent';
-            }}
-            >
-              <input 
-                type="checkbox" 
-                checked={addBots} 
-                onChange={(e) => setAddBots(e.target.checked)}
-                style={{ 
-                  width: '18px', 
-                  height: '18px',
-                  accentColor: '#22c55e',
-                  cursor: 'pointer'
-                }} 
-              />
-              Добавить ботов
-            </label>
-            <label style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              color: '#e2e8f0',
-              fontSize: '1rem',
-              fontWeight: '500',
-              cursor: 'pointer',
-              padding: '8px',
-              borderRadius: '8px',
-              transition: 'background 0.3s ease'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.background = 'rgba(34, 197, 94, 0.1)';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.background = 'transparent';
-            }}
-            >
-              <input 
-                type="checkbox" 
-                checked={testMode} 
-                onChange={(e) => setTestMode(e.target.checked)}
-                style={{ 
-                  width: '18px', 
-                  height: '18px',
-                  accentColor: '#22c55e',
-                  cursor: 'pointer'
-                }} 
-              />
-              Тестовый режим
-            </label>
-          </div>
-        </div>
+
+
 
         {/* Кнопки */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
