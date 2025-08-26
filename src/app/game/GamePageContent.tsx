@@ -265,6 +265,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
     console.log(`🤖 [AI Check] Проверка хода для бота ${currentTurnPlayer.name}:`);
     console.log(`🤖 [AI Check] - gameStage: ${gameStage}, turnPhase: ${turnPhase}, stage2TurnPhase: ${stage2TurnPhase}`);
     console.log(`🤖 [AI Check] - currentPlayerId: ${currentPlayerId}, player.id: ${currentTurnPlayer.id}`);
+    console.log(`🤖 [AI Check] - игрок.карты: ${currentTurnPlayer.cards.length}, открытых: ${currentTurnPlayer.cards.filter(c => c.open).length}`);
+    console.log(`🤖 [AI Check] - карты игрока:`, currentTurnPlayer.cards.map(c => `${c.image}(${c.open ? 'open' : 'closed'})`));
     
     // Проверяем что это действительно ход этого бота
     if (gameStage === 2 || gameStage === 3) {
@@ -333,6 +335,9 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
       } else if (gameStage === 2 || gameStage === 3) {
         // Во 2-й и 3-й стадиях AI использует систему selectHandCard + playSelectedCard (правила одинаковые)
         console.log(`🤖 [AI Stage${gameStage}] Принято решение:`, decision);
+        console.log(`🤖 [AI Stage${gameStage}] - tableStack.length: ${tableStack?.length || 0}`);
+        console.log(`🤖 [AI Stage${gameStage}] - trumpSuit: ${trumpSuit}`);
+        console.log(`🤖 [AI Stage${gameStage}] - доступные функции: selectHandCard=${!!selectHandCard}, playSelectedCard=${!!playSelectedCard}, takeTableCards=${!!takeTableCards}`);
         switch (decision.action) {
           case 'play_card':
             if (decision.cardToPlay && selectHandCard && playSelectedCard) {
@@ -354,10 +359,13 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                 } else {
                   console.log(`🚨 [AI Stage${gameStage}] Карта не найдена в руке или закрыта:`, decision.cardToPlay?.image);
                   console.log(`🚨 [AI Stage${gameStage}] Доступные карты:`, currentTurnPlayer.cards.filter(c => c.open).map(c => c.image));
+                  console.log(`🚨 [AI Stage${gameStage}] Все карты игрока:`, currentTurnPlayer.cards.map(c => `${c.image}(${c.open ? 'open' : 'closed'})`));
                   // Fallback: берем карты со стола
                   if (takeTableCards) {
                     console.log(`🤖 [AI Stage${gameStage}] Fallback: берем карты со стола`);
                     takeTableCards();
+                  } else {
+                    console.log(`🚨 [AI Stage${gameStage}] КРИТИЧЕСКАЯ ОШИБКА: Нет функции takeTableCards!`);
                   }
                 }
               }

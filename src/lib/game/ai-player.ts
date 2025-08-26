@@ -149,6 +149,7 @@ export class AIPlayer {
     // Проверяем есть ли карты для игры
     if (handCards.length === 0) {
       console.log(`🤖 [AI Stage2 P.I.D.R.] ❌ Нет открытых карт для игры`);
+      console.log(`🤖 [AI Stage2 P.I.D.R.] ❌ Все карты игрока:`, currentPlayer.cards.map((c: any) => `${c.image}(${c.open ? 'open' : 'closed'})`));
       return { action: 'draw_card', confidence: 0.9 }; // Берем нижнюю карту
     }
     
@@ -163,6 +164,8 @@ export class AIPlayer {
           cardToPlay: weakestCard,
           confidence: 0.8
         };
+      } else {
+        console.log(`🚨 [AI Stage2 P.I.D.R.] ❌ Не можем найти слабейшую карту среди:`, handCards.map((c: any) => c.image));
       }
     } else {
       // ПРАВИЛА P.I.D.R.: На столе есть карты - пытаемся побить ВЕРХНЮЮ карту
