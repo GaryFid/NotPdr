@@ -46,8 +46,8 @@ export async function GET(req: NextRequest) {
       if (error) throw error;
 
       const online = onlineFriends
-        ?.filter(f => f.users?.user_status?.status === 'online' || f.users?.user_status?.status === 'in_game')
-        .map(f => ({
+        ?.filter((f: any) => f.users?.user_status?.status === 'online' || f.users?.user_status?.status === 'in_game')
+        .map((f: any) => ({
           id: f.friend_id,
           name: f.users?.username || f.users?.firstName || 'Игрок',
           status: f.users?.user_status?.status === 'in_game' ? 'В игре' : 'В сети',
@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
 
       if (error) throw error;
 
-      const friendRequests = requests?.map(r => ({
+      const friendRequests = requests?.map((r: any) => ({
         id: r.id,
         userId: r.user_id,
         name: r.users?.username || r.users?.firstName || 'Игрок',
@@ -99,10 +99,10 @@ export async function GET(req: NextRequest) {
         .select('friend_id')
         .eq('user_id', userId);
 
-      const friendIds = existingFriends?.map(f => f.friend_id) || [];
+      const friendIds = existingFriends?.map((f: any) => f.friend_id) || [];
       const suggestions = suggested
-        ?.filter(u => !friendIds.includes(u.id))
-        .map(u => ({
+        ?.filter((u: any) => !friendIds.includes(u.id))
+        .map((u: any) => ({
           id: u.id,
           name: u.username || u.firstName || 'Игрок',
           avatar: u.avatar || '🎯',
@@ -127,7 +127,7 @@ export async function GET(req: NextRequest) {
 
     if (error) throw error;
 
-    const friends = allFriends?.map(f => ({
+    const friends = allFriends?.map((f: any) => ({
       id: f.friend_id,
       name: f.users?.username || f.users?.firstName || 'Игрок',
       status: getStatusText(f.users?.user_status?.status, f.users?.user_status?.last_seen),

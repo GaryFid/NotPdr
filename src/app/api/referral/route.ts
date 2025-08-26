@@ -52,8 +52,8 @@ export async function GET(req: NextRequest) {
 
     // Подсчитываем статистику
     const totalReferrals = referrals?.length || 0;
-    const totalRewards = referrals?.reduce((sum, ref) => sum + (ref.is_rewarded ? ref.reward_coins : 0), 0) || 0;
-    const pendingRewards = referrals?.filter(ref => !ref.is_rewarded).length || 0;
+    const totalRewards = referrals?.reduce((sum: number, ref: any) => sum + (ref.is_rewarded ? ref.reward_coins : 0), 0) || 0;
+    const pendingRewards = referrals?.filter((ref: any) => !ref.is_rewarded).length || 0;
 
     // Создаем реферальную ссылку
     const referralUrl = `${APP_URL}?ref=${user.referralCode}`;
@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
         totalRewards,
         pendingRewards
       },
-      referrals: referrals?.map(ref => ({
+      referrals: referrals?.map((ref: any) => ({
         id: ref.id,
         username: ref.users?.username || ref.users?.firstName || 'Игрок',
         avatar: ref.users?.avatar || '🎮',

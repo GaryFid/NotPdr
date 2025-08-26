@@ -252,7 +252,7 @@ export async function POST(req: NextRequest) {
         .select('position')
         .eq('room_id', room.id);
 
-      const occupied = occupiedPositions?.map(p => p.position) || [];
+      const occupied = occupiedPositions?.map((p: any) => p.position) || [];
       let freePosition = 0;
       for (let i = 0; i < room.max_players; i++) {
         if (!occupied.includes(i)) {
@@ -412,7 +412,7 @@ async function getUserRoomIds(userId: string): Promise<string> {
     .select('room_id')
     .eq('user_id', userId);
   
-  return data?.map(p => p.room_id).join(',') || '';
+  return data?.map((p: any) => p.room_id).join(',') || '';
 }
 
 async function updateUserStatus(userId: string, status: string, roomId: string | null) {
