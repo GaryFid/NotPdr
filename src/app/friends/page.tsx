@@ -1,30 +1,205 @@
 'use client'
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, UserPlus, Search, Check, X, User, Users, Gamepad2 } from 'lucide-react';
+import { ArrowLeft, UserPlus, Search, Check, X, User, Users, Gamepad2, Share, Copy } from 'lucide-react';
 import BottomNav from '../../components/BottomNav';
+import { useTelegramShare } from '../../hooks/useTelegramShare';
+
+interface Friend {
+  id: string;
+  name: string;
+  status: string;
+  avatar: string;
+  lastSeen?: string;
+  isOnline?: boolean;
+  currentRoom?: string;
+}
+
+interface FriendRequest {
+  id: string;
+  userId: string;
+  name: string;
+  message: string;
+  avatar: string;
+  date: string;
+}
+
+interface SuggestedFriend {
+  id: string;
+  name: string;
+  avatar: string;
+  mutualFriends: number;
+}
 
 export default function FriendsPage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [onlineFriends, setOnlineFriends] = useState<Friend[]>([]);
+  const [allFriends, setAllFriends] = useState<Friend[]>([]);
+  const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
+  const [suggestedFriends, setSuggestedFriends] = useState<SuggestedFriend[]>([]);
+  const [addingFriend, setAddingFriend] = useState(false);
+  const [newFriendName, setNewFriendName] = useState('');
   
-  const onlineFriends = [
-    { id: 1, name: 'Shadow', status: 'В игре', avatar: '🎮', lastSeen: null },
-    { id: 2, name: 'Phoenix', status: 'В сети', avatar: '🔥', lastSeen: null }
-  ];
-  
-  const allFriends = [
-    { id: 3, name: 'Tiger', status: 'Был(а) 2 часа назад', avatar: '🐅', lastSeen: '2 часа назад' },
-    { id: 4, name: 'Wolf', status: 'Был(а) вчера', avatar: '🐺', lastSeen: 'вчера' }
-  ];
-  
-  const friendRequests = [
-    { id: 5, name: 'Dragon', message: 'Хочет добавить вас в друзья', avatar: '🐉' }
-  ];
-  
-  const suggestedFriends = [
-    { id: 6, name: 'Eagle', mutualFriends: 3, avatar: '🦅' },
-    { id: 7, name: 'Falcon', mutualFriends: 1, avatar: '🦅' }
-  ];
+  const { inviteFriend, shareReferral } = useTelegramShare();
+
+  // Загрузка данных друзей
+  useEffect(() => {
+    loadFriendsData();
+  }, []);
+
+  const loadFriendsData = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) return;
+
+      // Загружаем онлайн друзей
+      const onlineResponse = await fetch('/api/friends?type=online', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (onlineResponse.ok) {
+        const { friends } = await onlineResponse.json();
+        setOnlineFriends(friends || []);
+      }
+
+      // Загружаем всех друзей
+      const allResponse = await fetch('/api/friends?type=all', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (allResponse.ok) {
+        const { friends } = await allResponse.json();
+        setAllFriends(friends || []);
+      }
+
+      // Загружаем запросы в друзья
+      const requestsResponse = await fetch('/api/friends?type=requests', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (requestsResponse.ok) {
+        const { requests } = await requestsResponse.json();
+        setFriendRequests(requests || []);
+      }
+
+      // Загружаем предложения
+      const suggestedResponse = await fetch('/api/friends?type=suggested', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (suggestedResponse.ok) {
+        const { suggested } = await suggestedResponse.json();
+        setSuggestedFriends(suggested || []);
+      }
+
+    } catch (error) {
+      console.error('Error loading friends:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Добавить друга
+  const handleAddFriend = async (username: string) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) return;
+
+      const response = await fetch('/api/friends', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          action: 'add',
+          username: username.trim()
+        })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        alert(result.message);
+        setNewFriendName('');
+        setAddingFriend(false);
+      } else {
+        alert(result.message);
+      }
+    } catch (error) {
+      console.error('Error adding friend:', error);
+      alert('Ошибка при добавлении друга');
+    }
+  };
+
+  // Принять запрос в друзья
+  const handleAcceptRequest = async (userId: string) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) return;
+
+      const response = await fetch('/api/friends', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          action: 'accept',
+          friendId: userId
+        })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        // Обновляем списки
+        loadFriendsData();
+      } else {
+        alert(result.message);
+      }
+    } catch (error) {
+      console.error('Error accepting request:', error);
+    }
+  };
+
+  // Отклонить запрос в друзья
+  const handleDeclineRequest = async (userId: string) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) return;
+
+      const response = await fetch('/api/friends', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          action: 'decline',
+          friendId: userId
+        })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        // Обновляем списки
+        loadFriendsData();
+      } else {
+        alert(result.message);
+      }
+    } catch (error) {
+      console.error('Error declining request:', error);
+    }
+  };
+
+  // Пригласить в игру
+  const handleInviteToGame = (friend: Friend) => {
+    // TODO: Интеграция с системой комнат
+    if (friend.currentRoom) {
+      // Если друг уже в игре, можно присоединиться к его комнате
+      alert(`${friend.name} уже играет! Хотите присоединиться к их игре?`);
+    } else {
+      // Создать новую игру и пригласить друга
+      alert(`Приглашение в игру отправлено ${friend.name}!`);
+    }
+  };
 
   return (
     <div className="main-menu-container">
@@ -36,10 +211,71 @@ export default function FriendsPage() {
             Назад
           </button>
           <span className="menu-title">ДРУЗЬЯ</span>
-          <button className="friends-add-btn">
-            <UserPlus className="w-5 h-5" />
-          </button>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => shareReferral('USER_REF_CODE')} // TODO: получить реальный код
+              className="p-2 rounded-lg border border-blue-400 text-blue-200 hover:bg-blue-400/10 transition-all"
+              title="Пригласить через Telegram"
+            >
+              <Share className="w-5 h-5" />
+            </button>
+            <button 
+              onClick={() => setAddingFriend(true)}
+              className="friends-add-btn"
+            >
+              <UserPlus className="w-5 h-5" />
+            </button>
+          </div>
         </div>
+
+        {/* Add Friend Modal */}
+        {addingFriend && (
+          <motion.div 
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div 
+              className="bg-gray-800 rounded-lg p-6 w-full max-w-md"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+            >
+              <h3 className="text-xl font-bold text-white mb-4">Добавить друга</h3>
+              <input
+                type="text"
+                placeholder="Введите имя пользователя..."
+                value={newFriendName}
+                onChange={(e) => setNewFriendName(e.target.value)}
+                className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-400 focus:outline-none mb-4"
+                autoFocus
+              />
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => {
+                    setAddingFriend(false);
+                    setNewFriendName('');
+                  }}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-colors"
+                >
+                  Отмена
+                </button>
+                <button
+                  onClick={() => {
+                    if (newFriendName.trim()) {
+                      handleAddFriend(newFriendName);
+                    }
+                  }}
+                  disabled={!newFriendName.trim()}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Добавить
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
 
         {/* Search */}
         <motion.div 
@@ -59,6 +295,13 @@ export default function FriendsPage() {
             />
           </div>
         </motion.div>
+
+        {/* Loading */}
+        {loading && (
+          <div className="flex justify-center items-center py-8">
+            <div className="text-white text-lg">Загрузка друзей...</div>
+          </div>
+        )}
 
         {/* Online Friends */}
         <motion.div 
@@ -93,6 +336,7 @@ export default function FriendsPage() {
                   className="friend-action-btn play"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
+                  onClick={() => handleInviteToGame(friend)}
                 >
                   <Gamepad2 className="action-icon" />
                   Играть
@@ -174,6 +418,7 @@ export default function FriendsPage() {
                     className="request-btn accept"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
+                    onClick={() => handleAcceptRequest(request.userId)}
                   >
                     <Check className="request-icon" />
                   </motion.button>
@@ -181,6 +426,7 @@ export default function FriendsPage() {
                     className="request-btn decline"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
+                    onClick={() => handleDeclineRequest(request.userId)}
                   >
                     <X className="request-icon" />
                   </motion.button>
@@ -221,6 +467,7 @@ export default function FriendsPage() {
                   className="suggested-add-btn"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
+                  onClick={() => handleAddFriend(suggestion.name)}
                 >
                   <UserPlus className="add-icon" />
                   Добавить
