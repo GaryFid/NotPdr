@@ -220,14 +220,14 @@
             <div class="rule-item">
                 <div class="stage-number">2</div>
                 <div class="rule-content">
-                    <div class="rule-title">P.I.D.R. правила (2-я стадия)</div>
+                    <div class="rule-title">Алгоритм битья P.I.D.R. (2-я стадия)</div>
                     <ul class="stage-rules">
-                        <li>Если побил карту - ход переходит следующему игроку</li>
-                        <li>Если не можешь побить - берёшь нижнюю карту со стола</li>
-                        <li>Максимум карт на столе = количество игроков - 1</li>
-                        <li>Инициатор раунда закрывает ход при достижении лимита</li>
-                        <li>Определяется козырная масть (последняя не-пика в колоде)</li>
-                        <li>Козырная карта бьёт любую некозырную того же ранга</li>
+                        <li><strong>Атака:</strong> Атакующий кладет карту на стол</li>
+                        <li><strong>Защита:</strong> Побить картой старше той же масти ИЛИ козырем (если атака не козырная)</li>
+                        <li><strong>Не можешь побить:</strong> Взять нижнюю карту со стола</li>
+                        <li><strong>Если побил:</strong> Ход переходит следующему игроку, он пытается побить верхнюю карту</li>
+                        <li><strong>Проверка ранга:</strong> Карта должна быть старше (ранг > ранг на столе)</li>
+                        <li><strong>ВАЖНО:</strong> Никакого подкидывания карт нет!</li>
                     </ul>
                 </div>
             </div>
@@ -241,6 +241,109 @@
                         <li>Правила игры остаются как во 2-й стадии</li>
                         <li>Игрок играет пеньками до победы или поражения</li>
                     </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Детальный алгоритм 2-й стадии -->
+        <div class="rules-section">
+            <div class="rules-section-title">
+                <i class="fas fa-cogs"></i>
+                Пошаговый алгоритм 2-й стадии
+            </div>
+            <div class="rule-item">
+                <div class="rule-icon">1</div>
+                <div class="rule-content">
+                    <div class="rule-title">Атака</div>
+                    <div class="rule-description">Выбрать карту для хода и положить на стол</div>
+                </div>
+            </div>
+            <div class="rule-item">
+                <div class="rule-icon">2</div>
+                <div class="rule-content">
+                    <div class="rule-title">Защита</div>
+                    <div class="rule-description">Найти подходящую карту для битья</div>
+                </div>
+            </div>
+            <div class="rule-item">
+                <div class="rule-icon">3</div>
+                <div class="rule-content">
+                    <div class="rule-title">Проверка масти</div>
+                    <div class="rule-description">Та же масть или козырь (если атака не козырная)</div>
+                </div>
+            </div>
+            <div class="rule-item">
+                <div class="rule-icon">4</div>
+                <div class="rule-content">
+                    <div class="rule-title">Проверка ранга</div>
+                    <div class="rule-description">Карта должна быть старше (ранг > ранг на столе)</div>
+                </div>
+            </div>
+            <div class="rule-item">
+                <div class="rule-icon">5</div>
+                <div class="rule-content">
+                    <div class="rule-title">Если нельзя побить</div>
+                    <div class="rule-description">Взять нижнюю карту со стола</div>
+                </div>
+            </div>
+            <div class="rule-item">
+                <div class="rule-icon">6</div>
+                <div class="rule-content">
+                    <div class="rule-title">Переход хода</div>
+                    <div class="rule-description">К следующему игроку для попытки побить верхнюю карту</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Логика ИИ -->
+        <div class="rules-section">
+            <div class="rules-section-title">
+                <i class="fas fa-robot"></i>
+                Логика ИИ (для ботов)
+            </div>
+            <div class="rule-item">
+                <div class="rule-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="rule-content">
+                    <div class="rule-title">Анализ руки</div>
+                    <div class="rule-description">Оценка силы карт в руке</div>
+                </div>
+            </div>
+            <div class="rule-item">
+                <div class="rule-icon">
+                    <i class="fas fa-arrow-down"></i>
+                </div>
+                <div class="rule-content">
+                    <div class="rule-title">Выбор слабейшей</div>
+                    <div class="rule-description">Для атаки выбирается самая слабая карта</div>
+                </div>
+            </div>
+            <div class="rule-item">
+                <div class="rule-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="rule-content">
+                    <div class="rule-title">Сохранение козырей</div>
+                    <div class="rule-description">Козыри сохраняются для важных моментов</div>
+                </div>
+            </div>
+            <div class="rule-item">
+                <div class="rule-icon">
+                    <i class="fas fa-calculator"></i>
+                </div>
+                <div class="rule-content">
+                    <div class="rule-title">Подсчет карт</div>
+                    <div class="rule-description">Запоминание сыгранных карт</div>
+                </div>
+            </div>
+            <div class="rule-item">
+                <div class="rule-icon">
+                    <i class="fas fa-ban"></i>
+                </div>
+                <div class="rule-content">
+                    <div class="rule-title">Блокировка</div>
+                    <div class="rule-description">Не дать противнику сходить последней картой</div>
                 </div>
             </div>
         </div>
@@ -266,7 +369,7 @@
                 </div>
                 <div class="rule-content">
                     <div class="rule-title">Козырная масть (2-3 стадии)</div>
-                    <div class="rule-description">Определяется как последняя не-пиковая карта в колоде при переходе во 2-ю стадию</div>
+                    <div class="rule-description">Последняя не-пиковая карта в колоде. Пики только Пикями!</div>
                 </div>
             </div>
             <div class="rule-item">
