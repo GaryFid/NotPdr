@@ -624,21 +624,14 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                     </>
                   ) : (
                     /* Показываем когда стол пустой */
-                    <div 
-                      className={styles.tableLabel} 
-                      style={{ 
-                        opacity: 0.7, 
-                        fontSize: '14px',
-                        zIndex: 300,
-                        background: 'rgba(255, 165, 0, 0.8)',
-                        color: 'white',
-                        padding: '8px 12px',
-                        borderRadius: '12px',
-                        fontWeight: 600
-                      }}
+                    <motion.div 
+                      className={styles.tableLabel}
+                      initial={{ opacity: 0, y: -20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      style={{ zIndex: 300 }}
                     >
-                      {gameStage === 2 ? '⚔️ БИТВА' : ''}
-                    </div>
+                      🃏 Карты на столе: {tableStack.length}
+                    </motion.div>
                   )}
                 </div>
               )}

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>P.I.D.R. - Правила</title>
+    <title>P.I.D.R. - Правила игры</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="css/game-setup.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -152,7 +152,7 @@
         <button class="btn-circle" onclick="history.back()">
             <i class="fas fa-arrow-left"></i>
         </button>
-        <h1 class="section-title">Правила игры</h1>
+        <h1 class="section-title">Правила P.I.D.R.</h1>
         <div style="width: 32px;"></div>
     </header>
 
@@ -161,7 +161,7 @@
         <div class="rules-section">
             <div class="rules-section-title">
                 <i class="fas fa-book" style="color: #FFD700;"></i>
-                Правила игры
+                Правила игры P.I.D.R.
             </div>
         </div>
 
@@ -220,11 +220,26 @@
             <div class="rule-item">
                 <div class="stage-number">2</div>
                 <div class="rule-content">
-                    <div class="rule-title">Расширенные правила</div>
+                    <div class="rule-title">P.I.D.R. правила (2-я стадия)</div>
                     <ul class="stage-rules">
-                        <li>Добавляются правила мастей</li>
-                        <li>Активируется механика "Последняя!"</li>
-                        <li>Доступна механика "Сколько карт?"</li>
+                        <li>Если побил карту - ход переходит следующему игроку</li>
+                        <li>Если не можешь побить - берёшь нижнюю карту со стола</li>
+                        <li>Максимум карт на столе = количество игроков - 1</li>
+                        <li>Инициатор раунда закрывает ход при достижении лимита</li>
+                        <li>Определяется козырная масть (последняя не-пика в колоде)</li>
+                        <li>Козырная карта бьёт любую некозырную того же ранга</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="rule-item">
+                <div class="stage-number">3</div>
+                <div class="rule-content">
+                    <div class="rule-title">Пеньки (3-я стадия)</div>
+                    <ul class="stage-rules">
+                        <li>Активируется когда у игрока нет открытых карт во 2-й стадии</li>
+                        <li>Открываются 2 закрытые карты (пеньки)</li>
+                        <li>Правила игры остаются как во 2-й стадии</li>
+                        <li>Игрок играет пеньками до победы или поражения</li>
                     </ul>
                 </div>
             </div>
@@ -234,33 +249,42 @@
         <div class="rules-section">
             <div class="rules-section-title">
                 <i class="fas fa-exclamation-circle"></i>
-                Особые правила
+                Особые правила P.I.D.R.
             </div>
             <div class="rule-item">
                 <div class="rule-icon">
                     <i class="fas fa-crown"></i>
                 </div>
                 <div class="rule-content">
-                    <div class="rule-title">Правило двойки</div>
-                    <div class="rule-description">Карта "2" может побить только туз (A)</div>
+                    <div class="rule-title">Правило двойки (1-я стадия)</div>
+                    <div class="rule-description">Карта "2" может быть положена только на туз (A)</div>
                 </div>
             </div>
             <div class="rule-item">
                 <div class="rule-icon">
-                    <i class="fas fa-exclamation"></i>
+                    <i class="fas fa-diamond"></i>
                 </div>
                 <div class="rule-content">
-                    <div class="rule-title">Последняя!</div>
-                    <div class="rule-description">Игрок должен объявить, когда у него остается одна карта</div>
+                    <div class="rule-title">Козырная масть (2-3 стадии)</div>
+                    <div class="rule-description">Определяется как последняя не-пиковая карта в колоде при переходе во 2-ю стадию</div>
                 </div>
             </div>
             <div class="rule-item">
                 <div class="rule-icon">
-                    <i class="fas fa-question"></i>
+                    <i class="fas fa-exchange-alt"></i>
                 </div>
                 <div class="rule-content">
-                    <div class="rule-title">Сколько карт?</div>
-                    <div class="rule-description">Игроки могут спрашивать количество карт у других участников</div>
+                    <div class="rule-title">Переходы между стадиями</div>
+                    <div class="rule-description">1→2: когда у всех по 2 карты. 2→3: когда нет открытых карт</div>
+                </div>
+            </div>
+            <div class="rule-item">
+                <div class="rule-icon">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <div class="rule-content">
+                    <div class="rule-title">Условие победы</div>
+                    <div class="rule-description">Избавиться от всех карт (включая пеньки в 3-й стадии)</div>
                 </div>
             </div>
         </div>

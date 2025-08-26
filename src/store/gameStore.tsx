@@ -929,33 +929,24 @@ export const useGameStore = create<GameState>()(
         // Инициализируем 2-ю стадию
         get().initializeStage2();
         
-        // Уведомления о начале второй стадии (по 5 секунд каждое)
+        // Показываем уведомления и СРАЗУ запускаем ход
+        get().showNotification('🎉 Первая стадия завершена!', 'success', 3000);
+        
         setTimeout(() => {
-          get().showNotification('🎉 Первая стадия завершена!', 'success', 5000);
+          const startingPlayer = players.find(p => p.id === startingPlayerId);
+          get().showNotification(`🚀 Вторая стадия! Ходит: ${startingPlayer?.name || 'Игрок'}`, 'info', 3000);
+          
+          const trumpName = trumpSuit === 'clubs' ? 'Трефы' : 
+                          trumpSuit === 'diamonds' ? 'Бубны' :
+                          trumpSuit === 'hearts' ? 'Червы' : 'Неизвестно';
           
           setTimeout(() => {
-            const startingPlayer = players.find(p => p.id === startingPlayerId);
-            get().showNotification(`🚀 Вторая стадия! Ходит: ${startingPlayer?.name || 'Игрок'}`, 'info', 5000);
-            
-            setTimeout(() => {
-              const trumpName = trumpSuit === 'clubs' ? 'Трефы' : 
-                              trumpSuit === 'diamonds' ? 'Бубны' :
-                              trumpSuit === 'hearts' ? 'Червы' : 'Неизвестно';
-              // Примечание: Пики никогда не могут быть козырем!
-              get().showNotification(`🃏 Козырь: ${trumpName} (Пики не козырь!)`, 'warning', 5000);
-              
-              // Показываем правило "Пики только Пикями!"
-              setTimeout(() => {
-                get().showNotification('⚠️ Пики только Пикями!', 'error', 5000);
-                
-                // ИСПРАВЛЕНО: Запускаем обработку хода для 2-й стадии
-                setTimeout(() => {
-                  get().processPlayerTurn(startingPlayerId);
-                }, 1000);
-              }, 3000);
-            }, 3000);
-          }, 3000);
-        }, 1000);
+            get().showNotification(`🃏 Козырь: ${trumpName} (Пики не козырь!)`, 'warning', 3000);
+          }, 2000);
+          
+          // ИСПРАВЛЕНО: Запускаем ход СРАЗУ (не ждем окончания уведомлений)
+          get().processPlayerTurn(startingPlayerId);
+        }, 500);
       },
       
       // Обработка хода игрока (НОВАЯ логика)
