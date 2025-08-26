@@ -10,7 +10,7 @@ interface CreateRoomModalProps {
     isPrivate: boolean;
     password: string;
   };
-  setRoomData: (data: (prev: typeof roomData) => typeof roomData) => void;
+  setRoomData: (data: any) => void;
   onCreateRoom: () => void;
 }
 
