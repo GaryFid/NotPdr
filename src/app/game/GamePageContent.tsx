@@ -132,9 +132,12 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
     return 1; // 5 и меньше
   }, [players.length, playerCount]);
 
-  // Получаем текущего игрока (пользователя)
-  const currentPlayer = players.find(p => p.id === currentPlayerId);
+  // Получаем игрока, который сейчас ходит
+  const currentTurnPlayer = players.find(p => p.id === currentPlayerId);
   const currentPlayerIndex = players.findIndex(p => p.id === currentPlayerId);
+  
+  // Получаем пользователя-человека (для UI контейнера карт)
+  const humanPlayer = players.find(p => p.isUser);
   
   // Создаем экземпляры ИИ для ботов
   const [aiPlayers, setAiPlayers] = useState<Map<number, AIPlayer>>(new Map());
@@ -249,19 +252,18 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
   useEffect(() => {
     if (!isGameActive || !currentPlayerId) return;
     
-    const currentPlayer = players.find(p => p.id === currentPlayerId);
-    if (!currentPlayer || !currentPlayer.isBot) return;
+    if (!currentTurnPlayer || !currentTurnPlayer.isBot) return;
     
     // Защита от повторных вызовов AI (race condition protection)
     if (aiProcessingRef.current === currentPlayerId) {
-      console.log(`🚫 [AI Protection] AI уже обрабатывает ход для ${currentPlayer.name}, пропускаем`);
+      console.log(`🚫 [AI Protection] AI уже обрабатывает ход для ${currentTurnPlayer.name}, пропускаем`);
       return;
     }
     
     // СТРОГИЕ ПРОВЕРКИ: ИИ может ходить только в свой ход!
-    console.log(`🤖 [AI Check] Проверка хода для бота ${currentPlayer.name}:`);
+    console.log(`🤖 [AI Check] Проверка хода для бота ${currentTurnPlayer.name}:`);
     console.log(`🤖 [AI Check] - gameStage: ${gameStage}, turnPhase: ${turnPhase}, stage2TurnPhase: ${stage2TurnPhase}`);
-    console.log(`🤖 [AI Check] - currentPlayerId: ${currentPlayerId}, player.id: ${currentPlayer.id}`);
+    console.log(`🤖 [AI Check] - currentPlayerId: ${currentPlayerId}, player.id: ${currentTurnPlayer.id}`);
     
     // Проверяем что это действительно ход этого бота
     if (gameStage === 2 || gameStage === 3) {
@@ -271,7 +273,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
         return;
       }
       // Дополнительная проверка: игрок должен быть текущим
-      if (currentPlayer.id !== currentPlayerId) {
+      if (currentTurnPlayer?.id !== currentPlayerId) {
         console.log(`🚫 [AI Check] ID игрока не совпадает с текущим ID хода`);
         return;
       }
@@ -289,7 +291,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
       return;
     }
     
-    console.log(`✅ [AI Check] ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ! Запускаем AI для игрока ${currentPlayer.name}`);
+    console.log(`✅ [AI Check] ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ! Запускаем AI для игрока ${currentTurnPlayer.name}`);
     
     // Устанавливаем флаг обработки
     aiProcessingRef.current = currentPlayerId;
@@ -334,11 +336,10 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
           case 'play_card':
             if (decision.cardToPlay && selectHandCard && playSelectedCard) {
               // Найдем карту в руке игрока и выберем её
-              const currentPlayer = players.find(p => p.id === currentPlayerId);
-              if (currentPlayer) {
-                console.log(`🤖 [AI Stage${gameStage}] Ищем карту ${decision.cardToPlay?.image} среди:`, currentPlayer.cards.map(c => `${c.image}(${c.open ? 'open' : 'closed'})`));
+              if (currentTurnPlayer) {
+                console.log(`🤖 [AI Stage${gameStage}] Ищем карту ${decision.cardToPlay?.image} среди:`, currentTurnPlayer.cards.map(c => `${c.image}(${c.open ? 'open' : 'closed'})`));
                 
-                const cardInHand = currentPlayer.cards.find(c => 
+                const cardInHand = currentTurnPlayer.cards.find(c => 
                   c.image === decision.cardToPlay?.image && c.open
                 );
                 if (cardInHand) {
@@ -351,7 +352,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                   }, 800);
                 } else {
                   console.log(`🚨 [AI Stage${gameStage}] Карта не найдена в руке или закрыта:`, decision.cardToPlay?.image);
-                  console.log(`🚨 [AI Stage${gameStage}] Доступные карты:`, currentPlayer.cards.filter(c => c.open).map(c => c.image));
+                  console.log(`🚨 [AI Stage${gameStage}] Доступные карты:`, currentTurnPlayer.cards.filter(c => c.open).map(c => c.image));
                   // Fallback: берем карты со стола
                   if (takeTableCards) {
                     console.log(`🤖 [AI Stage${gameStage}] Fallback: берем карты со стола`);
@@ -424,8 +425,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
 
 
 
-  const canDrawCard = turnPhase === 'deck_card_revealed' && currentPlayer?.id === currentPlayerId;
-  const canClickDeck = turnPhase === 'showing_deck_hint' && currentPlayer?.id === currentPlayerId;
+  const canDrawCard = turnPhase === 'deck_card_revealed' && currentTurnPlayer?.id === currentPlayerId;
+  const canClickDeck = turnPhase === 'showing_deck_hint' && currentTurnPlayer?.id === currentPlayerId;
   const waitingForTarget = turnPhase === 'waiting_target_selection';
   
   // УДАЛЕНО: Логика canBeatTopCard и shouldShowTakeButton - кнопка "Взять карту" теперь постоянная во 2-й стадии
@@ -502,7 +503,9 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
 
       {!isGameActive ? (
         <div className={styles.setupScreen}>
-          <h2>Настройка игры P.I.D.R.</h2>
+          <h2>P.I.D.R. - Карточная игра</h2>
+          
+          {/* Выбор количества игроков */}
           <div className={styles.playerCountSelector}>
             <label>Количество игроков: {playerCount}</label>
             <input
@@ -514,9 +517,27 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
               className={styles.rangeSlider}
             />
           </div>
-          <button onClick={handleStartGame} className={styles.startButton}>
-            Начать игру
-          </button>
+          
+          {/* Кнопки игры */}
+          <div className={styles.gameButtons}>
+            <button onClick={handleStartGame} className={styles.startButton}>
+              🎮 Играть
+            </button>
+            
+            <button 
+              onClick={() => alert('Создание комнаты временно недоступно')} 
+              className={styles.roomButton}
+            >
+              🏠 Создать комнату
+            </button>
+            
+            <button 
+              onClick={() => alert('Подключение к комнате временно недоступно')} 
+              className={styles.roomButton}
+            >
+              🔗 Присоединиться
+            </button>
+          </div>
         </div>
       ) : (
         <div className={styles.gameArea}>
@@ -695,10 +716,10 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
               {/* Игроки по кругу */}
               {players.map((p, playerIndex) => {
                 const position = getCirclePosition(playerIndex, players.length);
-                const isCurrentPlayer = p.id === currentPlayer?.id;
+                const isCurrentPlayer = p.id === currentTurnPlayer?.id;
                 const isCurrentTurn = p.id === players[currentPlayerIndex]?.id;
                 // ПОДСКАЗКИ ТОЛЬКО ДЛЯ ЧЕЛОВЕКА (не для ботов!)
-                const showHintsForUser = currentPlayer && !currentPlayer.isBot;
+                const showHintsForUser = currentTurnPlayer && !currentTurnPlayer.isBot;
                 
                 const isTargetAvailable = availableTargets.includes(playerIndex) && showHintsForUser;
                 const isCurrentPlayerCard = p.id === currentPlayerId && turnPhase === 'analyzing_hand' && availableTargets.length > 0 && showHintsForUser;
@@ -1005,15 +1026,15 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
           </div>
 
           {/* Контейнер карт игрока внизу - только во 2-й и 3-й стадиях И ТОЛЬКО для человека */}
-          {isGameActive && currentPlayer && !currentPlayer.isBot && currentPlayer.cards.length > 0 && gameStage >= 2 && (
+          {isGameActive && humanPlayer && humanPlayer.cards.length > 0 && gameStage >= 2 && (
             <div className={styles.playerHand}>
               <div className={styles.handTitle}>
-                {gameStage === 2 && stage2TurnPhase === 'selecting_card' && currentPlayer.id === currentPlayerId ? 
+                {gameStage === 2 && stage2TurnPhase === 'selecting_card' && humanPlayer.id === currentPlayerId ? 
                   '🎯 ВЫБЕРИТЕ КАРТУ' : 
-                  '🎴 Ваши карты'} ({currentPlayer.cards.length})
+                  '🎴 Ваши карты'} ({humanPlayer.cards.length})
                 
                 {/* Кнопка "Взять карту" - постоянная во 2-й стадии */}
-                {gameStage === 2 && tableStack.length > 0 && currentPlayer?.id === currentPlayerId && (
+                {gameStage === 2 && tableStack.length > 0 && humanPlayer?.id === currentPlayerId && (
                   <button 
                     className={styles.takeCardFromTableButton}
                     onClick={() => {
@@ -1040,12 +1061,12 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                 )}
               </div>
               <div className={styles.handCards}>
-                {currentPlayer.cards.map((card, index) => {
+                {humanPlayer.cards.map((card, index) => {
                   const isSelectableStage2 = card.open && 
                     gameStage === 2 && 
                     stage2TurnPhase === 'selecting_card' && 
-                    currentPlayer.id === currentPlayerId && 
-                    !currentPlayer.isBot;
+                    humanPlayer.id === currentPlayerId && 
+                    !humanPlayer.isBot;
                   const isSelected = selectedHandCard?.id === card.id;
                   const baseStep = 10;
                   const mobileSteps = {
@@ -1091,12 +1112,12 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                         // Разрешаем клики только в свой ход во 2-й стадии
                         if (isSelectableStage2 && 
                             gameStage === 2 && 
-                            currentPlayer.id === currentPlayerId && 
-                            !currentPlayer.isBot) {
+                            humanPlayer.id === currentPlayerId && 
+                            !humanPlayer.isBot) {
                           console.log(`🎯 [HandCard Click] Игрок выбирает карту: ${card.image}`);
                           selectHandCard(card);
                         } else {
-                          console.log(`🚫 [HandCard Click] Клик заблокирован: isSelectableStage2=${isSelectableStage2}, gameStage=${gameStage}, isCurrentPlayer=${currentPlayer.id === currentPlayerId}, isBot=${currentPlayer.isBot}`);
+                          console.log(`🚫 [HandCard Click] Клик заблокирован: isSelectableStage2=${isSelectableStage2}, gameStage=${gameStage}, isCurrentPlayer=${humanPlayer.id === currentPlayerId}, isBot=${humanPlayer.isBot}`);
                         }
                       }}
                     >

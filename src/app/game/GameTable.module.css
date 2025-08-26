@@ -1937,6 +1937,39 @@
     0 0 0 1px rgba(255, 255, 255, 0.2);
 }
 
+/* Контейнер для кнопок */
+.gameButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
+  margin-top: 20px;
+}
+
+/* Кнопки комнат */
+.roomButton {
+  padding: 14px 30px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 6px 20px rgba(71, 85, 105, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.roomButton:hover {
+  background: linear-gradient(135deg, #475569 0%, #334155 100%);
+  transform: translateY(-1px);
+  box-shadow: 
+    0 8px 25px rgba(71, 85, 105, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
 .gameArea {
   display: flex;
   flex-direction: column;
@@ -2158,6 +2191,11 @@
     padding: 18px 50px;
     font-size: 20px;
   }
+  
+  .roomButton {
+    padding: 16px 40px;
+    font-size: 18px;
+  }
 }
 
 /* Большие экраны (ноутбуки и десктопы) */
@@ -2279,6 +2317,11 @@
     padding: 20px 60px;
     font-size: 22px;
   }
+  
+  .roomButton {
+    padding: 18px 50px;
+    font-size: 20px;
+  }
 }
 
 /* Очень большие экраны (широкие мониторы) */
@@ -2398,5 +2441,10 @@
   .startButton {
     padding: 22px 70px;
     font-size: 24px;
+  }
+  
+  .roomButton {
+    padding: 20px 60px;
+    font-size: 22px;
   }
 } 
