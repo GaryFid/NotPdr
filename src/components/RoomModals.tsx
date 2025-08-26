@@ -10,7 +10,7 @@ interface CreateRoomModalProps {
     isPrivate: boolean;
     password: string;
   };
-  setRoomData: (data: any) => void;
+  setRoomData: (data: (prev: typeof roomData) => typeof roomData) => void;
   onCreateRoom: () => void;
 }
 
@@ -46,7 +46,7 @@ export function CreateRoomModal({ isOpen, onClose, roomData, setRoomData, onCrea
             <input
               type="text"
               value={roomData.name}
-              onChange={(e) => setRoomData(prev => ({ ...prev, name: e.target.value }))}
+              onChange={(e) => setRoomData((prev: any) => ({ ...prev, name: e.target.value }))}
               className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-400 focus:outline-none"
             />
           </div>
@@ -55,7 +55,7 @@ export function CreateRoomModal({ isOpen, onClose, roomData, setRoomData, onCrea
             <label className="block text-sm font-medium text-gray-300 mb-2">Максимум игроков</label>
             <select
               value={roomData.maxPlayers}
-              onChange={(e) => setRoomData(prev => ({ ...prev, maxPlayers: parseInt(e.target.value) }))}
+              onChange={(e) => setRoomData((prev: any) => ({ ...prev, maxPlayers: parseInt(e.target.value) }))}
               className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-400 focus:outline-none"
             >
               {[2, 3, 4, 5, 6, 7, 8, 9].map(num => (
@@ -67,7 +67,7 @@ export function CreateRoomModal({ isOpen, onClose, roomData, setRoomData, onCrea
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-gray-300">Приватная комната</label>
             <button
-              onClick={() => setRoomData(prev => ({ ...prev, isPrivate: !prev.isPrivate }))}
+              onClick={() => setRoomData((prev: any) => ({ ...prev, isPrivate: !prev.isPrivate }))}
               className={`w-12 h-6 rounded-full ${roomData.isPrivate ? 'bg-blue-500' : 'bg-gray-600'} relative transition-colors`}
             >
               <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${roomData.isPrivate ? 'translate-x-6' : 'translate-x-0.5'}`} />
@@ -80,7 +80,7 @@ export function CreateRoomModal({ isOpen, onClose, roomData, setRoomData, onCrea
               <input
                 type="text"
                 value={roomData.password}
-                onChange={(e) => setRoomData(prev => ({ ...prev, password: e.target.value }))}
+                onChange={(e) => setRoomData((prev: any) => ({ ...prev, password: e.target.value }))}
                 className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-blue-400 focus:outline-none"
                 placeholder="Оставьте пустым для комнаты без пароля"
               />
