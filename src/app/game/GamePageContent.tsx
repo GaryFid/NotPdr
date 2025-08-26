@@ -704,19 +704,23 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                 const position = getCirclePosition(playerIndex, players.length);
                 const isCurrentPlayer = p.id === currentPlayer?.id;
                 const isCurrentTurn = p.id === players[currentPlayerIndex]?.id;
-                const isTargetAvailable = availableTargets.includes(playerIndex);
-                const isCurrentPlayerCard = p.id === currentPlayerId && turnPhase === 'analyzing_hand' && availableTargets.length > 0;
+                // ПОДСКАЗКИ ТОЛЬКО ДЛЯ ЧЕЛОВЕКА (не для ботов!)
+                const showHintsForUser = currentPlayer && !currentPlayer.isBot;
+                
+                const isTargetAvailable = availableTargets.includes(playerIndex) && showHintsForUser;
+                const isCurrentPlayerCard = p.id === currentPlayerId && turnPhase === 'analyzing_hand' && availableTargets.length > 0 && showHintsForUser;
                 
                 // Дополнительная проверка для фазы waiting_deck_action когда можно положить карту на себя по правилам
                 const canPlaceOnSelfInDeckAction = p.id === currentPlayerId && 
                                                    turnPhase === 'waiting_deck_action' && 
-                                                   useGameStore.getState().canPlaceOnSelfByRules;
+                                                   useGameStore.getState().canPlaceOnSelfByRules &&
+                                                   showHintsForUser;
                 
                 const isClickableTarget = isTargetAvailable && (turnPhase === 'waiting_target_selection' || turnPhase === 'waiting_deck_action');
                 const isClickableOwnCard = isCurrentPlayerCard || canPlaceOnSelfInDeckAction;
                 
-                // ОТЛАДКА: Логи кликабельности карт
-                if (p.id === currentPlayerId) {
+                // ОТЛАДКА: Логи кликабельности карт (только для человека)
+                if (p.id === currentPlayerId && showHintsForUser) {
                   console.log(`🎯 [GamePageContent] Анализ кликабельности карты игрока ${p.name}:`);
                   console.log(`🎯 [GamePageContent] - p.id: ${p.id}, currentPlayerId: ${currentPlayerId}, совпадает: ${p.id === currentPlayerId}`);
                   console.log(`🎯 [GamePageContent] - turnPhase: ${turnPhase}`);
@@ -726,7 +730,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                   console.log(`🎯 [GamePageContent] - isClickableOwnCard: ${isClickableOwnCard}`);
                 }
                 
-                if (isTargetAvailable) {
+                if (isTargetAvailable && showHintsForUser) {
                   console.log(`🎯 [GamePageContent] Анализ кликабельности ЦЕЛИ ${p.name} (индекс ${playerIndex}):`);
                   console.log(`🎯 [GamePageContent] - isTargetAvailable: ${isTargetAvailable}`);
                   console.log(`🎯 [GamePageContent] - turnPhase: ${turnPhase}`);
@@ -811,16 +815,16 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                           🃏 {p.cards.filter(c => c.open).length}
                         </span>
                       )}
-                      {isTargetAvailable && <span style={{color:'#ffd700',marginLeft:4}}>🎯</span>}
+                      {/* Подсказка цели только для человека */}
+                      {isTargetAvailable && showHintsForUser && <span style={{color:'#ffd700',marginLeft:4}}>🎯</span>}
                     </div>
                     
                     {/* Контейнер для пеньков и открытой карты */}
                     <div className={styles.cardsContainer}>
-                      {/* Пеньки (подложка) - показываем только на 3-й стадии */}
-                      {/* Пеньки - это скрытые карты, которые активируются только на 3-й стадии игры */}
-                      {/* Они имеют нормальный размер (не увеличены в 2 раза) и плавно появляются/исчезают */}
+                      {/* Пеньки (подложка) - показываем во 2-й стадии когда есть пеньки */}
+                      {/* В 3-й стадии пеньки уже активированы и переносятся в player.cards */}
                       <AnimatePresence mode="wait">
-                        {p.penki && p.penki.length > 0 && gameStage === 3 && (
+                        {p.penki && p.penki.length > 0 && gameStage === 2 && (
                           <motion.div 
                             key="penki-visible"
                             className={styles.penkiRow}
@@ -876,8 +880,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                             const visibleCards = p.cards;
                             const isTopCard = ci === visibleCards.length - 1; // Последняя из видимых карт
                             
-                            // ОТЛАДКА: Логи для isTopCard
-                            if (p.id === currentPlayerId) {
+                            // ОТЛАДКА: Логи для isTopCard (только для человека)
+                            if (p.id === currentPlayerId && showHintsForUser) {
                               console.log(`🎯 [GamePageContent] Карта ${ci} игрока ${p.name}: isTopCard = ${isTopCard}, visibleCards.length = ${visibleCards.length}`);
                             }
                             // Определяем направление стекинга карт в зависимости от позиции игрока
@@ -934,27 +938,29 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                                     height: (gameStage === 2 && p.isBot) ? 87 : (card.open ? 120 : 87) // Увеличено в 1.5 раза
                                   }}
                                   onClick={() => {
-                                    console.log(`🎯 [GamePageContent] КЛИК по карте ${p.name}, isTopCard: ${isTopCard}`);
-                                    console.log(`🎯 [GamePageContent] - isClickableOwnCard: ${isClickableOwnCard}, isClickableTarget: ${isClickableTarget}`);
+                                    if (showHintsForUser) {
+                                      console.log(`🎯 [GamePageContent] КЛИК по карте ${p.name}, isTopCard: ${isTopCard}`);
+                                      console.log(`🎯 [GamePageContent] - isClickableOwnCard: ${isClickableOwnCard}, isClickableTarget: ${isClickableTarget}`);
+                                    }
                                     if (isTopCard) {
                                       if (isClickableOwnCard) {
                                         // Проверяем что именно можно делать с картой
                                         if (canPlaceOnSelfInDeckAction) {
-                                          console.log(`✅ [GamePageContent] Клик по своей карте - кладем карту из колоды на себя по правилам`);
+                                          if (showHintsForUser) console.log(`✅ [GamePageContent] Клик по своей карте - кладем карту из колоды на себя по правилам`);
                                           placeCardOnSelfByRules();
                                         } else if (isCurrentPlayerCard) {
-                                          console.log(`✅ [GamePageContent] Клик по своей карте - вызываем makeMove('initiate_move')`);
+                                          if (showHintsForUser) console.log(`✅ [GamePageContent] Клик по своей карте - вызываем makeMove('initiate_move')`);
                                           makeMove('initiate_move');
                                         }
                                       } else if (isClickableTarget) {
-                                        console.log(`✅ [GamePageContent] Клик по карте соперника - вызываем makeMove(${p.id})`);
+                                        if (showHintsForUser) console.log(`✅ [GamePageContent] Клик по карте соперника - вызываем makeMove(${p.id})`);
                                         // Клик по карте соперника - делаем ход
                                         makeMove(p.id);
                                       } else {
-                                        console.log(`❌ [GamePageContent] Карта не кликабельна`);
+                                        if (showHintsForUser) console.log(`❌ [GamePageContent] Карта не кликабельна`);
                                       }
                                     } else {
-                                      console.log(`❌ [GamePageContent] Клик не по верхней карте`);
+                                      if (showHintsForUser) console.log(`❌ [GamePageContent] Клик не по верхней карте`);
                                     }
                                   }}
                                 >
