@@ -127,13 +127,11 @@ interface GameState {
   onDeckClick: () => void
   findAvailableTargetsForDeckCard: (deckCard: Card) => number[]
   
-  // Методы для 2-й стадии
+  // Методы для 2-й стадии (P.I.D.R. правила)
   selectHandCard: (card: Card) => void
   playSelectedCard: () => void
   canBeatCard: (attackCard: Card, defendCard: Card, trumpSuit: string) => boolean
-  beatCard: (defendCard: Card) => void
   takeTableCards: () => void
-  checkRoundComplete: () => boolean
   initializeStage2: () => void
   
   // Методы для 3-й стадии
@@ -562,8 +560,8 @@ export const useGameStore = create<GameState>()(
         // Запускаем обработку хода для соответствующей стадии
         if (gameStage === 1) {
           setTimeout(() => get().processPlayerTurn(nextPlayerId), 1000)
-        } else if (gameStage === 2) {
-          // Для 2-й стадии устанавливаем фазу выбора карты
+        } else if (gameStage === 2 || gameStage === 3) {
+          // Для 2-й и 3-й стадий устанавливаем фазу выбора карты (правила одинаковые)
           set({ stage2TurnPhase: 'selecting_card' });
           setTimeout(() => get().processPlayerTurn(nextPlayerId), 1000)
         }
@@ -968,15 +966,15 @@ export const useGameStore = create<GameState>()(
         
         console.log(`🎮 [processPlayerTurn] Обработка хода для ${currentPlayer.name} (стадия ${gameStage}, бот: ${currentPlayer.isBot})`);
         
-        // ИСПРАВЛЕНО: Обрабатываем как 1-ю так и 2-ю стадии
-        if (gameStage === 2) {
-          console.log(`🎮 [processPlayerTurn Stage2] Обрабатываем ход для ${currentPlayer.name} (бот: ${currentPlayer.isBot})`);
+        // ИСПРАВЛЕНО: Обрабатываем 2-ю и 3-ю стадии одинаково (правила дурака)
+        if (gameStage === 2 || gameStage === 3) {
+          console.log(`🎮 [processPlayerTurn Stage${gameStage}] Обрабатываем ход для ${currentPlayer.name} (бот: ${currentPlayer.isBot})`);
           
-          // Для 2-й стадии устанавливаем фазу выбора карты
+          // Для 2-й и 3-й стадий устанавливаем фазу выбора карты (правила одинаковые)
           set({ stage2TurnPhase: 'selecting_card' });
           
           if (currentPlayer.isBot) {
-            console.log(`🤖 [processPlayerTurn Stage2] Бот ${currentPlayer.name} должен автоматически выбрать карту`);
+            console.log(`🤖 [processPlayerTurn Stage${gameStage}] Бот ${currentPlayer.name} должен автоматически выбрать карту`);
             // Для бота - логика обрабатывается через useEffect в GamePageContent
             // Принудительно обновляем состояние чтобы useEffect сработал
             set({ 
@@ -989,7 +987,7 @@ export const useGameStore = create<GameState>()(
           return;
         }
         
-        if (gameStage !== 1 && gameStage !== 3) return; // Поддерживаем 1-ю и 3-ю стадии
+        if (gameStage !== 1) return; // Поддерживаем только 1-ю стадию в этой ветке
         
         // Проверяем состояние карт игрока
         const openCards = currentPlayer.cards.filter(c => c.open);
@@ -1447,7 +1445,7 @@ export const useGameStore = create<GameState>()(
           }
         },
          
-         // Розыгрыш выбранной карты
+         // Розыгрыш выбранной карты (ПРАВИЛА P.I.D.R.)
          playSelectedCard: () => {
            const { selectedHandCard, currentPlayerId, players, tableStack, roundInProgress, stage2TurnPhase, trumpSuit } = get();
            if (!selectedHandCard || !currentPlayerId) return;
@@ -1455,44 +1453,50 @@ export const useGameStore = create<GameState>()(
            const currentPlayer = players.find(p => p.id === currentPlayerId);
            if (!currentPlayer) return;
            
-           // НОВАЯ ЛОГИКА: Проверяем правила битья во 2-й стадии
-           console.log(`🃏 [playSelectedCard] Анализ правил битья:`);
-           console.log(`🃏 [playSelectedCard] - tableStack.length: ${tableStack.length}`);
-           console.log(`🃏 [playSelectedCard] - stage2TurnPhase: ${stage2TurnPhase}`);
-           console.log(`🃏 [playSelectedCard] - selectedHandCard: ${selectedHandCard?.image}`);
-           console.log(`🃏 [playSelectedCard] - trumpSuit: ${trumpSuit}`);
+           console.log(`🃏 [playSelectedCard P.I.D.R.] Игрок ${currentPlayer.name} играет картой: ${selectedHandCard?.image}`);
+           console.log(`🃏 [playSelectedCard P.I.D.R.] - tableStack.length: ${tableStack.length}`);
+           console.log(`🃏 [playSelectedCard P.I.D.R.] - roundInProgress: ${roundInProgress}`);
            
+           // ПРАВИЛА P.I.D.R.: Проверяем можем ли побить верхнюю карту (если есть карты на столе)
            if (tableStack.length > 0) {
-             // Если на столе есть карты, ВСЕГДА проверяем правила дурака
              const topCard = tableStack[tableStack.length - 1];
-             console.log(`🃏 [playSelectedCard] - topCard на столе: ${topCard?.image}`);
+             console.log(`🃏 [playSelectedCard P.I.D.R.] Пытаемся побить верхнюю карту: ${topCard?.image}`);
              
              const canBeat = get().canBeatCard(topCard, selectedHandCard, trumpSuit || '');
-             console.log(`🃏 [playSelectedCard] - Результат canBeatCard: ${canBeat}`);
-             
              if (!canBeat) {
                get().showNotification('Эта карта не может побить верхнюю карту на столе!', 'error', 3000);
-               console.log(`🃏 [playSelectedCard] ❌ БЛОКИРУЕМ НЕПРАВИЛЬНЫЙ ХОД!`);
+               console.log(`🃏 [playSelectedCard P.I.D.R.] ❌ НЕ МОЖЕТ ПОБИТЬ!`);
                return; // Блокируем неправильный ход
              }
-             console.log(`🃏 [playSelectedCard] ✅ Правила битья соблюдены`);
+             console.log(`🃏 [playSelectedCard P.I.D.R.] ✅ ПОБИЛ ВЕРХНЮЮ КАРТУ!`);
            } else {
-             console.log(`🃏 [playSelectedCard] 🆕 Первая карта на стол - правила битья не применяются`);
+             console.log(`🃏 [playSelectedCard P.I.D.R.] 🆕 Первая карта на стол (начало раунда)`);
            }
            
-           // Проверяем лимит карт на столе ПЕРЕД добавлением
+           // Проверяем лимит карт на столе
            const maxCardsOnTable = players.length - 1;
            if (tableStack.length >= maxCardsOnTable) {
-             get().showNotification(`Лимит карт на столе достигнут (${maxCardsOnTable}). Карты уходят в бито!`, 'warning', 5000);
-             // Все карты со стола уходят в бито
-             set({
-               tableStack: [],
-               roundInProgress: false,
-               currentRoundInitiator: null,
-               stage2TurnPhase: 'selecting_card'
-             });
-             get().showNotification(`${currentPlayer.name} начинает новый ход!`, 'info', 3000);
-             return;
+             console.log(`🃏 [playSelectedCard P.I.D.R.] 🚫 ЛИМИТ ДОСТИГНУТ! Инициатор должен закрыть ход`);
+             
+             // Проверяем, является ли текущий игрок инициатором раунда
+             const { currentRoundInitiator } = get();
+             if (currentPlayerId === currentRoundInitiator) {
+               console.log(`🃏 [playSelectedCard P.I.D.R.] ✅ Инициатор закрывает ход`);
+               // Инициатор закрывает ход - все карты в биту
+               set({
+                 tableStack: [],
+                 roundInProgress: false,
+                 currentRoundInitiator: null,
+                 stage2TurnPhase: 'selecting_card',
+                 selectedHandCard: null
+               });
+               get().showNotification(`${currentPlayer.name} закрыл ход! Карты ушли в биту`, 'success', 3000);
+               setTimeout(() => get().nextTurn(), 500);
+               return;
+             } else {
+               get().showNotification(`Лимит карт достигнут! Только инициатор может закрыть ход`, 'warning', 3000);
+               return;
+             }
            }
            
            // Убираем карту из руки игрока
@@ -1501,43 +1505,35 @@ export const useGameStore = create<GameState>()(
            
            currentPlayer.cards.splice(cardIndex, 1);
            
-           // Добавляем карту на стол (всегда наверх стопки)
+           // Добавляем карту на стол (поверх всех)
            const playedCard = { ...selectedHandCard };
-           playedCard.open = true; // ИСПРАВЛЕНО: На столе карты должны быть открыты
-           
-           // Определяем тип действия: атака или защита
-           const isBeating = tableStack.length > 0 && stage2TurnPhase === 'waiting_beat';
-           const actionType = isBeating ? 'побил карту' : 'сыграл карту';
+           playedCard.open = true;
            
            const newTableStack = [...tableStack, playedCard];
-           
-           console.log(`🃏 [playSelectedCard] ✅ ДОБАВЛЯЕМ КАРТУ НА СТОЛ:`);
-           console.log(`🃏 [playSelectedCard] - Карта: ${playedCard.image}`);
-           console.log(`🃏 [playSelectedCard] - Было карт на столе: ${tableStack.length}`);
-           console.log(`🃏 [playSelectedCard] - Стало карт на столе: ${newTableStack.length}`);
-           console.log(`🃏 [playSelectedCard] - Новый tableStack:`, newTableStack.map(c => c.image));
+           const wasEmptyTable = tableStack.length === 0;
            
            set({
              players: [...players],
              tableStack: newTableStack,
              selectedHandCard: null,
              roundInProgress: true,
-             currentRoundInitiator: roundInProgress ? get().currentRoundInitiator : currentPlayerId,
-             stage2TurnPhase: 'waiting_beat'
+             // Запоминаем инициатора раунда (кто положил первую карту)
+             currentRoundInitiator: wasEmptyTable ? currentPlayerId : get().currentRoundInitiator,
+             stage2TurnPhase: 'selecting_card' // Следующий игрок выбирает карту
            });
            
-           console.log(`🃏 [playSelectedCard] 🎯 СОСТОЯНИЕ ОБНОВЛЕНО! Проверяем store.tableStack.length: ${get().tableStack.length}`);
+           const actionType = wasEmptyTable ? 'начал атаку' : 'побил карту';
+           get().showNotification(`${currentPlayer.name} ${actionType} (на столе: ${newTableStack.length}/${maxCardsOnTable})`, 'info', 3000);
            
-           get().showNotification(`${currentPlayer.name} ${actionType} (на столе: ${newTableStack.length}/${maxCardsOnTable})`, isBeating ? 'success' : 'info', 3000);
+           // Проверяем переход в 3-ю стадию
+           get().checkStage3Transition(currentPlayerId);
            
-                     // Проверяем переход в 3-ю стадию после розыгрыша карты
-          get().checkStage3Transition(currentPlayerId);
-          
-          // Проверяем условия победы после розыгрыша карты
-          get().checkVictoryCondition();
-          
-          // Переходим к следующему игроку
-          get().nextTurn();
+           // Проверяем условия победы
+           get().checkVictoryCondition();
+           
+           // ПРАВИЛА P.I.D.R.: Ход переходит к следующему игроку
+           console.log(`🃏 [playSelectedCard P.I.D.R.] ✅ Ход к следующему игроку`);
+           setTimeout(() => get().nextTurn(), 300);
          },
          
          // Проверка возможности побить карту
@@ -1574,69 +1570,18 @@ export const useGameStore = create<GameState>()(
            return false;
          },
          
-         // Побить карту на столе (ИСПРАВЛЕНО: ход к следующему игроку)
-         beatCard: (defendCard: Card) => {
-           const { currentPlayerId, players, tableStack, trumpSuit } = get();
-           if (!currentPlayerId || tableStack.length === 0) return;
-           
-           const currentPlayer = players.find(p => p.id === currentPlayerId);
-           if (!currentPlayer) return;
-           
-           const topCard = tableStack[tableStack.length - 1]; // Верхняя карта для битья
-           
-           // Проверяем можем ли побить
-           if (!get().canBeatCard(topCard, defendCard, trumpSuit || '')) {
-             get().showNotification('Нельзя побить эту карту!', 'error', 5000);
-             return;
-           }
-           
-           // Проверяем лимит карт на столе ПЕРЕД добавлением карты битья
-           const maxCardsOnTable = players.length - 1;
-           if (tableStack.length >= maxCardsOnTable) {
-             get().showNotification(`Лимит карт на столе достигнут (${maxCardsOnTable}). Карты уходят в бито!`, 'warning', 5000);
-             // Все карты со стола уходят в бито
-             set({
-               tableStack: [],
-               roundInProgress: false,
-               currentRoundInitiator: null,
-               stage2TurnPhase: 'selecting_card'
-             });
-             get().showNotification(`${currentPlayer.name} начинает новый ход!`, 'info', 3000);
-             return;
-           }
-           
-           // Убираем карту из руки
-           const cardIndex = currentPlayer.cards.findIndex(c => c.id === defendCard.id);
-           if (cardIndex === -1) return;
-           
-           currentPlayer.cards.splice(cardIndex, 1);
-           
-           // Добавляем карту на стол (поверх всех)
-           const playedCard = { ...defendCard };
-           playedCard.open = true; // ИСПРАВЛЕНО: Карта битья также открыта
-           
-           set({
-             players: [...players],
-             tableStack: [...tableStack, playedCard]
-           });
-           
-           get().showNotification(`${currentPlayer.name} побил карту!`, 'success', 5000);
-           
-           // Проверяем переход в 3-ю стадию после битья
-           get().checkStage3Transition(currentPlayerId);
-           
-           // ИСПРАВЛЕНО: Ход ВСЕГДА переходит к следующему игроку по кругу
-           // (а не к тому кто отбился)
-           get().nextTurn();
-         },
+
          
-         // Взять карты со стола (ИСПРАВЛЕНО: берем только нижнюю карту)
+         // Взять НИЖНЮЮ карту со стола (ПРАВИЛА P.I.D.R.)
          takeTableCards: () => {
            const { currentPlayerId, players, tableStack } = get();
            if (!currentPlayerId || tableStack.length === 0) return;
            
            const currentPlayer = players.find(p => p.id === currentPlayerId);
            if (!currentPlayer) return;
+           
+           console.log(`🃏 [takeTableCards P.I.D.R.] ${currentPlayer.name} не может побить и берет НИЖНЮЮ карту`);
+           console.log(`🃏 [takeTableCards P.I.D.R.] Карты на столе:`, tableStack.map(c => c.image));
            
            // Берем ТОЛЬКО нижнюю карту (первую в стопке)
            const bottomCard = tableStack[0];
@@ -1649,13 +1594,18 @@ export const useGameStore = create<GameState>()(
            
            set({
              players: [...players],
-             tableStack: newTableStack
+             tableStack: newTableStack,
+             stage2TurnPhase: 'selecting_card' // Следующий игрок выбирает карту
            });
            
-           get().showNotification(`${currentPlayer.name} взял нижнюю карту (осталось на столе: ${newTableStack.length})`, 'warning', 5000);
+           console.log(`🃏 [takeTableCards P.I.D.R.] Взята нижняя карта: ${bottomCard.image}`);
+           console.log(`🃏 [takeTableCards P.I.D.R.] Осталось на столе:`, newTableStack.map(c => c.image));
+           
+           get().showNotification(`${currentPlayer.name} взял нижнюю карту (осталось: ${newTableStack.length})`, 'warning', 3000);
            
            // Если стол опустел - завершаем раунд
            if (newTableStack.length === 0) {
+             console.log(`🃏 [takeTableCards P.I.D.R.] Стол опустел - завершаем раунд`);
              set({
                roundInProgress: false,
                currentRoundInitiator: null,
@@ -1664,14 +1614,15 @@ export const useGameStore = create<GameState>()(
              get().showNotification('Стол очищен! Новый раунд', 'info', 3000);
            }
            
-                     // Проверяем переход в 3-ю стадию (игрок мог остаться без карт)
-          get().checkStage3Transition(currentPlayerId);
-          
-          // Проверяем условия победы после взятия карты
-          get().checkVictoryCondition();
-          
-          // Переходим к следующему игроку по кругу
-          get().nextTurn();
+           // Проверяем переход в 3-ю стадию
+           get().checkStage3Transition(currentPlayerId);
+           
+           // Проверяем условия победы
+           get().checkVictoryCondition();
+           
+           // ПРАВИЛА P.I.D.R.: Ход переходит к следующему игроку
+           console.log(`🃏 [takeTableCards P.I.D.R.] ✅ Ход к следующему игроку`);
+           setTimeout(() => get().nextTurn(), 300);
          },
          
          // Проверка завершения раунда

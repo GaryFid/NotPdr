@@ -123,177 +123,81 @@ export class AIPlayer {
     };
   }
   
-  // Решения для 2-й стадии (дурак)
+  // Решения для 2-й стадии (P.I.D.R. правила)
   private makeStage2Decision(gameState: any): AIDecision {
     const { players, tableStack, trumpSuit } = gameState;
     const currentPlayer = players.find((p: Player) => parseInt(p.id) === this.playerId);
     
     if (!currentPlayer) {
-      console.error(`🔴 [AI Stage2] Не найден игрок с ID ${this.playerId}`);
+      console.error(`🔴 [AI Stage2 P.I.D.R.] Не найден игрок с ID ${this.playerId}`);
       return { action: 'pass', confidence: 0 };
     }
     
     if (!currentPlayer.cards) {
-      console.error(`🔴 [AI Stage2] У игрока ${this.playerId} нет карт`);
+      console.error(`🔴 [AI Stage2 P.I.D.R.] У игрока ${this.playerId} нет карт`);
       return { action: 'pass', confidence: 0 };
     }
     
     const handCards = currentPlayer.cards.filter((c: Card) => c.open);
     
-    console.log(`🤖 [AI Stage2] Анализ ситуации для игрока ${this.playerId}:`);
-    console.log(`🤖 [AI Stage2] - tableStack.length: ${tableStack?.length || 0}`);
-    console.log(`🤖 [AI Stage2] - handCards.length: ${handCards.length}`);
-    console.log(`🤖 [AI Stage2] - handCards:`, handCards.map((c: any) => c.image));
-    console.log(`🤖 [AI Stage2] - trumpSuit: ${trumpSuit}`);
-    console.log(`🤖 [AI Stage2] - difficulty: ${this.difficulty}`);
+    console.log(`🤖 [AI Stage2 P.I.D.R.] Анализ ситуации для игрока ${this.playerId}:`);
+    console.log(`🤖 [AI Stage2 P.I.D.R.] - tableStack.length: ${tableStack?.length || 0}`);
+    console.log(`🤖 [AI Stage2 P.I.D.R.] - handCards.length: ${handCards.length}`);
+    console.log(`🤖 [AI Stage2 P.I.D.R.] - handCards:`, handCards.map((c: any) => c.image));
+    console.log(`🤖 [AI Stage2 P.I.D.R.] - trumpSuit: ${trumpSuit}`);
     
-    // Проверяем есть ли вообще карты для игры
+    // Проверяем есть ли карты для игры
     if (handCards.length === 0) {
-      console.log(`🤖 [AI Stage2] ❌ Нет открытых карт для игры`);
-      return { action: 'pass', confidence: 0 };
+      console.log(`🤖 [AI Stage2 P.I.D.R.] ❌ Нет открытых карт для игры`);
+      return { action: 'draw_card', confidence: 0.9 }; // Берем нижнюю карту
     }
     
     if (!tableStack || tableStack.length === 0) {
-      // Начинаем атаку - играем самую слабую карту
-      console.log(`🤖 [AI Stage2] Начинаем атаку`);
+      // ПРАВИЛА P.I.D.R.: Начинаем раунд - кладем самую слабую карту
+      console.log(`🤖 [AI Stage2 P.I.D.R.] Начинаем новый раунд`);
       const weakestCard = this.findWeakestNonTrumpCard(handCards, trumpSuit) || this.findWeakestCard(handCards, trumpSuit);
       if (weakestCard) {
-        console.log(`🤖 [AI Stage2] ✅ Атакуем картой: ${weakestCard.image}`);
+        console.log(`🤖 [AI Stage2 P.I.D.R.] ✅ Начинаем раунд картой: ${weakestCard.image}`);
         return {
           action: 'play_card',
           cardToPlay: weakestCard,
-          confidence: 0.7
+          confidence: 0.8
         };
       }
     } else {
-      // На столе есть карты - пытаемся отбиться
-      const attackCard = tableStack[tableStack.length - 1];
-      console.log(`🤖 [AI Stage2] Защищаемся от: ${attackCard?.image}`);
+      // ПРАВИЛА P.I.D.R.: На столе есть карты - пытаемся побить ВЕРХНЮЮ карту
+      const topCard = tableStack[tableStack.length - 1];
+      console.log(`🤖 [AI Stage2 P.I.D.R.] Пытаемся побить верхнюю карту: ${topCard?.image}`);
       
-      const defenseCard = this.findBestDefenseCard(handCards, attackCard, trumpSuit);
+      const defenseCard = this.findBestDefenseCard(handCards, topCard, trumpSuit);
       
       if (defenseCard) {
-        console.log(`🤖 [AI Stage2] ✅ Отбиваемся картой: ${defenseCard.image}`);
+        console.log(`🤖 [AI Stage2 P.I.D.R.] ✅ Побиваем верхнюю карту: ${defenseCard.image}`);
         return {
           action: 'play_card',
           cardToPlay: defenseCard,
           confidence: 0.8
         };
       } else {
-        // Не можем отбиться - берем карты
-        console.log(`🤖 [AI Stage2] ❌ Не можем отбиться - берем карты со стола`);
+        // ПРАВИЛА P.I.D.R.: Не можем побить - берем НИЖНЮЮ карту со стола
+        console.log(`🤖 [AI Stage2 P.I.D.R.] ❌ Не можем побить - берем нижнюю карту`);
         return {
-          action: 'draw_card', // В контексте 2-й стадии = takeTableCards
+          action: 'draw_card', // В P.I.D.R. = takeTableCards (берет нижнюю)
           confidence: 0.9
         };
       }
     }
     
-    console.log(`🤖 [AI Stage2] ⚠️ Нет доступных ходов - пропускаем`);
-    return { action: 'pass', confidence: 0.3 };
+    console.log(`🤖 [AI Stage2 P.I.D.R.] ⚠️ Нет доступных ходов - берем нижнюю карту`);
+    return { action: 'draw_card', confidence: 0.6 };
   }
   
-  // Решения для 3-й стадии (пеньки)
+  // Решения для 3-й стадии (пеньки) - используют правила 2-й стадии (P.I.D.R.)
   private makeStage3Decision(gameState: any): AIDecision {
-    const { players, availableTargets, revealedDeckCard } = gameState;
-    const currentPlayer = players.find((p: Player) => parseInt(p.id) === this.playerId);
+    console.log(`🤖 [AI Stage3] 3-я стадия использует правила 2-й стадии (P.I.D.R.)`);
     
-    if (!currentPlayer) {
-      console.error(`🔴 [AI Stage3] Не найден игрок с ID ${this.playerId}`);
-      return { action: 'draw_card', confidence: 0.6 };
-    }
-    
-    console.log(`🤖 [AI Stage3] Анализ ситуации 3-й стадии:`);
-    console.log(`🤖 [AI Stage3] - player.cards.length: ${currentPlayer.cards.length}`);
-    console.log(`🤖 [AI Stage3] - player.penki.length: ${currentPlayer.penki?.length || 0}`);
-    console.log(`🤖 [AI Stage3] - availableTargets: [${availableTargets.join(', ')}]`);
-    console.log(`🤖 [AI Stage3] - revealedDeckCard: ${revealedDeckCard?.image || 'нет'}`);
-    
-    // В 3-й стадии логика аналогична 1-й стадии:
-    // 1. Если есть открытая карта из колоды - анализируем её
-    // 2. Если есть ходы из руки - делаем их
-    // 3. Если нет ходов - берем из колоды
-    
-    if (revealedDeckCard) {
-      const cardRank = this.getCardRank(revealedDeckCard);
-      
-      // В 3-й стадии игрок уже опытный, стратегия более агрессивная
-      switch (this.difficulty) {
-        case 'easy':
-          // Простой ИИ - случайный выбор
-          if (availableTargets.length > 0) {
-            const randomTarget = availableTargets[Math.floor(Math.random() * availableTargets.length)];
-            console.log(`🤖 [AI Stage3] Easy: случайный ход на цель ${randomTarget}`);
-            return {
-              action: 'place_on_target',
-              targetPlayerId: randomTarget,
-              confidence: 0.6
-            };
-          }
-          break;
-          
-        case 'medium':
-          // Средний ИИ - стратегия "мешать лидерам"
-          if (cardRank <= 7 && availableTargets.length > 0) {
-            // Находим игрока с наименьшим количеством карт (лидера)
-            const enemyTargets = availableTargets.filter((id: number) => id !== this.playerId);
-            if (enemyTargets.length > 0) {
-              let targetWithFewestCards = enemyTargets[0];
-              let fewestCardsCount = players[targetWithFewestCards].cards.length + (players[targetWithFewestCards].penki?.length || 0);
-              
-              enemyTargets.forEach((targetId: number) => {
-                const targetPlayer = players[targetId];
-                const totalCards = targetPlayer.cards.length + (targetPlayer.penki?.length || 0);
-                if (totalCards < fewestCardsCount) {
-                  fewestCardsCount = totalCards;
-                  targetWithFewestCards = targetId;
-                }
-              });
-              
-              console.log(`🤖 [AI Stage3] Medium: мешаем лидеру (у него ${fewestCardsCount} карт)`);
-              return {
-                action: 'place_on_target',
-                targetPlayerId: targetWithFewestCards,
-                confidence: 0.8
-              };
-            }
-          } else if (cardRank >= 10) {
-            // Хорошие карты себе
-            if (this.canPlaceOnSelf(currentPlayer, revealedDeckCard)) {
-              console.log(`🤖 [AI Stage3] Medium: хорошую карту себе`);
-              return {
-                action: 'place_on_self',
-                confidence: 0.9
-              };
-            }
-          }
-          break;
-          
-        case 'hard':
-          // Сложный ИИ - продвинутая стратегия
-          const decision = this.analyzeStage3Situation(gameState);
-          if (decision) return decision;
-          break;
-      }
-    }
-    
-    // Если есть доступные цели из руки
-    if (availableTargets.length > 0) {
-      const target = availableTargets[0];
-      console.log(`🤖 [AI Stage3] Ход из руки на цель ${target}`);
-      return {
-        action: 'place_on_target',
-        targetPlayerId: target,
-        confidence: 0.7
-      };
-    }
-    
-    // По умолчанию берем карту из колоды
-    console.log(`🤖 [AI Stage3] Берем карту из колоды`);
-    return {
-      action: 'draw_card',
-      confidence: 0.6
-    };
+    // ИСПРАВЛЕНО: 3-я стадия использует правила 2-й стадии P.I.D.R.!
+    return this.makeStage2Decision(gameState);
   }
   
   // Вспомогательные методы
@@ -356,32 +260,7 @@ export class AIPlayer {
     return null;
   }
   
-  private analyzeStage3Situation(gameState: any): AIDecision | null {
-    const { players, availableTargets, revealedDeckCard } = gameState;
-    
-    console.log(`🤖 [AI Stage3 Hard] Продвинутый анализ ситуации`);
-    
-    // В 3-й стадии критически важно блокировать игроков близких к победе
-    const criticalThreats = this.identifyCriticalThreats(players);
-    
-    if (criticalThreats.length > 0 && revealedDeckCard) {
-      const cardRank = this.getCardRank(revealedDeckCard);
-      
-      // Если есть игрок с 1-2 картами - мешаем ему любой картой
-      const closestToVictory = criticalThreats[0];
-      if (availableTargets.includes(closestToVictory)) {
-        console.log(`🤖 [AI Stage3 Hard] КРИТИЧЕСКАЯ УГРОЗА! Блокируем игрока ${closestToVictory}`);
-        return {
-          action: 'place_on_target',
-          targetPlayerId: closestToVictory,
-          confidence: 1.0 // Максимальная уверенность
-        };
-      }
-    }
-    
-    // Если нет критических угроз, применяем обычную стратегию
-    return this.analyzeStage1Situation(gameState);
-  }
+
   
   private identifyCriticalThreats(players: Player[]): number[] {
     // Игроки с минимальным количеством карт (близкие к победе)
