@@ -10,6 +10,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import React from 'react';
 import { useGameStore } from '@/store/gameStore';
 import { AIPlayer, AIDifficulty } from '@/lib/game/ai-player';
+import MultiplayerGame from '@/components/MultiplayerGame';
+import { useWebSocket } from '@/hooks/useWebSocket';
+import { useTelegram } from '@/hooks/useTelegram';
 
 const CARD_IMAGES = [
   '2_of_clubs.png','2_of_diamonds.png','2_of_hearts.png','2_of_spades.png',
@@ -97,6 +100,8 @@ interface GamePageContentProps {
 }
 
 export default function GamePageContent({ initialPlayerCount = 4 }: GamePageContentProps) {
+  const { user } = useTelegram();
+  
   const { 
     isGameActive, gameStage, turnPhase, stage2TurnPhase,
     players, currentPlayerId, deck, availableTargets,
@@ -110,6 +115,29 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
   // Мониторинг tableStack убран - система работает корректно
 
   const [playerCount, setPlayerCount] = useState(initialPlayerCount);
+  
+  // Состояние мультиплеера
+  const [isMultiplayer, setIsMultiplayer] = useState(false);
+  const [multiplayerRoom, setMultiplayerRoom] = useState<{
+    id: string;
+    code: string;
+    isHost: boolean;
+  } | null>(null);
+  
+  // Проверяем URL параметры для мультиплеера
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const roomId = urlParams.get('roomId');
+      const roomCode = urlParams.get('roomCode');
+      const isHost = urlParams.get('host') === 'true';
+      
+      if (roomId && roomCode) {
+        setMultiplayerRoom({ id: roomId, code: roomCode, isHost });
+        setIsMultiplayer(true);
+      }
+    }
+  }, []);
   
   // Проверяем что все необходимые функции доступны
   useEffect(() => {
@@ -233,8 +261,9 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
     const newAiPlayers = new Map<number, AIPlayer>();
     players.forEach(player => {
       if (player.isBot) {
-        const playerId = typeof player.id === 'string' ? parseInt(player.id) : player.id;
-        console.log(`🤖 [AI Init] Создаем AI для бота ${player.name} (ID: ${playerId}, difficulty: ${player.difficulty || 'medium'})`);
+        const playerId = typeof player.id === 'string' ? 
+          parseInt(player.id.replace('player_', '')) : player.id;
+        console.log(`🤖 [AI Init] Создаем AI для бота ${player.name} (ID: ${player.id} -> ${playerId}, difficulty: ${player.difficulty || 'medium'})`);
         newAiPlayers.set(playerId, new AIPlayer(playerId, player.difficulty || 'medium'));
       }
     });
@@ -287,7 +316,10 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
       }
     }
     
-    const playerIdNum = typeof currentPlayerId === 'string' ? parseInt(currentPlayerId) : currentPlayerId;
+    const playerIdNum = typeof currentPlayerId === 'string' ? 
+      parseInt(currentPlayerId.replace('player_', '')) : currentPlayerId;
+    console.log(`🔍 [AI useEffect] currentPlayerId: ${currentPlayerId}, converted to: ${playerIdNum}`);
+    
     const ai = aiPlayers.get(playerIdNum);
     if (!ai) {
       console.log(`🚨 [AI useEffect] AI не найден для игрока ${playerIdNum}, доступные AI:`, Array.from(aiPlayers.keys()));
@@ -381,6 +413,10 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
             } else {
               console.log(`🚨 [AI Stage${gameStage}] Нет функции takeTableCards`);
             }
+            break;
+          case 'pass':
+            console.log(`🤖 [AI Stage${gameStage}] Игрок пропускает ход`);
+            // Логика пропуска хода может потребовать вызова nextTurn()
             break;
           default:
             console.log(`🚨 [AI Stage${gameStage}] Неизвестное действие:`, decision.action);
@@ -1186,6 +1222,19 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
             </div>
           </div>
         </div>
+      )}
+
+      {/* Мультиплеер компонент */}
+      {isMultiplayer && multiplayerRoom && (
+        <MultiplayerGame
+          roomId={multiplayerRoom.id}
+          roomCode={multiplayerRoom.code}
+          isHost={multiplayerRoom.isHost}
+          onGameStateUpdate={(gameState) => {
+            console.log('🔄 [Multiplayer] Получено обновление состояния:', gameState);
+            // Здесь можно обновить локальное состояние игры
+          }}
+        />
       )}
 
       <BottomNav />

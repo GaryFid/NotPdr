@@ -84,6 +84,19 @@ CREATE TABLE user_status (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- 7. Приглашения в игру через Telegram
+CREATE TABLE game_invitations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  room_id UUID NOT NULL REFERENCES game_rooms(id) ON DELETE CASCADE,
+  inviter_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  invited_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  invitation_url TEXT NOT NULL,
+  status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'declined', 'expired')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  accepted_at TIMESTAMP WITH TIME ZONE,
+  expired_at TIMESTAMP WITH TIME ZONE
+);
+
 -- Индексы для оптимизации
 CREATE INDEX idx_friends_user_id ON friends(user_id);
 CREATE INDEX idx_friends_friend_id ON friends(friend_id);
@@ -151,3 +164,9 @@ BEGIN
     RETURN result;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Дополнительные индексы для game_invitations
+CREATE INDEX idx_game_invitations_inviter ON game_invitations(inviter_id);
+CREATE INDEX idx_game_invitations_invited ON game_invitations(invited_id);
+CREATE INDEX idx_game_invitations_room ON game_invitations(room_id);
+CREATE INDEX idx_game_invitations_status ON game_invitations(status);

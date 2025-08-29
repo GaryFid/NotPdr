@@ -59,7 +59,10 @@ export class AIPlayer {
   // Решения для 1-й стадии (раскладывание карт)
   private makeStage1Decision(gameState: any): AIDecision {
     const { players, availableTargets, revealedDeckCard } = gameState;
-    const currentPlayer = players.find((p: Player) => parseInt(p.id) === this.playerId);
+    const currentPlayer = players.find((p: Player) => {
+      const pId = typeof p.id === 'string' ? parseInt(p.id.replace('player_', '')) : p.id;
+      return pId === this.playerId;
+    });
     
     if (!currentPlayer) {
       console.error(`🔴 [AI Stage1] Не найден игрок с ID ${this.playerId}`);
@@ -126,7 +129,10 @@ export class AIPlayer {
   // Решения для 2-й стадии (P.I.D.R. правила)
   private makeStage2Decision(gameState: any): AIDecision {
     const { players, tableStack, trumpSuit } = gameState;
-    const currentPlayer = players.find((p: Player) => parseInt(p.id) === this.playerId);
+    const currentPlayer = players.find((p: Player) => {
+      const pId = typeof p.id === 'string' ? parseInt(p.id.replace('player_', '')) : p.id;
+      return pId === this.playerId;
+    });
     
     if (!currentPlayer) {
       console.error(`🔴 [AI Stage2 P.I.D.R.] Не найден игрок с ID ${this.playerId}`);
@@ -268,7 +274,10 @@ export class AIPlayer {
   private identifyCriticalThreats(players: Player[]): number[] {
     // Игроки с минимальным количеством карт (близкие к победе)
     return players
-      .filter(p => parseInt(p.id) !== this.playerId)
+      .filter(p => {
+        const pId = typeof p.id === 'string' ? parseInt(p.id.replace('player_', '')) : p.id;
+        return pId !== this.playerId;
+      })
       .filter(p => {
         const totalCards = p.cards.length + (p.penki?.length || 0);
         return totalCards <= 2; // Критическая угроза - 2 или меньше карт
@@ -278,28 +287,43 @@ export class AIPlayer {
         const bCards = b.cards.length + (b.penki?.length || 0);
         return aCards - bCards; // Сортируем по возрастанию количества карт
       })
-      .map(p => parseInt(p.id));
+      .map(p => {
+        const pId = typeof p.id === 'string' ? parseInt(p.id.replace('player_', '')) : p.id;
+        return pId;
+      });
   }
   
   private identifyThreats(players: Player[]): number[] {
     // Определяем игроков, которые представляют угрозу
     return players
-      .filter(p => parseInt(p.id) !== this.playerId)
+      .filter(p => {
+        const pId = typeof p.id === 'string' ? parseInt(p.id.replace('player_', '')) : p.id;
+        return pId !== this.playerId;
+      })
       .sort((a, b) => {
         // Сортируем по количеству хороших карт
         const aScore = this.evaluatePlayerPosition(a);
         const bScore = this.evaluatePlayerPosition(b);
         return bScore - aScore;
       })
-      .map(p => parseInt(p.id));
+      .map(p => {
+        const pId = typeof p.id === 'string' ? parseInt(p.id.replace('player_', '')) : p.id;
+        return pId;
+      });
   }
   
   private identifyOpportunities(players: Player[]): number[] {
     // Определяем слабых игроков
     return players
-      .filter(p => parseInt(p.id) !== this.playerId)
+      .filter(p => {
+        const pId = typeof p.id === 'string' ? parseInt(p.id.replace('player_', '')) : p.id;
+        return pId !== this.playerId;
+      })
       .filter(p => p.cards.length < 3) // Мало карт
-      .map(p => parseInt(p.id));
+      .map(p => {
+        const pId = typeof p.id === 'string' ? parseInt(p.id.replace('player_', '')) : p.id;
+        return pId;
+      });
   }
   
   private evaluatePlayerPosition(player: Player): number {

@@ -5,6 +5,7 @@ import { ArrowLeft, Plus, Search, Users, Lock, Unlock, Play, Eye, Crown, Clock, 
 import BottomNav from '../../components/BottomNav';
 import { CreateRoomModal, JoinRoomModal } from '../../components/RoomModals';
 import { useTelegramShare } from '../../hooks/useTelegramShare';
+import TelegramInvitations from '../../components/TelegramInvitations';
 
 interface GameRoom {
   id: string;
@@ -25,7 +26,7 @@ export default function TablesListPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [rooms, setRooms] = useState<GameRoom[]>([]);
-  const [filter, setFilter] = useState<'all' | 'waiting' | 'playing'>('waiting');
+  const [filter, setFilter] = useState<'all' | 'waiting' | 'playing' | 'telegram'>('waiting');
   const [creatingRoom, setCreatingRoom] = useState(false);
   const [joiningRoom, setJoiningRoom] = useState(false);
   const [roomCode, setRoomCode] = useState('');
@@ -196,6 +197,7 @@ export default function TablesListPage() {
           {[
             { key: 'waiting', label: 'Ожидают', icon: Clock },
             { key: 'playing', label: 'В игре', icon: Gamepad2 },
+            { key: 'telegram', label: 'Telegram', icon: Users },
             { key: 'all', label: 'Все', icon: Eye }
           ].map(({ key, label, icon: Icon }) => (
             <button
@@ -239,8 +241,17 @@ export default function TablesListPage() {
           </div>
         )}
 
+        {/* Telegram Invitations */}
+        {filter === 'telegram' && !loading && (
+          <TelegramInvitations 
+            onJoinRoom={(roomId, roomCode) => {
+              window.location.href = `/game?roomId=${roomId}&roomCode=${roomCode}`;
+            }}
+          />
+        )}
+
         {/* Rooms List */}
-        {!loading && (
+        {filter !== 'telegram' && !loading && (
           <motion.div 
             className="space-y-4"
             initial={{ opacity: 0, y: 20 }}
