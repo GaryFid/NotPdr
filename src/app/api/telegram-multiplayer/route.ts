@@ -171,7 +171,7 @@ export async function GET(req: NextRequest) {
 
       if (error) throw error;
 
-      const pendingInvitations = invitations?.map(inv => ({
+      const pendingInvitations = invitations?.map((inv: any) => ({
         id: inv.id,
         roomId: inv.room_id,
         inviterName: inv.users?.username || inv.users?.firstName || 'Игрок',
@@ -205,7 +205,7 @@ export async function GET(req: NextRequest) {
 
       if (error) throw error;
 
-      const sentInvitations = invitations?.map(inv => ({
+      const sentInvitations = invitations?.map((inv: any) => ({
         id: inv.id,
         roomId: inv.room_id,
         invitedName: inv.users?.username || inv.users?.firstName || 'Игрок',
