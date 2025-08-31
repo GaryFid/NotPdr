@@ -19,7 +19,7 @@ export default function MultiplayerGame({
   onGameStateUpdate 
 }: MultiplayerGameProps) {
   const { user } = useTelegram();
-  const { shareRoom, inviteFriend } = useTelegramShare();
+  const { inviteToGame, inviteFriend } = useTelegramShare();
   
   // WebSocket подключение
   const {
@@ -159,7 +159,15 @@ export default function MultiplayerGame({
   // Поделиться комнатой
   const handleShareRoom = async () => {
     try {
-      await shareRoom(roomId, roomCode);
+      const result = inviteToGame({ 
+        roomCode,
+        roomName: `P.I.D.R. Игра`,
+        playerCount: onlineUsers.length,
+        maxPlayers: 4
+      });
+      if (!result) {
+        console.error('Не удалось поделиться комнатой');
+      }
     } catch (error) {
       console.error('Ошибка при поделке комнатой:', error);
     }

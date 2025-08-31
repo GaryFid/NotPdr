@@ -1,7 +1,7 @@
 'use client'
 import React, { useEffect, useState } from 'react';
 import { useTelegram } from '@/hooks/useTelegram';
-import { useTelegramShare } from '@/hooks/useTelegramShare';
+
 
 interface TelegramInvitation {
   id: string;
@@ -22,7 +22,7 @@ interface TelegramInvitationsProps {
 
 export default function TelegramInvitations({ onJoinRoom }: TelegramInvitationsProps) {
   const { user, webApp } = useTelegram();
-  const { shareRoom } = useTelegramShare();
+
   
   const [invitations, setInvitations] = useState<TelegramInvitation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -120,7 +120,7 @@ export default function TelegramInvitations({ onJoinRoom }: TelegramInvitationsP
       if (data.success) {
         // Поделиться комнатой через Telegram
         if (data.room.telegramShareUrl) {
-          if (webApp) {
+          if (webApp && webApp.openTelegramLink) {
             webApp.openTelegramLink(data.room.telegramShareUrl);
           } else {
             window.open(data.room.telegramShareUrl, '_blank');
@@ -145,7 +145,7 @@ export default function TelegramInvitations({ onJoinRoom }: TelegramInvitationsP
   // Поделиться приглашением
   const shareInvitation = async (invitation: TelegramInvitation) => {
     try {
-      if (webApp) {
+      if (webApp && webApp.openTelegramLink) {
         const shareText = `🎮 Присоединяйся к игре P.I.D.R.!\n\n` +
                          `🎯 Комната: ${invitation.roomCode}\n` +
                          `👤 Создатель: ${invitation.inviterName}\n` +
