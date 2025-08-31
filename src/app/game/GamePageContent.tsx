@@ -643,7 +643,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                             }}
                             animate={{ 
                               opacity: 1, 
-                              scale: 1, 
+                              scale: 1 - ((tableStack.length - 1 - index) * 0.1), // Верхняя карта scale=1, каждая нижняя на 0.1 меньше
                               y: 0,
                               rotateX: 0,
                               transition: {
