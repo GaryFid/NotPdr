@@ -1450,10 +1450,9 @@ export const useGameStore = create<GameState>()(
             return;
           }
           
-          // Дополнительная проверка для 2-й стадии
+          // Разрешаем ботам играть во 2-й стадии через AI логику
           if (gameStage === 2 && currentPlayer.isBot) {
-            console.warn(`🚫 [selectHandCard] Попытка управлять ботом ${currentPlayer.name} во 2-й стадии`);
-            return;
+            console.log(`🤖 [selectHandCard] Бот ${currentPlayer.name} играет карту во 2-й стадии: ${card.image}`);
           }
           
           console.log(`✅ [selectHandCard] Игрок ${currentPlayer.name} выбирает карту ${card.image}`);
