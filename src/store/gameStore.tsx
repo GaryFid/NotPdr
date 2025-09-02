@@ -83,6 +83,7 @@ interface GameState {
   stage2TurnPhase: 'selecting_card' | 'playing_card' | 'waiting_beat' | 'round_complete' // Фазы хода 2-й стадии
   roundInProgress: boolean // Идет ли текущий раунд битья
   currentRoundInitiator: string | null // Кто начал текущий раунд
+  roundFinisher: string | null // Игрок который должен завершить круг (позиция -1 от инициатора)
   
   // Статистика и настройки
   stats: GameStats
@@ -136,6 +137,7 @@ interface GameState {
   canBeatCard: (attackCard: Card, defendCard: Card, trumpSuit: string) => boolean
   takeTableCards: () => void
   initializeStage2: () => void
+  calculateRoundFinisher: (initiatorId: string) => string | null
   
   // Методы для 3-й стадии
   checkStage3Transition: (playerId: string) => void
@@ -229,6 +231,7 @@ export const useGameStore = create<GameState>()(
       stage2TurnPhase: 'selecting_card',
       roundInProgress: false,
       currentRoundInitiator: null,
+      roundFinisher: null,
       
       // Состояния хода для новой логики
       turnPhase: 'analyzing_hand',
@@ -1428,9 +1431,26 @@ export const useGameStore = create<GameState>()(
              stage2TurnPhase: 'selecting_card',
              roundInProgress: false,
              currentRoundInitiator: null,
+             roundFinisher: null,
              tableStack: [],
              selectedHandCard: null
            });
+         },
+
+         // Вычисляем игрока который должен завершить круг битья (позиция -1 от инициатора)
+         calculateRoundFinisher: (initiatorId: string): string | null => {
+           const { players } = get();
+           const initiatorIndex = players.findIndex(p => p.id === initiatorId);
+           if (initiatorIndex === -1) return null;
+
+           // Находим игрока который сидит ПЕРЕД инициатором (позиция -1)
+           const finisherIndex = initiatorIndex === 0 ? players.length - 1 : initiatorIndex - 1;
+           const finisher = players[finisherIndex];
+           
+           console.log(`🎯 [calculateRoundFinisher] Инициатор: ${players[initiatorIndex].name} (индекс ${initiatorIndex})`);
+           console.log(`🎯 [calculateRoundFinisher] Должен завершить: ${finisher.name} (индекс ${finisherIndex})`);
+           
+           return finisher.id;
          },
          
                  // Выбор карты в руке (двойной клик)
@@ -1494,31 +1514,8 @@ export const useGameStore = create<GameState>()(
              console.log(`🃏 [playSelectedCard P.I.D.R.] 🆕 Первая карта на стол (начало раунда)`);
            }
            
-           // Проверяем лимит карт на столе
-           const maxCardsOnTable = players.length - 1;
-           if (tableStack.length >= maxCardsOnTable) {
-             console.log(`🃏 [playSelectedCard P.I.D.R.] 🚫 ЛИМИТ ДОСТИГНУТ! Инициатор должен закрыть ход`);
-             
-             // Проверяем, является ли текущий игрок инициатором раунда
-             const { currentRoundInitiator } = get();
-             if (currentPlayerId === currentRoundInitiator) {
-               console.log(`🃏 [playSelectedCard P.I.D.R.] ✅ Инициатор закрывает ход`);
-               // Инициатор закрывает ход - все карты в биту
-               set({
-                 tableStack: [],
-                 roundInProgress: false,
-                 currentRoundInitiator: null,
-                 stage2TurnPhase: 'selecting_card',
-                 selectedHandCard: null
-               });
-               get().showNotification(`${currentPlayer.name} закрыл ход! Карты ушли в биту`, 'success', 3000);
-               setTimeout(() => get().nextTurn(), 500);
-               return;
-             } else {
-               get().showNotification(`Лимит карт достигнут! Только инициатор может закрыть ход`, 'warning', 3000);
-               return;
-             }
-           }
+           // УБРАНА СТАРАЯ НЕПРАВИЛЬНАЯ ЛОГИКА ЛИМИТА КАРТ
+           // Теперь круг завершается только когда финишер (-1 от инициатора) побьет карту
            
            // Убираем карту из руки игрока
            const cardIndex = currentPlayer.cards.findIndex(c => c.id === selectedHandCard.id);
@@ -1533,22 +1530,59 @@ export const useGameStore = create<GameState>()(
            const newTableStack = [...tableStack, playedCard];
            const wasEmptyTable = tableStack.length === 0;
            
+           // НОВАЯ ЛОГИКА: Определяем инициатора и финишера круга
+           let newInitiator = get().currentRoundInitiator;
+           let newFinisher = get().roundFinisher;
+           
+           if (wasEmptyTable) {
+             // Начинается новый раунд - текущий игрок становится инициатором
+             newInitiator = currentPlayerId;
+             newFinisher = get().calculateRoundFinisher(currentPlayerId);
+             console.log(`🎯 [playSelectedCard] 🆕 НОВЫЙ РАУНД НАЧАТ! Инициатор: ${currentPlayer.name}, Финишер: ${players.find(p => p.id === newFinisher)?.name}`);
+           }
+           
            set({
              players: [...players],
              tableStack: newTableStack,
              selectedHandCard: null,
              roundInProgress: true,
-             // Запоминаем инициатора раунда (кто положил первую карту)
-             currentRoundInitiator: wasEmptyTable ? currentPlayerId : get().currentRoundInitiator,
+             currentRoundInitiator: newInitiator,
+             roundFinisher: newFinisher,
              stage2TurnPhase: 'selecting_card' // Следующий игрок выбирает карту
            });
            
            const actionType = wasEmptyTable ? 'начал атаку' : 'побил карту';
-           get().showNotification(`${currentPlayer.name} ${actionType} (на столе: ${newTableStack.length}/${maxCardsOnTable})`, 'info', 3000);
+           get().showNotification(`${currentPlayer.name} ${actionType} (на столе: ${newTableStack.length})`, 'info', 3000);
            
+           // НОВАЯ ЛОГИКА ЗАВЕРШЕНИЯ КРУГА: Проверяем, завершает ли финишер круг
+           if (currentPlayerId === newFinisher && !wasEmptyTable) {
+             console.log(`🎯 [playSelectedCard] 🏁 КРУГ ЗАВЕРШЕН! ${currentPlayer.name} (финишер) побил карту`);
+             console.log(`🎯 [playSelectedCard] 🗑️ Все карты со стола уходят в биту: ${newTableStack.map(c => c.image).join(', ')}`);
+             
+             // ВСЕ КАРТЫ СО СТОЛА УХОДЯТ В БИТУ
+             set({
+               tableStack: [],
+               roundInProgress: false,
+               currentRoundInitiator: null,
+               roundFinisher: null,
+               stage2TurnPhase: 'selecting_card'
+             });
+             
+             get().showNotification(`🏁 ${currentPlayer.name} завершил круг! Карты в биту`, 'success', 3000);
+             
+             // Проверяем переход в 3-ю стадию
+             get().checkStage3Transition(currentPlayerId);
+             // Проверяем условия победы
+             get().checkVictoryCondition();
+             
+             // Финишер начинает новый раунд (остается ходить)
+             setTimeout(() => get().nextTurn(), 500);
+             return;
+           }
+           
+           // ОБЫЧНОЕ ПРОДОЛЖЕНИЕ КРУГА
            // Проверяем переход в 3-ю стадию
            get().checkStage3Transition(currentPlayerId);
-           
            // Проверяем условия победы
            get().checkVictoryCondition();
            
@@ -1595,7 +1629,7 @@ export const useGameStore = create<GameState>()(
          
          // Взять НИЖНЮЮ карту со стола (ПРАВИЛА P.I.D.R.)
          takeTableCards: () => {
-           const { currentPlayerId, players, tableStack } = get();
+           const { currentPlayerId, players, tableStack, roundFinisher, currentRoundInitiator } = get();
            if (!currentPlayerId || tableStack.length === 0) return;
            
            const currentPlayer = players.find(p => p.id === currentPlayerId);
@@ -1603,6 +1637,11 @@ export const useGameStore = create<GameState>()(
            
            console.log(`🃏 [takeTableCards P.I.D.R.] ${currentPlayer.name} не может побить и берет НИЖНЮЮ карту`);
            console.log(`🃏 [takeTableCards P.I.D.R.] Карты на столе:`, tableStack.map(c => c.image));
+           
+           // НОВАЯ ЛОГИКА: Если это финишер берет карту - круг НЕ завершается, продолжается дальше
+           if (currentPlayerId === roundFinisher) {
+             console.log(`🎯 [takeTableCards] ⚠️ Финишер ${currentPlayer.name} взял карту - круг ПРОДОЛЖАЕТСЯ`);
+           }
            
            // Берем ТОЛЬКО нижнюю карту (первую в стопке)
            const bottomCard = tableStack[0];
@@ -1617,6 +1656,7 @@ export const useGameStore = create<GameState>()(
              players: [...players],
              tableStack: newTableStack,
              stage2TurnPhase: 'selecting_card' // Следующий игрок выбирает карту
+             // НЕ сбрасываем roundFinisher и currentRoundInitiator - круг продолжается!
            });
            
            console.log(`🃏 [takeTableCards P.I.D.R.] Взята нижняя карта: ${bottomCard.image}`);
@@ -1626,10 +1666,11 @@ export const useGameStore = create<GameState>()(
            
            // Если стол опустел - завершаем раунд
            if (newTableStack.length === 0) {
-             console.log(`🃏 [takeTableCards P.I.D.R.] Стол опустел - завершаем раунд`);
+             console.log(`🎯 [takeTableCards] 📭 Стол полностью очищен - раунд завершен`);
              set({
                roundInProgress: false,
                currentRoundInitiator: null,
+               roundFinisher: null,
                stage2TurnPhase: 'selecting_card'
              });
              get().showNotification('Стол очищен! Новый раунд', 'info', 3000);
