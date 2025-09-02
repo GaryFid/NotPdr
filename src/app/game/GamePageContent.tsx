@@ -109,7 +109,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
     gameCoins,
     startGame, endGame, 
     drawCard, makeMove, onDeckClick, placeCardOnSelfByRules,
-    selectHandCard, playSelectedCard, takeTableCards
+    selectHandCard, playSelectedCard, takeTableCards, showNotification
   } = useGameStore();
 
   // Мониторинг tableStack убран - система работает корректно
@@ -466,6 +466,62 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
     startGame('multiplayer', playerCount);
     setDealt(false);
     setGameInitialized(true);
+  };
+
+  // НОВЫЕ ФУНКЦИИ для кнопок подсчета карт
+  
+  // Показать количество карт у всех соперников
+  const showOpponentsCardCount = () => {
+    if (!humanPlayer) return;
+    
+    const opponentsCounts = players
+      .filter(p => p.id !== humanPlayer.id)
+      .map(player => {
+        const totalCards = player.cards.length + (player.penki?.length || 0);
+        const openCards = player.cards.filter(c => c.open).length;
+        return `${player.name}: ${totalCards} карт (${openCards} открытых)`;
+      })
+      .join('\n');
+    
+    console.log('🔢 [showOpponentsCardCount] Количество карт у соперников:', opponentsCounts);
+    
+    // Показываем уведомление с количеством карт
+    // Разбиваем на несколько уведомлений для лучшей читаемости
+    players
+      .filter(p => p.id !== humanPlayer.id)
+      .forEach((player, index) => {
+        const totalCards = player.cards.length + (player.penki?.length || 0);
+        const openCards = player.cards.filter(c => c.open).length;
+        setTimeout(() => {
+          showNotification(
+            `${player.name}: ${totalCards} карт (${openCards} открытых)`, 
+            'info', 
+            3000
+          );
+        }, index * 1000);
+      });
+  };
+
+  // Объявить что у игрока последняя карта
+  const announceLastCard = () => {
+    if (!humanPlayer) return;
+    
+    const openCards = humanPlayer.cards.filter(c => c.open);
+    console.log('1️⃣ [announceLastCard] Объявление последней карты:', openCards.length);
+    
+    if (openCards.length === 1) {
+      showNotification(`${humanPlayer.name} объявляет: "ОДНА КАРТА!"`, 'warning', 5000);
+      
+      // Показываем всем соперникам
+      setTimeout(() => {
+        showNotification(`Внимание! У ${humanPlayer.name} осталась последняя карта!`, 'warning', 4000);
+      }, 1000);
+      
+      console.log(`📢 [announceLastCard] ${humanPlayer.name} объявил последнюю карту!`);
+    } else {
+      showNotification(`Нельзя объявлять "одна карта" - у вас ${openCards.length} карт`, 'error', 3000);
+      console.warn(`⚠️ [announceLastCard] Неправильное объявление: ${openCards.length} карт вместо 1`);
+    }
   };
 
 
@@ -1062,9 +1118,10 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                   '🎯 ВЫБЕРИТЕ КАРТУ' : 
                   '🎴 Ваши карты'} ({humanPlayer.cards.length})
                 
-                {/* Кнопка "Взять карту" - постоянная во 2-й стадии с улучшенным дизайном */}
-                {gameStage === 2 && tableStack.length > 0 && humanPlayer?.id === currentPlayerId && (
-                  <div style={{ marginLeft: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
+                {/* Кнопки во 2-й стадии */}
+                <div style={{ marginLeft: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
+                  {/* Кнопка "Взять карту" - показывается когда есть карты на столе */}
+                  {gameStage === 2 && tableStack.length > 0 && humanPlayer?.id === currentPlayerId && (
                     <button 
                       className={styles.takeCardFromTableButton}
                       onClick={() => {
@@ -1074,30 +1131,49 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                     >
                       📥 Взять карту
                     </button>
+                  )}
+                  
+                  {/* ИСПРАВЛЕННАЯ ЛОГИКА кнопок подсчета карт */}
+                  {gameStage === 2 && humanPlayer && (() => {
+                    const humanOpenCards = humanPlayer.cards.filter(c => c.open).length;
+                    const opponentWithOneCard = players.find(p => p.id !== humanPlayer.id && p.cards.filter(c => c.open).length === 1);
                     
-                    {/* Новые кнопки подсчета карт */}
-                    <div className={styles.cardCountButtonsContainer}>
-                      <button 
-                        className={styles.cardCountButton}
-                        onClick={() => {
-                          console.log('🃏 [GamePageContent] Сколько карт?');
-                          // TODO: Добавить логику подсчета карт
-                        }}
-                      >
-                        🔢 Сколько карт?
-                      </button>
-                      <button 
-                        className={styles.cardCountButton}
-                        onClick={() => {
-                          console.log('🃏 [GamePageContent] Одна карта!');
-                          // TODO: Добавить логику одной карты
-                        }}
-                      >
-                        1️⃣ Одна карта!
-                      </button>
-                    </div>
-                  </div>
-                )}
+                    return (
+                      <>
+                        {/* Кнопка "Одна карта!" - показывается у игрока когда у него 1 карта */}
+                        {humanOpenCards === 1 && humanPlayer.id === currentPlayerId && (
+                          <div className={styles.cardCountButtonsContainer}>
+                            <button 
+                              className={styles.cardCountButton}
+                              onClick={() => {
+                                console.log('🃏 [GamePageContent] Объявляю: одна карта!');
+                                announceLastCard();
+                              }}
+                              style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}
+                            >
+                              ☝️ Одна карта!
+                            </button>
+                          </div>
+                        )}
+                        
+                        {/* Кнопка "Сколько карт?" - показывается всем когда у соперника 1 карта */}
+                        {opponentWithOneCard && (
+                          <div className={styles.cardCountButtonsContainer}>
+                            <button 
+                              className={styles.cardCountButton}
+                              onClick={() => {
+                                console.log(`🃏 [GamePageContent] Сколько карт у ${opponentWithOneCard.name}?`);
+                                showOpponentsCardCount();
+                              }}
+                            >
+                              🔍 Сколько карт?
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
               </div>
               <div className={styles.handCards}>
                 {humanPlayer.cards.map((card, index) => {
