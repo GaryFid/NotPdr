@@ -470,35 +470,50 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
 
   // НОВЫЕ ФУНКЦИИ для кнопок подсчета карт
   
+  // НОВЫЙ STATE для сообщений над игроками
+  const [playerMessages, setPlayerMessages] = useState<{[playerId: string]: {text: string; type: 'info' | 'warning' | 'success' | 'error'; timestamp: number}}>({});
+
+  // Показать сообщение над конкретным игроком
+  const showPlayerMessage = (playerId: string, text: string, type: 'info' | 'warning' | 'success' | 'error' = 'info', duration: number = 3000) => {
+    setPlayerMessages(prev => ({
+      ...prev,
+      [playerId]: { text, type, timestamp: Date.now() }
+    }));
+    
+    // Убираем сообщение через указанное время
+    setTimeout(() => {
+      setPlayerMessages(prev => {
+        const newMessages = { ...prev };
+        delete newMessages[playerId];
+        return newMessages;
+      });
+    }, duration);
+  };
+
   // Показать количество карт у всех соперников
   const showOpponentsCardCount = () => {
     if (!humanPlayer) return;
     
-    const opponentsCounts = players
-      .filter(p => p.id !== humanPlayer.id)
-      .map(player => {
-        const totalCards = player.cards.length + (player.penki?.length || 0);
-        const openCards = player.cards.filter(c => c.open).length;
-        return `${player.name}: ${totalCards} карт (${openCards} открытых)`;
-      })
-      .join('\n');
+    console.log('🔢 [showOpponentsCardCount] Запрашиваем количество карт у соперников');
     
-    console.log('🔢 [showOpponentsCardCount] Количество карт у соперников:', opponentsCounts);
+    // Показываем сообщение над игроком который спросил
+    showPlayerMessage(humanPlayer.id, '🔍 Сколько карт?', 'info', 2000);
     
-    // Показываем уведомление с количеством карт
-    // Разбиваем на несколько уведомлений для лучшей читаемости
+    // Показываем информацию о картах каждого соперника
     players
       .filter(p => p.id !== humanPlayer.id)
       .forEach((player, index) => {
         const totalCards = player.cards.length + (player.penki?.length || 0);
         const openCards = player.cards.filter(c => c.open).length;
+        
         setTimeout(() => {
-          showNotification(
-            `${player.name}: ${totalCards} карт (${openCards} открытых)`, 
+          showPlayerMessage(
+            player.id, 
+            `${totalCards} карт (${openCards} открытых)`, 
             'info', 
-            3000
+            4000
           );
-        }, index * 1000);
+        }, index * 800);
       });
   };
 
@@ -510,15 +525,18 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
     console.log('1️⃣ [announceLastCard] Объявление последней карты:', openCards.length);
     
     if (openCards.length === 1) {
-      showNotification(`${humanPlayer.name} объявляет: "ОДНА КАРТА!"`, 'warning', 5000);
+      // Показываем сообщение над игроком который объявил
+      showPlayerMessage(humanPlayer.id, '☝️ ОДНА КАРТА!', 'warning', 4000);
       
-      // Показываем всем соперникам
+      // Уведомление для всех через обычную систему
       setTimeout(() => {
-        showNotification(`Внимание! У ${humanPlayer.name} осталась последняя карта!`, 'warning', 4000);
-      }, 1000);
+        showNotification(`⚠️ ${humanPlayer.name} объявил: "ОДНА КАРТА!"`, 'warning', 4000);
+      }, 500);
       
       console.log(`📢 [announceLastCard] ${humanPlayer.name} объявил последнюю карту!`);
     } else {
+      // Показываем ошибку над игроком
+      showPlayerMessage(humanPlayer.id, `❌ У вас ${openCards.length} карт!`, 'error', 3000);
       showNotification(`Нельзя объявлять "одна карта" - у вас ${openCards.length} карт`, 'error', 3000);
       console.warn(`⚠️ [announceLastCard] Неправильное объявление: ${openCards.length} карт вместо 1`);
     }
@@ -699,7 +717,7 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                             }}
                             animate={{ 
                               opacity: 1, 
-                              scale: 1 - ((tableStack.length - 1 - index) * 0.1), // Верхняя карта scale=1, каждая нижняя на 0.1 меньше
+                              scale: Math.max(0.75, 1 - ((tableStack.length - 1 - index) * 0.05)), // ИСПРАВЛЕНО: минимум 75%, меньшее уменьшение
                               y: 0,
                               rotateX: 0,
                               transition: {
@@ -717,9 +735,9 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                             }}
                             className={`${styles.tableCard} ${index === tableStack.length - 1 ? styles.tableCardTop : ''}`}
                             style={{
-                              left: `${-20 + index * 25}px`, // Больше смещение для лучшей видимости
-                              top: `${-15 + index * 8}px`,
-                              zIndex: 200 + index // Высокий z-index
+                              left: `${-15 + index * 18}px`, // ИСПРАВЛЕНО: Уменьшенное смещение для лучшего обзора
+                              top: `${-10 + index * 5}px`, // ИСПРАВЛЕНО: Меньшее вертикальное смещение
+                              zIndex: 200 + index // Высокий z-index - верхние карты поверх нижних
                             }}
                           >
                             <Image 
@@ -847,6 +865,38 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                       transform: `translate(-50%, -50%) scale(0.85)`, // Фиксированный масштаб как в DevTools
                     }}
                   >
+                    {/* СООБЩЕНИЕ НАД ИГРОКОМ */}
+                    {playerMessages[p.id] && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10, scale: 0.8 }}
+                        animate={{ opacity: 1, y: -50, scale: 1 }}
+                        exit={{ opacity: 0, y: -60, scale: 0.8 }}
+                        transition={{ duration: 0.3 }}
+                        style={{
+                          position: 'absolute',
+                          top: '-20px',
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          background: playerMessages[p.id].type === 'warning' ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' :
+                                      playerMessages[p.id].type === 'error' ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' :
+                                      playerMessages[p.id].type === 'success' ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' :
+                                      'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                          color: 'white',
+                          padding: '6px 12px',
+                          borderRadius: '12px',
+                          fontSize: '11px',
+                          fontWeight: '600',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                          zIndex: 1000,
+                          whiteSpace: 'nowrap',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          backdropFilter: 'blur(4px)'
+                        }}
+                      >
+                        {playerMessages[p.id].text}
+                      </motion.div>
+                    )}
+
                     {/* Аватар и имя по центру */}
                     <div className={styles.avatarWrap}>
                       <div className={styles.avatarContainer}>
