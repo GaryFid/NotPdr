@@ -677,27 +677,11 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                           </motion.div>
                         ))}
                       </AnimatePresence>
-                      
-                      {/* Лейбл для карт на столе */}
-                      <motion.div 
-                        className={styles.tableLabel}
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        style={{ zIndex: 300 }}
-                      >
-                        🃏 Карты на столе: {tableStack.length}
-                      </motion.div>
+                      {/* Лейбл для карт на столе убран - мешает основному столу */}
                     </>
                   ) : (
-                    /* Показываем когда стол пустой */
-                    <motion.div 
-                      className={styles.tableLabel}
-                      initial={{ opacity: 0, y: -20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      style={{ zIndex: 300 }}
-                    >
-                      🃏 Карты на столе: {tableStack.length}
-                    </motion.div>
+                    /* Лейбл убран - когда стол пустой ничего не показываем */
+                    null
                   )}
                 </div>
               )}
@@ -1078,31 +1062,41 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
                   '🎯 ВЫБЕРИТЕ КАРТУ' : 
                   '🎴 Ваши карты'} ({humanPlayer.cards.length})
                 
-                {/* Кнопка "Взять карту" - постоянная во 2-й стадии */}
+                {/* Кнопка "Взять карту" - постоянная во 2-й стадии с улучшенным дизайном */}
                 {gameStage === 2 && tableStack.length > 0 && humanPlayer?.id === currentPlayerId && (
-                  <button 
-                    className={styles.takeCardFromTableButton}
-                    onClick={() => {
-                      console.log('🃏 [GamePageContent] Взять нижнюю карту со стола');
-                      takeTableCards();
-                    }}
-                    style={{
-                      marginLeft: '15px',
-                      padding: '8px 16px',
-                      background: '#dc2626',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => (e.target as HTMLButtonElement).style.background = '#b91c1c'}
-                    onMouseLeave={(e) => (e.target as HTMLButtonElement).style.background = '#dc2626'}
-                  >
-                    📥 Взять карту
-                  </button>
+                  <div style={{ marginLeft: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
+                    <button 
+                      className={styles.takeCardFromTableButton}
+                      onClick={() => {
+                        console.log('🃏 [GamePageContent] Взять нижнюю карту со стола');
+                        takeTableCards();
+                      }}
+                    >
+                      📥 Взять карту
+                    </button>
+                    
+                    {/* Новые кнопки подсчета карт */}
+                    <div className={styles.cardCountButtonsContainer}>
+                      <button 
+                        className={styles.cardCountButton}
+                        onClick={() => {
+                          console.log('🃏 [GamePageContent] Сколько карт?');
+                          // TODO: Добавить логику подсчета карт
+                        }}
+                      >
+                        🔢 Сколько карт?
+                      </button>
+                      <button 
+                        className={styles.cardCountButton}
+                        onClick={() => {
+                          console.log('🃏 [GamePageContent] Одна карта!');
+                          // TODO: Добавить логику одной карты
+                        }}
+                      >
+                        1️⃣ Одна карта!
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
               <div className={styles.handCards}>

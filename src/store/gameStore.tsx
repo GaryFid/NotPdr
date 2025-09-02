@@ -1689,11 +1689,15 @@ export const useGameStore = create<GameState>()(
            }
          },
          
-         // Активация пеньков (переход в 3-ю стадию)
+         // Активация пеньков (остается во 2-й стадии)
          activatePenki: (playerId: string) => {
            const { players } = get();
            const player = players.find(p => p.id === playerId);
            if (!player || player.penki.length === 0) return;
+           
+           console.log(`🃏 [activatePenki] Активация пеньков для ${player.name}`);
+           console.log(`🃏 [activatePenki] - Текущие карты:`, player.cards.map(c => `${c.image}(${c.open ? 'open' : 'closed'})`));
+           console.log(`🃏 [activatePenki] - Пеньки:`, player.penki.map(c => `${c.image}(${c.open ? 'open' : 'closed'})`));
            
            // Открываем пеньки и переносим их в активные карты
            const activatedPenki = player.penki.map(card => ({
@@ -1701,13 +1705,16 @@ export const useGameStore = create<GameState>()(
              open: true // Пеньки становятся открытыми когда переходят в руку
            }));
            
-           player.cards = activatedPenki;
+           // ИСПРАВЛЕНО: Добавляем пеньки к существующим картам, остаемся во 2-й стадии
+           player.cards = [...player.cards, ...activatedPenki];
            player.penki = [];
-           player.playerStage = 3;
+           // НЕ меняем playerStage - остаемся во 2-й стадии!
            
            set({ players: [...players] });
            
-           get().showNotification(`${player.name} активировал пеньки - переход в 3-ю стадию!`, 'info', 5000);
+           console.log(`🃏 [activatePenki] После активации карты игрока:`, player.cards.map(c => `${c.image}(${c.open ? 'open' : 'closed'})`));
+           
+           get().showNotification(`${player.name} активировал пеньки - продолжает играть во 2-й стадии!`, 'info', 5000);
            
            // Проверяем условия победы
            get().checkVictoryCondition();
