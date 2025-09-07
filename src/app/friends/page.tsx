@@ -40,6 +40,7 @@ export default function FriendsPage() {
   const [suggestedFriends, setSuggestedFriends] = useState<SuggestedFriend[]>([]);
   const [addingFriend, setAddingFriend] = useState(false);
   const [newFriendName, setNewFriendName] = useState('');
+  const [userReferralCode, setUserReferralCode] = useState<string>('');
   
   const { inviteFriend, shareReferral } = useTelegramShare();
 
@@ -88,6 +89,15 @@ export default function FriendsPage() {
       if (suggestedResponse.ok) {
         const { suggested } = await suggestedResponse.json();
         setSuggestedFriends(suggested || []);
+      }
+
+      // Загружаем реферальный код пользователя
+      const referralResponse = await fetch('/api/referral?action=get_code', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (referralResponse.ok) {
+        const { referralCode } = await referralResponse.json();
+        setUserReferralCode(referralCode || '');
       }
 
     } catch (error) {
@@ -213,9 +223,14 @@ export default function FriendsPage() {
           <span className="menu-title">ДРУЗЬЯ</span>
           <div className="flex gap-2">
             <button 
-              onClick={() => shareReferral('USER_REF_CODE')} // TODO: получить реальный код
-              className="p-2 rounded-lg border border-blue-400 text-blue-200 hover:bg-blue-400/10 transition-all"
-              title="Пригласить через Telegram"
+              onClick={() => userReferralCode && shareReferral(userReferralCode)}
+              disabled={!userReferralCode}
+              className={`p-2 rounded-lg border transition-all ${
+                userReferralCode 
+                  ? 'border-blue-400 text-blue-200 hover:bg-blue-400/10' 
+                  : 'border-gray-600 text-gray-500 cursor-not-allowed'
+              }`}
+              title="Пригласить друзей через Telegram"
             >
               <Share className="w-5 h-5" />
             </button>
@@ -433,6 +448,64 @@ export default function FriendsPage() {
                 </div>
               </motion.div>
             ))}
+          </div>
+        </motion.div>
+
+        {/* Invite from Telegram Section */}
+        <motion.div 
+          className="friends-section"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.35 }}
+        >
+          <h3 className="friends-section-title">
+            <Share className="section-icon" />
+            ПРИГЛАСИТЬ ИЗ TELEGRAM
+          </h3>
+          <div className="p-4 bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-lg border border-blue-400/30">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h4 className="text-white font-bold text-lg">Пригласи друзей!</h4>
+                <p className="text-gray-300 text-sm">Получай 100 монет за каждого друга</p>
+              </div>
+              <div className="text-4xl">🎁</div>
+            </div>
+            <div className="flex gap-3">
+              <motion.button 
+                onClick={() => userReferralCode && shareReferral(userReferralCode)}
+                disabled={!userReferralCode}
+                className={`flex-1 py-3 px-4 rounded-lg font-bold transition-all ${
+                  userReferralCode 
+                    ? 'bg-blue-600 hover:bg-blue-500 text-white' 
+                    : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                }`}
+                whileHover={userReferralCode ? { scale: 1.02 } : undefined}
+                whileTap={userReferralCode ? { scale: 0.98 } : undefined}
+              >
+                <Share className="inline w-5 h-5 mr-2" />
+                Поделиться ссылкой
+              </motion.button>
+              {userReferralCode && (
+                <motion.button 
+                  onClick={() => {
+                    const referralUrl = `${window.location.origin}?ref=${userReferralCode}`;
+                    navigator.clipboard.writeText(referralUrl);
+                    alert('Ссылка скопирована в буфер обмена!');
+                  }}
+                  className="p-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-all"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  title="Скопировать ссылку"
+                >
+                  <Copy className="w-5 h-5" />
+                </motion.button>
+              )}
+            </div>
+            {userReferralCode && (
+              <div className="mt-3 p-2 bg-gray-800/50 rounded text-xs text-gray-400 break-all">
+                Ваш код: <span className="text-blue-400 font-mono">{userReferralCode}</span>
+              </div>
+            )}
           </div>
         </motion.div>
 

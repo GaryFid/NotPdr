@@ -84,6 +84,7 @@ interface GameState {
   roundInProgress: boolean // Идет ли текущий раунд битья
   currentRoundInitiator: string | null // Кто начал текущий раунд
   roundFinisher: string | null // Игрок который должен завершить круг (позиция -1 от инициатора)
+  initiatorTookCard: boolean // Взял ли инициатор карту (не побил) - для новой логики завершения
   
   // Статистика и настройки
   stats: GameStats
@@ -232,6 +233,7 @@ export const useGameStore = create<GameState>()(
       roundInProgress: false,
       currentRoundInitiator: null,
       roundFinisher: null,
+      initiatorTookCard: false,
       
       // Состояния хода для новой логики
       turnPhase: 'analyzing_hand',
@@ -256,8 +258,8 @@ export const useGameStore = create<GameState>()(
         difficulty: 'medium'
       },
       
-      // Игровая валюта (500 монет для новых пользователей)
-      gameCoins: 500,
+      // Игровая валюта (0 монет - будут зарабатываться в игре)
+      gameCoins: 0,
       
       selectedCard: null,
       showCardDetails: false,
@@ -1432,6 +1434,7 @@ export const useGameStore = create<GameState>()(
              roundInProgress: false,
              currentRoundInitiator: null,
              roundFinisher: null,
+             initiatorTookCard: false,
              tableStack: [],
              selectedHandCard: null
            });
@@ -1548,15 +1551,27 @@ export const useGameStore = create<GameState>()(
              roundInProgress: true,
              currentRoundInitiator: newInitiator,
              roundFinisher: newFinisher,
+             initiatorTookCard: false, // Сбрасываем флаг для нового раунда
              stage2TurnPhase: 'selecting_card' // Следующий игрок выбирает карту
            });
            
            const actionType = wasEmptyTable ? 'начал атаку' : 'побил карту';
            get().showNotification(`${currentPlayer.name} ${actionType} (на столе: ${newTableStack.length})`, 'info', 3000);
            
-           // НОВАЯ ЛОГИКА ЗАВЕРШЕНИЯ КРУГА: Проверяем, завершает ли финишер круг
-           if (currentPlayerId === newFinisher && !wasEmptyTable) {
-             console.log(`🎯 [playSelectedCard] 🏁 КРУГ ЗАВЕРШЕН! ${currentPlayer.name} (финишер) побил карту`);
+           // НОВАЯ ЛОГИКА ЗАВЕРШЕНИЯ КРУГА: 
+           // 1. Круг завершается если финишер (-1 от инициатора) побил карту
+           // 2. Если инициатор взял карту, то круг завершается когда ЛЮБОЙ игрок побьет карту
+           const { initiatorTookCard } = get();
+           const shouldEndRound = (currentPlayerId === newFinisher && !wasEmptyTable) || 
+                                 (initiatorTookCard && !wasEmptyTable);
+           
+           if (shouldEndRound) {
+             console.log(`🎯 [playSelectedCard] 🏁 КРУГ ЗАВЕРШЕН!`);
+             if (currentPlayerId === newFinisher) {
+               console.log(`🎯 [playSelectedCard] Причина: ${currentPlayer.name} (финишер) побил карту`);
+             } else if (initiatorTookCard) {
+               console.log(`🎯 [playSelectedCard] Причина: инициатор взял карту, ${currentPlayer.name} побил - завершает круг`);
+             }
              console.log(`🎯 [playSelectedCard] 🗑️ Все карты со стола уходят в биту: ${newTableStack.map(c => c.image).join(', ')}`);
              
              // ВСЕ КАРТЫ СО СТОЛА УХОДЯТ В БИТУ
@@ -1565,6 +1580,7 @@ export const useGameStore = create<GameState>()(
                roundInProgress: false,
                currentRoundInitiator: null,
                roundFinisher: null,
+               initiatorTookCard: false, // Сбрасываем флаг
                stage2TurnPhase: 'selecting_card'
              });
              
@@ -1575,7 +1591,7 @@ export const useGameStore = create<GameState>()(
              // Проверяем условия победы
              get().checkVictoryCondition();
              
-             // Финишер начинает новый раунд (остается ходить)
+             // Игрок который завершил круг начинает новый раунд (остается ходить)
              setTimeout(() => get().nextTurn(), 500);
              return;
            }
@@ -1638,6 +1654,13 @@ export const useGameStore = create<GameState>()(
            console.log(`🃏 [takeTableCards P.I.D.R.] ${currentPlayer.name} не может побить и берет НИЖНЮЮ карту`);
            console.log(`🃏 [takeTableCards P.I.D.R.] Карты на столе:`, tableStack.map(c => c.image));
            
+           // НОВАЯ ЛОГИКА: Отслеживаем если инициатор взял карту (не побил)
+           let initiatorTookCard = get().initiatorTookCard;
+           if (currentPlayerId === currentRoundInitiator) {
+             console.log(`🎯 [takeTableCards] ⚠️ ИНИЦИАТОР ${currentPlayer.name} взял карту - теперь любой может завершить круг`);
+             initiatorTookCard = true;
+           }
+           
            // НОВАЯ ЛОГИКА: Если это финишер берет карту - круг НЕ завершается, продолжается дальше
            if (currentPlayerId === roundFinisher) {
              console.log(`🎯 [takeTableCards] ⚠️ Финишер ${currentPlayer.name} взял карту - круг ПРОДОЛЖАЕТСЯ`);
@@ -1655,6 +1678,7 @@ export const useGameStore = create<GameState>()(
            set({
              players: [...players],
              tableStack: newTableStack,
+             initiatorTookCard: initiatorTookCard,
              stage2TurnPhase: 'selecting_card' // Следующий игрок выбирает карту
              // НЕ сбрасываем roundFinisher и currentRoundInitiator - круг продолжается!
            });
@@ -1671,6 +1695,7 @@ export const useGameStore = create<GameState>()(
                roundInProgress: false,
                currentRoundInitiator: null,
                roundFinisher: null,
+               initiatorTookCard: false, // Сбрасываем флаг
                stage2TurnPhase: 'selecting_card'
              });
              get().showNotification('Стол очищен! Новый раунд', 'info', 3000);

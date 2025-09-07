@@ -1,5 +1,32 @@
 -- P.I.D.R. Database Schema for Multiplayer
--- Добавляем таблицы к существующей таблице users
+-- Полная схема базы данных для игры в реальном времени
+
+-- 0. Основная таблица пользователей
+CREATE TABLE users (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  telegram_id BIGINT UNIQUE, -- ID в Telegram
+  username VARCHAR(50) UNIQUE NOT NULL, -- Никнеймы для игры
+  display_name VARCHAR(100), -- Имя для отображения
+  avatar_emoji VARCHAR(10) DEFAULT '👤', -- Эмодзи аватарка
+  
+  -- Игровая статистика
+  games_played INTEGER DEFAULT 0,
+  games_won INTEGER DEFAULT 0,
+  total_score INTEGER DEFAULT 0,
+  best_score INTEGER DEFAULT 0,
+  
+  -- Игровая валюта (ОБНУЛЯЕМ - будут зарабатывать в игре)
+  coins INTEGER DEFAULT 0, -- Было 500, теперь 0
+  
+  -- Реферальная система  
+  referral_code VARCHAR(10) UNIQUE, -- Персональный код для приглашений
+  invited_by VARCHAR(10) NULL, -- Кем был приглашен (код)
+  
+  -- Метаданные
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  last_active TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
 -- 1. Система друзей
 CREATE TABLE friends (
@@ -98,6 +125,10 @@ CREATE TABLE game_invitations (
 );
 
 -- Индексы для оптимизации
+CREATE INDEX idx_users_telegram_id ON users(telegram_id);
+CREATE INDEX idx_users_username ON users(username);
+CREATE INDEX idx_users_referral_code ON users(referral_code);
+CREATE INDEX idx_users_invited_by ON users(invited_by);
 CREATE INDEX idx_friends_user_id ON friends(user_id);
 CREATE INDEX idx_friends_friend_id ON friends(friend_id);
 CREATE INDEX idx_friends_status ON friends(status);
@@ -120,6 +151,9 @@ END;
 $$ language 'plpgsql';
 
 -- Триггеры для автообновления timestamps
+CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 CREATE TRIGGER update_friends_updated_at BEFORE UPDATE ON friends 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -130,6 +164,7 @@ CREATE TRIGGER update_user_status_updated_at BEFORE UPDATE ON user_status
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- RLS (Row Level Security) политики для безопасности
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE friends ENABLE ROW LEVEL SECURITY;
 ALTER TABLE referrals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE game_rooms ENABLE ROW LEVEL SECURITY;
@@ -138,6 +173,12 @@ ALTER TABLE game_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_status ENABLE ROW LEVEL SECURITY;
 
 -- Политики безопасности (пользователи видят только свои данные)
+CREATE POLICY "Users can view their own profile" ON users
+    FOR SELECT USING (id = auth.uid());
+
+CREATE POLICY "Users can update their own profile" ON users
+    FOR UPDATE USING (id = auth.uid());
+
 CREATE POLICY "Users can view their own friends" ON friends
     FOR SELECT USING (user_id = auth.uid() OR friend_id = auth.uid());
 
@@ -162,6 +203,75 @@ BEGIN
         result := result || substr(chars, ceil(random() * length(chars))::INTEGER, 1);
     END LOOP;
     RETURN result;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Функция для генерации персонального реферального кода
+CREATE OR REPLACE FUNCTION generate_referral_code()
+RETURNS VARCHAR(10) AS $$
+DECLARE
+    chars TEXT := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    result VARCHAR(10) := '';
+    i INTEGER;
+    exists_count INTEGER;
+BEGIN
+    LOOP
+        result := '';
+        FOR i IN 1..8 LOOP
+            result := result || substr(chars, ceil(random() * length(chars))::INTEGER, 1);
+        END LOOP;
+        
+        -- Проверяем уникальность
+        SELECT COUNT(*) INTO exists_count FROM users WHERE referral_code = result;
+        IF exists_count = 0 THEN
+            EXIT;
+        END IF;
+    END LOOP;
+    
+    RETURN result;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Триггер для автоматической генерации реферального кода
+CREATE OR REPLACE FUNCTION auto_generate_referral_code()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.referral_code IS NULL THEN
+        NEW.referral_code := generate_referral_code();
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_auto_referral_code 
+    BEFORE INSERT ON users 
+    FOR EACH ROW EXECUTE FUNCTION auto_generate_referral_code();
+
+-- Функция для обработки реферального бонуса
+CREATE OR REPLACE FUNCTION process_referral_bonus(referrer_code VARCHAR(10), new_user_id UUID)
+RETURNS BOOLEAN AS $$
+DECLARE
+    referrer_id UUID;
+    bonus_amount INTEGER := 100; -- 100 монет за реферала
+BEGIN
+    -- Находим пользователя по коду
+    SELECT id INTO referrer_id FROM users WHERE referral_code = referrer_code;
+    
+    IF referrer_id IS NULL THEN
+        RETURN FALSE; -- Код не найден
+    END IF;
+    
+    -- Обновляем монеты у пригласившего
+    UPDATE users 
+    SET coins = coins + bonus_amount, 
+        updated_at = NOW() 
+    WHERE id = referrer_id;
+    
+    -- Записываем в таблицу реферралов
+    INSERT INTO referrals (referrer_id, referred_id, referral_code, reward_coins, is_rewarded)
+    VALUES (referrer_id, new_user_id, referrer_code, bonus_amount, TRUE);
+    
+    RETURN TRUE;
 END;
 $$ LANGUAGE plpgsql;
 
