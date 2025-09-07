@@ -795,7 +795,9 @@ export const useGameStore = create<GameState>()(
             turnPhase: 'waiting_target_selection',
             availableTargets: targets
           });
-          get().showNotification('Выберите цель для хода', 'info');
+          if (!players.find(p => p.id === currentPlayerId)?.isBot) {
+            get().showNotification('Выберите цель для хода', 'info');
+          }
           return;
         }
         
@@ -1008,7 +1010,7 @@ export const useGameStore = create<GameState>()(
               currentPlayerId: currentPlayer.id,
               stage2TurnPhase: 'selecting_card'
             });
-          } else {
+          } else if (!currentPlayer.isBot) {
             get().showNotification(`${currentPlayer.name}: выберите карту для хода`, 'info', 5000);
           }
           return;
@@ -1049,7 +1051,7 @@ export const useGameStore = create<GameState>()(
                   console.log(`🤖 [processPlayerTurn] У бота нет целей для хода`);
                 }
               }, 1000);
-            } else {
+            } else if (!currentPlayer.isBot) {
               get().showNotification(`${currentPlayer.name}: выберите карту для хода`, 'info');
             }
             return; // Ждем выполнения хода
@@ -1069,7 +1071,7 @@ export const useGameStore = create<GameState>()(
               setTimeout(() => {
                 get().onDeckClick();
               }, 1000);
-            } else {
+            } else if (!currentPlayer.isBot) {
               get().showNotification(`${currentPlayer.name}: нет ходов из руки, кликните на колоду`, 'warning');
             }
             return; // Ждем клика по колоде
@@ -1094,7 +1096,7 @@ export const useGameStore = create<GameState>()(
           setTimeout(() => {
             get().onDeckClick();
           }, 1000);
-        } else {
+        } else if (!currentPlayer.isBot) {
           get().showNotification(`${currentPlayer.name}: кликните на колоду чтобы открыть карту`, 'info');
         }
       },
@@ -1162,11 +1164,11 @@ export const useGameStore = create<GameState>()(
           }, 1500);
         } else {
           // Для пользователя - показываем варианты
-          if (canMoveToOpponents) {
+          if (canMoveToOpponents && !currentPlayer.isBot) {
             get().showNotification('Выберите: сходить на соперника или положить на себя', 'info');
-          } else if (canPlaceOnSelfByRules) {
+          } else if (canPlaceOnSelfByRules && !currentPlayer.isBot) {
             get().showNotification('Можете положить карту на себя по правилам', 'info');
-          } else {
+          } else if (!currentPlayer.isBot) {
             get().showNotification('Нет доступных ходов - карта ложится поверх ваших карт', 'warning');
             // Автоматически кладем карту поверх через 2 секунды
             setTimeout(() => {

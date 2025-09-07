@@ -801,8 +801,8 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
 
               {/* УБРАНО: Стопка карт на столе загромождала центр. В примере ее нет в центре. */}
 
-              {/* Элегантный индикатор для клика по колоде вместо кнопки */}
-              {gameStage === 1 && canClickDeck && (
+              {/* Элегантный индикатор для клика по колоде - ТОЛЬКО ДЛЯ ИГРОКА */}
+              {gameStage === 1 && canClickDeck && !currentTurnPlayer?.isBot && (
                 <div className={styles.deckHintContainer}>
                   <div className={styles.deckHintArrow}>👆</div>
                   <div className={styles.deckHintText}>Нажмите на колоду</div>
