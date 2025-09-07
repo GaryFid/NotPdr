@@ -1560,40 +1560,46 @@ export const useGameStore = create<GameState>()(
            const actionType = wasEmptyTable ? 'начал атаку' : 'побил карту';
            get().showNotification(`${currentPlayer.name} ${actionType} (на столе: ${newTableStack.length})`, 'info', 3000);
            
-           // НОВАЯ ЛОГИКА ЗАВЕРШЕНИЯ КРУГА: 
-           // 1. Круг завершается если финишер (-1 от инициатора) побил карту
-           // 2. Если инициатор взял карту, то круг завершается когда ЛЮБОЙ игрок побьет карту
+           // ИСПРАВЛЕННАЯ ЛОГИКА P.I.D.R.: Карты должны накапливаться в массиве!
+           // Круг завершается НЕ после первого битья, а только при особых условиях
+           console.log(`🃏 [playSelectedCard] Карта добавлена в массив. На столе карт: ${newTableStack.length}`);
+           console.log(`🃏 [playSelectedCard] Карты на столе: ${newTableStack.map(c => c.image).join(' -> ')}`);
+           
+           // ОЧЕНЬ РЕДКОЕ завершение круга - только если все игроки прошли полный цикл
+           // Пока просто накапливаем карты, пусть игроки бьют верхние или берут нижние
            const { initiatorTookCard } = get();
-           const shouldEndRound = (currentPlayerId === newFinisher && !wasEmptyTable) || 
-                                 (initiatorTookCard && !wasEmptyTable);
+           
+           // Завершение круга только если:
+           // 1. На столе уже много карт (больше чем игроков) И
+           // 2. Финишер побил карту (завершает цикл) И  
+           // 3. Все игроки сделали ходы
+           const shouldEndRound = newTableStack.length >= players.length && 
+                                 currentPlayerId === newFinisher && 
+                                 !wasEmptyTable;
            
            if (shouldEndRound) {
-             console.log(`🎯 [playSelectedCard] 🏁 КРУГ ЗАВЕРШЕН!`);
-             if (currentPlayerId === newFinisher) {
-               console.log(`🎯 [playSelectedCard] Причина: ${currentPlayer.name} (финишер) побил карту`);
-             } else if (initiatorTookCard) {
-               console.log(`🎯 [playSelectedCard] Причина: инициатор взял карту, ${currentPlayer.name} побил - завершает круг`);
-             }
+             console.log(`🎯 [playSelectedCard] 🏁 КРУГ ЗАВЕРШЕН после ${newTableStack.length} карт!`);
+             console.log(`🎯 [playSelectedCard] Причина: полный цикл игроков, финишер ${currentPlayer.name} завершил`);
              console.log(`🎯 [playSelectedCard] 🗑️ Все карты со стола уходят в биту: ${newTableStack.map(c => c.image).join(', ')}`);
              
-             // ВСЕ КАРТЫ СО СТОЛА УХОДЯТ В БИТУ
+             // ВСЕ КАРТЫ СО СТОЛА УХОДЯТ В БИТУ ТОЛЬКО СЕЙЧАС
              set({
                tableStack: [],
                roundInProgress: false,
                currentRoundInitiator: null,
                roundFinisher: null,
-               initiatorTookCard: false, // Сбрасываем флаг
+               initiatorTookCard: false,
                stage2TurnPhase: 'selecting_card'
              });
              
-             get().showNotification(`🏁 ${currentPlayer.name} завершил круг! Карты в биту`, 'success', 3000);
+             get().showNotification(`🏁 ${currentPlayer.name} завершил круг! ${newTableStack.length} карт в биту`, 'success', 3000);
              
              // Проверяем переход в 3-ю стадию
              get().checkStage3Transition(currentPlayerId);
              // Проверяем условия победы
              get().checkVictoryCondition();
              
-             // Игрок который завершил круг начинает новый раунд (остается ходить)
+             // Игрок который завершил круг начинает новый раунд
              setTimeout(() => get().nextTurn(), 500);
              return;
            }

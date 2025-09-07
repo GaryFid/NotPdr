@@ -8,6 +8,7 @@ import type { Player, Card } from '../../types/game';
 import type { Card as StoreCard } from '../../store/gameStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import React from 'react';
+import { ErrorBoundary } from '../../components/ErrorBoundary';
 import { useGameStore } from '@/store/gameStore';
 import { AIPlayer, AIDifficulty } from '@/lib/game/ai-player';
 import MultiplayerGame from '@/components/MultiplayerGame';
@@ -99,7 +100,7 @@ interface GamePageContentProps {
   initialPlayerCount?: number;
 }
 
-export default function GamePageContent({ initialPlayerCount = 4 }: GamePageContentProps) {
+function GamePageContentComponent({ initialPlayerCount = 4 }: GamePageContentProps) {
   const { user } = useTelegram();
   
   const { 
@@ -1354,5 +1355,14 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
 
       <BottomNav />
     </div>
+  );
+}
+
+// Оборачиваем в ErrorBoundary чтобы игра не вылетала
+export default function GamePageContentWrapper(props: GamePageContentProps) {
+  return (
+    <ErrorBoundary>
+      <GamePageContentComponent {...props} />
+    </ErrorBoundary>
   );
 }

@@ -462,90 +462,66 @@ export default function FriendsPage() {
             <Share className="section-icon" />
             ПРИГЛАСИТЬ ИЗ TELEGRAM
           </h3>
-          <div className="relative overflow-hidden bg-gradient-to-br from-indigo-900/40 via-purple-900/50 to-pink-900/40 rounded-2xl border border-purple-400/30 shadow-2xl backdrop-blur-sm">
-            {/* Анимированный фон */}
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10 animate-pulse"></div>
+          <div className="bg-gradient-to-br from-blue-900/50 to-purple-900/50 rounded-xl border border-blue-400/30 p-4">
+            <h4 className="text-white font-bold text-lg mb-3 text-center">
+              🎁 Приглашай друзей за монеты
+            </h4>
             
-            <div className="relative z-10 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h4 className="text-white font-bold text-xl bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                    💎 Пригласи друзей!
-                  </h4>
-                  <p className="text-gray-300 text-sm font-medium">
-                    💰 <span className="text-yellow-400">100 монет</span> за каждого друга
-                  </p>
+            <div className="flex gap-3 mb-3">
+              {/* НАСТОЯЩАЯ КНОПКА ПОДЕЛИТЬСЯ */}
+              <motion.button 
+                onClick={() => {
+                  const fallbackCode = userReferralCode || 'DEMO123';
+                  shareReferral(fallbackCode);
+                }}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-4 px-4 rounded-lg shadow-xl border-2 border-blue-400 transition-all duration-200 transform hover:scale-105 active:scale-95"
+                whileHover={{ y: -2 }}
+                whileTap={{ y: 0 }}
+                style={{
+                  background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                  boxShadow: '0 8px 25px rgba(37, 99, 235, 0.4), inset 0 1px 0 rgba(255,255,255,0.2)'
+                }}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <Share className="w-5 h-5" />
+                  <span>Поделиться</span>
                 </div>
-                <div className="text-5xl animate-bounce">🚀</div>
-              </div>
-              
-              <div className="flex gap-3 mb-4">
-                {/* Основная кнопка поделиться */}
-                <motion.button 
-                  onClick={() => {
-                    const fallbackCode = userReferralCode || 'DEMO123'; // Фолбэк если код не загрузился
-                    shareReferral(fallbackCode);
-                  }}
-                  className="flex-1 relative group overflow-hidden bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg transform transition-all duration-300 hover:shadow-purple-500/25 active:scale-95"
-                  whileHover={{ 
-                    scale: 1.02,
-                    boxShadow: "0 0 30px rgba(147, 51, 234, 0.5)"
-                  }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  {/* Блестящий эффект */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                  
-                  <div className="relative flex items-center justify-center">
-                    <Share className="w-5 h-5 mr-2" />
-                    <span className="text-lg">📱 Поделиться в Telegram</span>
-                  </div>
-                </motion.button>
+              </motion.button>
 
-                {/* Кнопка копирования */}
-                <motion.button 
-                  onClick={() => {
-                    const fallbackCode = userReferralCode || 'DEMO123';
-                    const referralUrl = `${window.location.origin}?ref=${fallbackCode}`;
-                    navigator.clipboard.writeText(referralUrl).then(() => {
-                      // Красивое уведомление
-                      const notification = document.createElement('div');
-                      notification.innerHTML = '✅ Ссылка скопирована!';
-                      notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-bounce';
-                      document.body.appendChild(notification);
-                      setTimeout(() => document.body.removeChild(notification), 3000);
-                    }).catch(() => {
-                      alert('📋 Ссылка: ' + referralUrl);
-                    });
-                  }}
-                  className="group relative overflow-hidden bg-gradient-to-br from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-white p-4 rounded-xl shadow-lg transition-all duration-300 hover:shadow-gray-500/25"
-                  whileHover={{ 
-                    scale: 1.05,
-                    rotate: [0, -2, 2, 0],
-                    transition: { duration: 0.3 }
-                  }}
-                  whileTap={{ scale: 0.95 }}
-                  title="📋 Скопировать ссылку"
-                >
-                  <Copy className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" />
-                </motion.button>
-              </div>
-
-              {/* Информация о коде */}
-              <div className="bg-black/30 backdrop-blur-sm rounded-lg p-3 border border-purple-400/20">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-300 text-sm">🎯 Ваш код:</span>
-                  <span className="text-purple-400 font-mono text-lg font-bold animate-pulse">
-                    {userReferralCode || 'Загружается...'}
-                  </span>
-                </div>
-                {!userReferralCode && (
-                  <div className="mt-2 text-xs text-yellow-400">
-                    ⚡ Код генерируется автоматически при входе
-                  </div>
-                )}
-              </div>
+              {/* НАСТОЯЩАЯ КНОПКА КОПИРОВАНИЯ */}
+              <motion.button 
+                onClick={() => {
+                  const fallbackCode = userReferralCode || 'DEMO123';
+                  const referralUrl = `${window.location.origin}?ref=${fallbackCode}`;
+                  navigator.clipboard.writeText(referralUrl).then(() => {
+                    const notification = document.createElement('div');
+                    notification.innerHTML = '✅ Скопировано!';
+                    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+                    document.body.appendChild(notification);
+                    setTimeout(() => document.body.removeChild(notification), 2000);
+                  });
+                }}
+                className="bg-gray-600 hover:bg-gray-700 active:bg-gray-800 text-white p-4 rounded-lg shadow-xl border-2 border-gray-400 transition-all duration-200 transform hover:scale-105 active:scale-95"
+                whileHover={{ y: -2 }}
+                whileTap={{ y: 0 }}
+                style={{
+                  background: 'linear-gradient(135deg, #4b5563 0%, #374151 100%)',
+                  boxShadow: '0 8px 25px rgba(75, 85, 99, 0.4), inset 0 1px 0 rgba(255,255,255,0.1)'
+                }}
+                title="Скопировать ссылку"
+              >
+                <Copy className="w-6 h-6" />
+              </motion.button>
             </div>
+
+            {/* Только код, без лишнего текста */}
+            {userReferralCode && (
+              <div className="bg-black/40 rounded-lg p-2 text-center">
+                <span className="text-blue-400 font-mono text-sm">
+                  {userReferralCode}
+                </span>
+              </div>
+            )}
           </div>
         </motion.div>
 

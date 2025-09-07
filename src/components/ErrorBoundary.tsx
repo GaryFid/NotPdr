@@ -30,34 +30,38 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      return this.props.fallback || (
+      // УБРАНО: Страница ошибки по требованию пользователя
+      // Автоматически перезапускаем игру через 1 секунду
+      setTimeout(() => {
+        // Сбрасываем состояние ошибки и перезапускаем
+        this.setState({ hasError: false, error: undefined });
+        
+        // Если ошибка критическая - обновляем страницу
+        if (this.state.error?.message?.includes('Cannot read prop') || 
+            this.state.error?.message?.includes('undefined')) {
+          console.log('🔄 Критическая ошибка - автоматически перезапускаем игру');
+          window.location.reload();
+        }
+      }, 1000);
+      
+      // Показываем минимальную загрузку вместо страницы ошибки
+      return (
         <div style={{ 
-          padding: '20px', 
-          textAlign: 'center', 
           background: '#0f172a', 
           color: '#e2e8f0',
           minHeight: '100vh',
           display: 'flex',
-          flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center'
         }}>
-          <h2>Что-то пошло не так!</h2>
-          <p>Пожалуйста, обновите страницу или попробуйте позже.</p>
-          <button 
-            onClick={() => window.location.reload()}
-            style={{
-              marginTop: '20px',
-              padding: '10px 20px',
-              background: '#22c55e',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer'
-            }}
-          >
-            Обновить страницу
-          </button>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ 
+              fontSize: '24px', 
+              marginBottom: '10px',
+              animation: 'spin 1s linear infinite' 
+            }}>⚡</div>
+            <p>Перезапуск игры...</p>
+          </div>
         </div>
       )
     }
