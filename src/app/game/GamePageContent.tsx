@@ -801,16 +801,11 @@ export default function GamePageContent({ initialPlayerCount = 4 }: GamePageCont
 
               {/* УБРАНО: Стопка карт на столе загромождала центр. В примере ее нет в центре. */}
 
-              {/* Центральная кнопка "КЛИКНИ!" для 1-й стадии */}
+              {/* Элегантный индикатор для клика по колоде вместо кнопки */}
               {gameStage === 1 && canClickDeck && (
-                <div className={styles.centralButtonContainer}>
-                  <button 
-                    className={styles.centralButton}
-                    onClick={() => onDeckClick()}
-                  >
-                    КЛИКНИ!
-                  </button>
-                  <div className={styles.deckCount}>{deck.length}</div>
+                <div className={styles.deckHintContainer}>
+                  <div className={styles.deckHintArrow}>👆</div>
+                  <div className={styles.deckHintText}>Нажмите на колоду</div>
                 </div>
               )}
 
