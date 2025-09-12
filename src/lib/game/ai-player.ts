@@ -459,13 +459,13 @@ export class AIPlayer {
     return this.getCardSuit(card) === trumpSuit;
   }
   
-  // Задержка для имитации размышления
+  // Задержка для имитации размышления (УСКОРЕНО В 2 РАЗА)
   async makeDecisionWithDelay(gameState: any): Promise<AIDecision> {
-    // Задержка зависит от сложности
+    // Задержка зависит от сложности (уменьшена в 2 раза)
     const delays = {
-      easy: 500 + Math.random() * 1000,
-      medium: 1000 + Math.random() * 1500,
-      hard: 1500 + Math.random() * 2000
+      easy: 250 + Math.random() * 500,
+      medium: 500 + Math.random() * 750,
+      hard: 750 + Math.random() * 1000
     };
     
     const delay = delays[this.difficulty];

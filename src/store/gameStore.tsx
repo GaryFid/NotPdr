@@ -77,6 +77,11 @@ interface GameState {
   trumpSuit: 'clubs' | 'diamonds' | 'hearts' | 'spades' | null // Козырь второй стадии
   drawnHistory: Card[] // История добранных/положенных из колоды карт (для определения козыря)
   
+  // Система "Одна карта!" и штрафов
+  oneCardDeclarations: {[playerId: string]: boolean} // Кто объявил "одна карта"
+  oneCardTimers: {[playerId: string]: number} // Таймеры для объявления (timestamp)
+  playersWithOneCard: string[] // Игроки у которых 1 карта (для проверки штрафов)
+  
   // Состояние 2-й стадии (дурак)
   tableStack: Card[] // Стопка карт на столе (нижняя = первая, верхняя = последняя)
   selectedHandCard: Card | null // Выбранная карта в руке (для двойного клика)
@@ -144,6 +149,13 @@ interface GameState {
   checkStage3Transition: (playerId: string) => void
   activatePenki: (playerId: string) => void
   checkVictoryCondition: () => void
+  
+  // Методы для системы "Одна карта!" и штрафов
+  checkOneCardStatus: () => void // Проверяет кому нужно объявлять "одна карта"
+  declareOneCard: (playerId: string) => void // Игрок объявляет "одна карта"
+  askHowManyCards: (askerPlayerId: string, targetPlayerId: string) => void // Спросить сколько карт
+  penalizeForgetfulPlayer: (forgetfulPlayerId: string) => void // Штраф за забывчивость
+  findWorstCardInHand: (cards: Card[], trumpSuit: string | null) => Card | null // Найти плохую карту
   
   // Управление картами
   selectCard: (card: Card | null) => void
@@ -225,6 +237,11 @@ export const useGameStore = create<GameState>()(
       lastPlayerToDrawCard: null,
       trumpSuit: null,
       drawnHistory: [],
+      
+      // Система "Одна карта!" и штрафов
+      oneCardDeclarations: {},
+      oneCardTimers: {},
+      playersWithOneCard: [],
       
       // Состояние 2-й стадии (дурак)
       tableStack: [],
@@ -422,11 +439,11 @@ export const useGameStore = create<GameState>()(
         console.log('🎮 [GameStore] Игра успешно создана, показываем уведомление...');
         get().showNotification(`Игра начата! Ходит первым: ${players[firstPlayerIndex].name}`, 'success');
         
-        // ИСПРАВЛЕНО: Запускаем обработку хода первого игрока через новую систему
-        console.log('🎮 [GameStore] Запускаем processPlayerTurn через 1 секунду...');
+        // ИСПРАВЛЕНО: Запускаем обработку хода первого игрока через новую систему (УСКОРЕНО В 2 РАЗА)
+        console.log('🎮 [GameStore] Запускаем processPlayerTurn через 0.5 секунды...');
         setTimeout(() => {
           get().processPlayerTurn(players[firstPlayerIndex].id);
-        }, 1000);
+        }, 500);
         
         console.log('🎮 [GameStore] startGame завершен успешно!');
         
@@ -572,13 +589,13 @@ export const useGameStore = create<GameState>()(
         // ДОБАВЛЕНО: Проверяем условия победы после каждого хода
         get().checkVictoryCondition();
         
-        // Запускаем обработку хода для соответствующей стадии
+        // Запускаем обработку хода для соответствующей стадии (УСКОРЕНО В 2 РАЗА)
         if (gameStage === 1) {
-          setTimeout(() => get().processPlayerTurn(nextPlayerId), 1000)
+          setTimeout(() => get().processPlayerTurn(nextPlayerId), 500)
         } else if (gameStage === 2 || gameStage === 3) {
           // Для 2-й и 3-й стадий устанавливаем фазу выбора карты (правила одинаковые)
           set({ stage2TurnPhase: 'selecting_card' });
-          setTimeout(() => get().processPlayerTurn(nextPlayerId), 1000)
+          setTimeout(() => get().processPlayerTurn(nextPlayerId), 500)
         }
         
         // УДАЛЕНО: Неправильная логика завершения игры по maxRounds
@@ -861,12 +878,15 @@ export const useGameStore = create<GameState>()(
         // Ход передается только когда игрок не может больше ходить
         get().resetTurnState();
         
-        // Проверяем условия победы после хода
-        get().checkVictoryCondition();
-        
-        setTimeout(() => {
-          get().processPlayerTurn(currentPlayerId);
-        }, 1000);
+         // Проверяем условия победы после хода
+         get().checkVictoryCondition();
+         
+         // Проверяем статус "одна карта" после хода
+         get().checkOneCardStatus();
+         
+         setTimeout(() => {
+           get().processPlayerTurn(currentPlayerId);
+         }, 500);
       },
       
       // Взятие карты из колоды
@@ -896,12 +916,12 @@ export const useGameStore = create<GameState>()(
         // фиксируем историю
         // set({ drawnHistory: [...get().drawnHistory, drawnCard] }); // Уже добавлено в revealDeckCard
         
-        // Проверяем переход к стадии 2 если мы в 1-й стадии и колода опустела
+        // Проверяем переход к стадии 2 если мы в 1-й стадии и колода опустела (УСКОРЕНО В 2 РАЗА)
         if (gameStage === 1 && newDeck.length === 0) {
           console.log(`🃏 [drawCardFromDeck] Колода пуста после взятия карты - переходим к стадии 2!`);
           setTimeout(() => {
             get().checkStage1End();
-          }, 1500);
+          }, 750);
         }
         
         get().showNotification(`${currentPlayer.name} взял карту из колоды (осталось: ${newDeck.length})`, 'info');
@@ -928,8 +948,8 @@ export const useGameStore = create<GameState>()(
         // Проверяем окончание стадии перед передачей хода
         get().checkStage1End();
         
-        // Переходим к следующему игроку
-        setTimeout(() => get().nextTurn(), 1000);
+        // Переходим к следующему игроку (УСКОРЕНО В 2 РАЗА)
+        setTimeout(() => get().nextTurn(), 500);
       },
       
       // Проверка окончания 1-й стадии
@@ -980,7 +1000,7 @@ export const useGameStore = create<GameState>()(
           
           setTimeout(() => {
             get().showNotification(`🃏 Козырь: ${trumpName} (Пики не козырь!)`, 'warning', 3000);
-          }, 2000);
+          }, 1000);
           
           // ИСПРАВЛЕНО: Запускаем ход СРАЗУ (не ждем окончания уведомлений)
           get().processPlayerTurn(startingPlayerId);
@@ -1067,10 +1087,10 @@ export const useGameStore = create<GameState>()(
             
             if (currentPlayer.isBot) {
               console.log(`🤖 [processPlayerTurn] Бот автоматически кликает по колоде`);
-              // Для бота - автоматически кликаем по колоде
+              // Для бота - автоматически кликаем по колоде (УСКОРЕНО В 2 РАЗА)
               setTimeout(() => {
                 get().onDeckClick();
-              }, 1000);
+              }, 500);
             } else if (!currentPlayer.isBot) {
               get().showNotification(`${currentPlayer.name}: нет ходов из руки, кликните на колоду`, 'warning');
             }
@@ -1092,10 +1112,10 @@ export const useGameStore = create<GameState>()(
         
         if (currentPlayer.isBot) {
           console.log(`🤖 [processPlayerTurn] Бот автоматически кликает по колоде (этап 2)`);
-          // Для бота - автоматически кликаем по колоде
+          // Для бота - автоматически кликаем по колоде (УСКОРЕНО В 2 РАЗА)
           setTimeout(() => {
             get().onDeckClick();
-          }, 1000);
+          }, 500);
         } else if (!currentPlayer.isBot) {
           get().showNotification(`${currentPlayer.name}: кликните на колоду чтобы открыть карту`, 'info');
         }
@@ -1565,17 +1585,31 @@ export const useGameStore = create<GameState>()(
            console.log(`🃏 [playSelectedCard] Карта добавлена в массив. На столе карт: ${newTableStack.length}`);
            console.log(`🃏 [playSelectedCard] Карты на столе: ${newTableStack.map(c => c.image).join(' -> ')}`);
            
-           // ОЧЕНЬ РЕДКОЕ завершение круга - только если все игроки прошли полный цикл
-           // Пока просто накапливаем карты, пусть игроки бьют верхние или берут нижние
-           const { initiatorTookCard } = get();
+           // НОВАЯ ЛОГИКА ЗАВЕРШЕНИЯ КРУГА P.I.D.R.:
+           // Круг может завершиться когда игрок побил карту (не взял) И:
+           // 1. Накопилось достаточно карт (игроков - 1) И финишер побил карту
+           // 2. ИЛИ финишер взял карту раньше И любой следующий игрок побил карту
+           const { initiatorTookCard, roundFinisher } = get();
            
-           // Завершение круга только если:
-           // 1. На столе уже много карт (больше чем игроков) И
-           // 2. Финишер побил карту (завершает цикл) И  
-           // 3. Все игроки сделали ходы
-           const shouldEndRound = newTableStack.length >= players.length && 
-                                 currentPlayerId === newFinisher && 
-                                 !wasEmptyTable;
+           // Находим индекс финишера и текущего игрока
+           const finisherIndex = roundFinisher ? players.findIndex(p => p.id === roundFinisher) : -1;
+           const currentIndex = players.findIndex(p => p.id === currentPlayerId);
+           
+           // Проверяем идет ли текущий игрок после финишера (по кругу против часовой стрелки)
+           let isAfterFinisher = false;
+           if (finisherIndex !== -1 && currentIndex !== -1) {
+             // Против часовой: если currentIndex < finisherIndex, то он идет после
+             // Или если currentIndex больше finisherIndex на круге
+             const nextAfterFinisher = (finisherIndex - 1 + players.length) % players.length;
+             isAfterFinisher = (currentIndex <= nextAfterFinisher && currentIndex !== finisherIndex);
+           }
+           
+           const shouldEndRound = !wasEmptyTable && (
+             // Стандартное условие: достаточно карт И финишер побил
+             (newTableStack.length >= (players.length - 1) && currentPlayerId === roundFinisher) ||
+             // НОВОЕ условие: финишер взял карту И любой следующий игрок побил
+             (initiatorTookCard && isAfterFinisher)
+           );
            
            if (shouldEndRound) {
              console.log(`🎯 [playSelectedCard] 🏁 КРУГ ЗАВЕРШЕН после ${newTableStack.length} карт!`);
@@ -1598,6 +1632,8 @@ export const useGameStore = create<GameState>()(
              get().checkStage3Transition(currentPlayerId);
              // Проверяем условия победы
              get().checkVictoryCondition();
+             // Проверяем статус "одна карта"
+             get().checkOneCardStatus();
              
              // Игрок который завершил круг начинает новый раунд
              setTimeout(() => get().nextTurn(), 500);
@@ -1609,6 +1645,8 @@ export const useGameStore = create<GameState>()(
            get().checkStage3Transition(currentPlayerId);
            // Проверяем условия победы
            get().checkVictoryCondition();
+           // Проверяем статус "одна карта"
+           get().checkOneCardStatus();
            
            // ПРАВИЛА P.I.D.R.: Ход переходит к следующему игроку
            console.log(`🃏 [playSelectedCard P.I.D.R.] ✅ Ход к следующему игроку`);
@@ -1662,16 +1700,17 @@ export const useGameStore = create<GameState>()(
            console.log(`🃏 [takeTableCards P.I.D.R.] ${currentPlayer.name} не может побить и берет НИЖНЮЮ карту`);
            console.log(`🃏 [takeTableCards P.I.D.R.] Карты на столе:`, tableStack.map(c => c.image));
            
-           // НОВАЯ ЛОГИКА: Отслеживаем если инициатор взял карту (не побил)
+           // ОБНОВЛЕННАЯ ЛОГИКА: Отслеживаем если инициатор ИЛИ финишер взял карту (не побил)
            let initiatorTookCard = get().initiatorTookCard;
            if (currentPlayerId === currentRoundInitiator) {
              console.log(`🎯 [takeTableCards] ⚠️ ИНИЦИАТОР ${currentPlayer.name} взял карту - теперь любой может завершить круг`);
              initiatorTookCard = true;
            }
            
-           // НОВАЯ ЛОГИКА: Если это финишер берет карту - круг НЕ завершается, продолжается дальше
+           // НОВАЯ ЛОГИКА: Если это финишер берет карту - следующие игроки могут завершить круг
            if (currentPlayerId === roundFinisher) {
-             console.log(`🎯 [takeTableCards] ⚠️ Финишер ${currentPlayer.name} взял карту - круг ПРОДОЛЖАЕТСЯ`);
+             console.log(`🎯 [takeTableCards] ⚠️ ФИНИШЕР ${currentPlayer.name} взял карту - следующие игроки могут завершить круг`);
+             initiatorTookCard = true; // Используем тот же флаг для упрощения логики
            }
            
            // Берем ТОЛЬКО нижнюю карту (первую в стопке)
@@ -1715,6 +1754,9 @@ export const useGameStore = create<GameState>()(
            // Проверяем условия победы
            get().checkVictoryCondition();
            
+           // Проверяем статус "одна карта"
+           get().checkOneCardStatus();
+           
            // ПРАВИЛА P.I.D.R.: Ход переходит к следующему игроку
            console.log(`🃏 [takeTableCards P.I.D.R.] ✅ Ход к следующему игроку`);
            setTimeout(() => get().nextTurn(), 300);
@@ -1739,13 +1781,22 @@ export const useGameStore = create<GameState>()(
          
          // ===== МЕТОДЫ ДЛЯ 3-Й СТАДИИ =====
          
-         // Проверка перехода в 3-ю стадию
+         // Проверка перехода в 3-ю стадию - ИСПРАВЛЕНО
          checkStage3Transition: (playerId: string) => {
            const { players, gameStage } = get();
            if (gameStage !== 2) return; // Только во 2-й стадии можно перейти в 3-ю
            
            const player = players.find(p => p.id === playerId);
-           if (!player) return;
+           if (!player) {
+             console.log(`🃏 [checkStage3Transition] ❌ Игрок не найден: ${playerId}`);
+             return;
+           }
+           
+           // ЗАЩИТА: Если у игрока уже нет пеньков, значит они уже активированы
+           if (player.penki.length === 0) {
+             console.log(`🃏 [checkStage3Transition] ⚠️ У игрока ${player.name} пеньки уже активированы - пропускаем`);
+             return;
+           }
            
            // Проверяем есть ли у игрока открытые карты
            const hasOpenCards = player.cards.some(card => card.open);
@@ -1763,11 +1814,16 @@ export const useGameStore = create<GameState>()(
            }
          },
          
-         // Активация пеньков (остается во 2-й стадии)
+         // Активация пеньков (остается во 2-й стадии) - ИСПРАВЛЕНО
          activatePenki: (playerId: string) => {
            const { players } = get();
-           const player = players.find(p => p.id === playerId);
-           if (!player || player.penki.length === 0) return;
+           const playerIndex = players.findIndex(p => p.id === playerId);
+           const player = players[playerIndex];
+           
+           if (!player || player.penki.length === 0) {
+             console.log(`🃏 [activatePenki] ❌ Игрок не найден или нет пеньков для активации: ${playerId}`);
+             return;
+           }
            
            console.log(`🃏 [activatePenki] Активация пеньков для ${player.name}`);
            console.log(`🃏 [activatePenki] - Текущие карты:`, player.cards.map(c => `${c.image}(${c.open ? 'open' : 'closed'})`));
@@ -1779,19 +1835,26 @@ export const useGameStore = create<GameState>()(
              open: true // Пеньки становятся открытыми когда переходят в руку
            }));
            
-           // ИСПРАВЛЕНО: Добавляем пеньки к существующим картам, остаемся во 2-й стадии
-           player.cards = [...player.cards, ...activatedPenki];
-           player.penki = [];
-           // НЕ меняем playerStage - остаемся во 2-й стадии!
+           // ИСПРАВЛЕНО: НЕ МУТИРУЕМ объект player, а создаем новый
+           const newPlayers = [...players];
+           newPlayers[playerIndex] = {
+             ...player,
+             cards: [...player.cards, ...activatedPenki],
+             penki: [] // Очищаем пеньки
+           };
            
-           set({ players: [...players] });
+           // Обновляем состояние с новым массивом игроков
+           set({ players: newPlayers });
            
-           console.log(`🃏 [activatePenki] После активации карты игрока:`, player.cards.map(c => `${c.image}(${c.open ? 'open' : 'closed'})`));
+           console.log(`🃏 [activatePenki] После активации карты игрока:`, newPlayers[playerIndex].cards.map(c => `${c.image}(${c.open ? 'open' : 'closed'})`));
            
            get().showNotification(`${player.name} активировал пеньки - продолжает играть во 2-й стадии!`, 'info', 5000);
            
-           // Проверяем условия победы
-           get().checkVictoryCondition();
+           // БЕЗОПАСНАЯ ПРОВЕРКА условий победы и статуса "одна карта" с небольшой задержкой
+           setTimeout(() => {
+             get().checkVictoryCondition();
+             get().checkOneCardStatus();
+           }, 100);
          },
          
          // Проверка условий победы и поражения с усиленной диагностикой
@@ -1928,6 +1991,236 @@ export const useGameStore = create<GameState>()(
            else {
              console.log(`⚠️ [checkVictoryCondition] Неожиданная ситуация: ${winners.length} победителей, ${playersWithCards.length} игроков с картами`);
            }
+         },
+         
+         // ===== МЕТОДЫ ДЛЯ СИСТЕМЫ "ОДНА КАРТА!" И ШТРАФОВ =====
+         
+         // Проверка кому нужно объявлять "одна карта"
+         checkOneCardStatus: () => {
+           const { players, gameStage, oneCardDeclarations, oneCardTimers } = get();
+           if (gameStage !== 2 && gameStage !== 3) return; // Только во 2-й и 3-й стадиях
+           
+           const currentTime = Date.now();
+           const newOneCardTimers = { ...oneCardTimers };
+           const newPlayersWithOneCard: string[] = [];
+           
+           players.forEach(player => {
+             const openCards = player.cards.filter(c => c.open);
+             
+             // Проверяем есть ли у игрока ровно 1 открытая карта
+             if (openCards.length === 1) {
+               newPlayersWithOneCard.push(player.id);
+               
+               // Если игрок еще не объявил "одна карта" и у него нет таймера
+               if (!oneCardDeclarations[player.id] && !oneCardTimers[player.id]) {
+                 // Запускаем таймер на 5 секунд для объявления
+                 newOneCardTimers[player.id] = currentTime + 5000; // 5 секунд на объявление
+                 
+                 console.log(`⏰ [checkOneCardStatus] У игрока ${player.name} 1 карта! Запущен таймер на объявление`);
+                 
+                 // Уведомляем игрока (если это человек)
+                 if (!player.isBot) {
+                   get().showNotification(`⚠️ У вас 1 карта! ОБЯЗАТЕЛЬНО нажмите "Одна карта!" в течение 5 секунд!`, 'warning', 5000);
+                 }
+                 
+                 // Для бота - автоматически объявляем через 1-2 секунды
+                 if (player.isBot) {
+                   setTimeout(() => {
+                     get().declareOneCard(player.id);
+                   }, 1000 + Math.random() * 1000);
+                 }
+               }
+             } else {
+               // У игрока больше или меньше 1 карты - сбрасываем объявление и таймер
+               if (oneCardDeclarations[player.id] || oneCardTimers[player.id]) {
+                 console.log(`🔄 [checkOneCardStatus] У игрока ${player.name} изменилось количество карт - сбрасываем объявление`);
+               }
+             }
+           });
+           
+           // Обновляем состояние
+           set({ 
+             oneCardTimers: newOneCardTimers,
+             playersWithOneCard: newPlayersWithOneCard
+           });
+         },
+         
+         // Игрок объявляет "одна карта"
+         declareOneCard: (playerId: string) => {
+           const { players, oneCardDeclarations, oneCardTimers } = get();
+           const player = players.find(p => p.id === playerId);
+           if (!player) return;
+           
+           const openCards = player.cards.filter(c => c.open);
+           
+           // Проверяем что у игрока действительно 1 открытая карта
+           if (openCards.length !== 1) {
+             get().showNotification(`❌ ${player.name}: неправильное объявление! У вас ${openCards.length} карт`, 'error', 3000);
+             return;
+           }
+           
+           // Успешное объявление
+           const newDeclarations = { ...oneCardDeclarations };
+           const newTimers = { ...oneCardTimers };
+           
+           newDeclarations[playerId] = true;
+           delete newTimers[playerId]; // Убираем таймер
+           
+           set({ 
+             oneCardDeclarations: newDeclarations,
+             oneCardTimers: newTimers
+           });
+           
+           console.log(`✅ [declareOneCard] ${player.name} объявил "одна карта!" вовремя`);
+           get().showNotification(`✅ ${player.name}: "ОДНА КАРТА!" объявлено вовремя`, 'success', 3000);
+         },
+         
+         // Спросить "сколько карт?" у другого игрока
+         askHowManyCards: (askerPlayerId: string, targetPlayerId: string) => {
+           const { players, oneCardDeclarations, oneCardTimers } = get();
+           const asker = players.find(p => p.id === askerPlayerId);
+           const target = players.find(p => p.id === targetPlayerId);
+           
+           if (!asker || !target) return;
+           
+           const targetOpenCards = target.cards.filter(c => c.open);
+           const currentTime = Date.now();
+           
+           console.log(`❓ [askHowManyCards] ${asker.name} спрашивает у ${target.name} сколько карт`);
+           
+           // Показываем количество карт
+           get().showNotification(`📊 ${target.name} имеет ${targetOpenCards.length} открытых карт`, 'info', 4000);
+           
+           // ШТРАФНАЯ ПРОВЕРКА: Если у цели 1 карта и она не объявила
+           if (targetOpenCards.length === 1) {
+             const hasTimer = oneCardTimers[targetPlayerId] && oneCardTimers[targetPlayerId] > currentTime;
+             const hasDeclared = oneCardDeclarations[targetPlayerId];
+             
+             if (hasTimer && !hasDeclared) {
+               // ШТРАФ! Игрок должен был объявить, но не объявил
+               console.log(`💸 [askHowManyCards] ШТРАФ! ${target.name} должен был объявить "одна карта!", но не объявил`);
+               
+               get().showNotification(`💸 ШТРАФ! ${target.name} забыл объявить "одна карта!" - получает штрафные карты!`, 'error', 5000);
+               
+               // Применяем штраф
+               get().penalizeForgetfulPlayer(targetPlayerId);
+             } else if (hasDeclared) {
+               get().showNotification(`✅ ${target.name} объявил "одна карта" вовремя - штрафа нет`, 'success', 3000);
+             }
+           }
+         },
+         
+         // Штраф для забывчивого игрока - все скидывают ему плохие карты
+         penalizeForgetfulPlayer: (forgetfulPlayerId: string) => {
+           const { players, trumpSuit, oneCardDeclarations, oneCardTimers } = get();
+           const forgetfulPlayer = players.find(p => p.id === forgetfulPlayerId);
+           if (!forgetfulPlayer) return;
+           
+           console.log(`💸 [penalizeForgetfulPlayer] Применяем штраф к ${forgetfulPlayer.name}`);
+           
+           let totalPenaltyCards = 0;
+           const newPlayers = [...players];
+           
+           // Каждый игрок (кроме забывчивого) скидывает ему плохую карту
+           newPlayers.forEach((player, playerIndex) => {
+             if (player.id === forgetfulPlayerId) return; // Сам себе не скидывает
+             
+             const openCards = player.cards.filter(c => c.open);
+             if (openCards.length === 0) return; // Нет карт для скидывания
+             
+             // Ищем плохую карту для скидывания
+             const worstCard = get().findWorstCardInHand(openCards, trumpSuit);
+             if (!worstCard) return;
+             
+             // Убираем карту у скидывающего игрока
+             const cardIndex = player.cards.findIndex(c => c.id === worstCard.id);
+             if (cardIndex !== -1) {
+               player.cards.splice(cardIndex, 1);
+               
+               // Добавляем карту забывчивому игроку
+               const forgetfulPlayerIndex = newPlayers.findIndex(p => p.id === forgetfulPlayerId);
+               if (forgetfulPlayerIndex !== -1) {
+                 worstCard.open = true; // Карта остается открытой
+                 newPlayers[forgetfulPlayerIndex].cards.push(worstCard);
+                 totalPenaltyCards++;
+                 
+                 console.log(`💸 [penalizeForgetfulPlayer] ${player.name} скинул ${worstCard.image} игроку ${forgetfulPlayer.name}`);
+               }
+             }
+           });
+           
+           // Сбрасываем объявление и таймер для забывчивого игрока
+           const newDeclarations = { ...oneCardDeclarations };
+           const newTimers = { ...oneCardTimers };
+           delete newDeclarations[forgetfulPlayerId];
+           delete newTimers[forgetfulPlayerId];
+           
+           // Обновляем состояние
+           set({ 
+             players: newPlayers,
+             oneCardDeclarations: newDeclarations,
+             oneCardTimers: newTimers
+           });
+           
+           get().showNotification(`💸 ${forgetfulPlayer.name} получил ${totalPenaltyCards} штрафных карт за забывчивость!`, 'error', 5000);
+           
+           // Проверяем нужно ли снова объявлять "одна карта" (если после штрафа стало больше карт)
+           setTimeout(() => {
+             get().checkOneCardStatus();
+           }, 1000);
+         },
+         
+         // Найти худшую карту в руке для скидывания
+         findWorstCardInHand: (cards: Card[], trumpSuit: string | null) => {
+           if (cards.length === 0) return null;
+           
+           // Приоритет плохих карт:
+           // 1. Некозырные карты низкого ранга (2-7)
+           // 2. Козыри низкого ранга (если нет некозырных)
+           // 3. Любая самая низкая карта
+           
+           const nonTrumpCards = cards.filter(c => trumpSuit && get().getCardSuit(c.image || '') !== trumpSuit);
+           const trumpCards = cards.filter(c => trumpSuit && get().getCardSuit(c.image || '') === trumpSuit);
+           
+           // Сначала ищем плохие некозырные карты
+           if (nonTrumpCards.length > 0) {
+             const lowNonTrumpCards = nonTrumpCards.filter(c => {
+               const rank = get().getCardRank(c.image || '');
+               return rank <= 7; // 2, 3, 4, 5, 6, 7 - плохие карты
+             });
+             
+             if (lowNonTrumpCards.length > 0) {
+               // Возвращаем самую низкую некозырную карту
+               return lowNonTrumpCards.reduce((worst, card) => {
+                 const worstRank = get().getCardRank(worst.image || '');
+                 const cardRank = get().getCardRank(card.image || '');
+                 return cardRank < worstRank ? card : worst;
+               });
+             }
+             
+             // Возвращаем любую некозырную карту (самую низкую)
+             return nonTrumpCards.reduce((worst, card) => {
+               const worstRank = get().getCardRank(worst.image || '');
+               const cardRank = get().getCardRank(card.image || '');
+               return cardRank < worstRank ? card : worst;
+             });
+           }
+           
+           // Если некозырных карт нет, берем самый низкий козырь
+           if (trumpCards.length > 0) {
+             return trumpCards.reduce((worst, card) => {
+               const worstRank = get().getCardRank(worst.image || '');
+               const cardRank = get().getCardRank(card.image || '');
+               return cardRank < worstRank ? card : worst;
+             });
+           }
+           
+           // В крайнем случае - самую низкую карту из всех
+           return cards.reduce((worst, card) => {
+             const worstRank = get().getCardRank(worst.image || '');
+             const cardRank = get().getCardRank(card.image || '');
+             return cardRank < worstRank ? card : worst;
+           });
          }
     }),
     {

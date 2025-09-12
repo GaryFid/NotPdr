@@ -107,10 +107,12 @@ function GamePageContentComponent({ initialPlayerCount = 4 }: GamePageContentPro
     isGameActive, gameStage, turnPhase, stage2TurnPhase,
     players, currentPlayerId, deck, availableTargets,
     selectedHandCard, revealedDeckCard, tableStack, trumpSuit,
+    oneCardDeclarations, oneCardTimers, playersWithOneCard,
     gameCoins,
     startGame, endGame, 
     drawCard, makeMove, onDeckClick, placeCardOnSelfByRules,
-    selectHandCard, playSelectedCard, takeTableCards, showNotification
+    selectHandCard, playSelectedCard, takeTableCards, showNotification,
+    declareOneCard, askHowManyCards
   } = useGameStore();
 
   // Мониторинг tableStack убран - система работает корректно
@@ -384,11 +386,11 @@ function GamePageContentComponent({ initialPlayerCount = 4 }: GamePageContentPro
                 if (cardInHand) {
                   console.log(`🤖 [AI Stage${gameStage}] ✅ Выбираем карту: ${cardInHand.image}`);
                   selectHandCard(cardInHand);
-                  // Играем карту с небольшой задержкой
+                  // Играем карту с небольшой задержкой (УСКОРЕНО В 2 РАЗА)
                   setTimeout(() => {
                     console.log(`🤖 [AI Stage${gameStage}] ✅ Играем выбранную карту`);
                     playSelectedCard();
-                  }, 800);
+                  }, 400);
                 } else {
                   console.log(`🚨 [AI Stage${gameStage}] Карта не найдена в руке или закрыта:`, decision.cardToPlay?.image);
                   console.log(`🚨 [AI Stage${gameStage}] Доступные карты:`, currentTurnPlayer.cards.filter(c => c.open).map(c => c.image));
@@ -427,8 +429,8 @@ function GamePageContentComponent({ initialPlayerCount = 4 }: GamePageContentPro
       aiProcessingRef.current = null;
     };
     
-    // Запускаем ход ИИ с небольшой задержкой (меньше для 2-й и 3-й стадий)
-    const delay = (gameStage === 2 || gameStage === 3) ? 500 : 1000;
+    // Запускаем ход ИИ с небольшой задержкой (УСКОРЕНО В 2 РАЗА)
+    const delay = (gameStage === 2 || gameStage === 3) ? 250 : 500;
     const timeoutId = setTimeout(makeAIMove, delay);
     
     return () => {
@@ -491,7 +493,7 @@ function GamePageContentComponent({ initialPlayerCount = 4 }: GamePageContentPro
     }, duration);
   };
 
-  // Показать количество карт у всех соперников
+  // Показать количество карт у всех соперников (ОБНОВЛЕННАЯ ЛОГИКА)
   const showOpponentsCardCount = () => {
     if (!humanPlayer) return;
     
@@ -500,25 +502,38 @@ function GamePageContentComponent({ initialPlayerCount = 4 }: GamePageContentPro
     // Показываем сообщение над игроком который спросил
     showPlayerMessage(humanPlayer.id, '🔍 Сколько карт?', 'info', 2000);
     
-    // Показываем информацию о картах каждого соперника
-    players
-      .filter(p => p.id !== humanPlayer.id)
-      .forEach((player, index) => {
-        const totalCards = player.cards.length + (player.penki?.length || 0);
-        const openCards = player.cards.filter(c => c.open).length;
-        
-        setTimeout(() => {
-          showPlayerMessage(
-            player.id, 
-            `${totalCards} карт (${openCards} открытых)`, 
-            'info', 
-            4000
-          );
-        }, index * 800);
-      });
+    // Проверяем каждого соперника через новую систему
+    const opponentsWithOneCard = players.filter(p => 
+      p.id !== humanPlayer.id && 
+      playersWithOneCard.includes(p.id)
+    );
+    
+    if (opponentsWithOneCard.length > 0) {
+      // Если есть игроки с 1 картой, спрашиваем у первого через новую систему
+      const targetPlayer = opponentsWithOneCard[0];
+      console.log(`🎯 [showOpponentsCardCount] Проверяем штраф у ${targetPlayer.name} через новую систему`);
+      askHowManyCards(humanPlayer.id, targetPlayer.id);
+    } else {
+      // Если нет игроков с 1 картой, показываем обычную информацию
+      players
+        .filter(p => p.id !== humanPlayer.id)
+        .forEach((player, index) => {
+          const totalCards = player.cards.length + player.penki.length;
+          const openCards = player.cards.filter(c => c.open).length;
+          
+          setTimeout(() => {
+            showPlayerMessage(
+              player.id, 
+              `${totalCards} карт (${openCards} открытых)`, 
+              'info', 
+              4000
+            );
+          }, index * 800);
+        });
+    }
   };
 
-  // Объявить что у игрока последняя карта
+  // Объявить что у игрока последняя карта (ОБНОВЛЕННАЯ ЛОГИКА)
   const announceLastCard = () => {
     if (!humanPlayer) return;
     
@@ -526,15 +541,13 @@ function GamePageContentComponent({ initialPlayerCount = 4 }: GamePageContentPro
     console.log('1️⃣ [announceLastCard] Объявление последней карты:', openCards.length);
     
     if (openCards.length === 1) {
+      // Используем новую системную функцию
+      declareOneCard(humanPlayer.id);
+      
       // Показываем сообщение над игроком который объявил
-      showPlayerMessage(humanPlayer.id, '☝️ ОДНА КАРТА!', 'warning', 4000);
+      showPlayerMessage(humanPlayer.id, '☝️ ОДНА КАРТА!', 'success', 4000);
       
-      // Уведомление для всех через обычную систему
-      setTimeout(() => {
-        showNotification(`⚠️ ${humanPlayer.name} объявил: "ОДНА КАРТА!"`, 'warning', 4000);
-      }, 500);
-      
-      console.log(`📢 [announceLastCard] ${humanPlayer.name} объявил последнюю карту!`);
+      console.log(`📢 [announceLastCard] ${humanPlayer.name} объявил последнюю карту через новую систему!`);
     } else {
       // Показываем ошибку над игроком
       showPlayerMessage(humanPlayer.id, `❌ У вас ${openCards.length} карт!`, 'error', 3000);
@@ -1179,20 +1192,41 @@ function GamePageContentComponent({ initialPlayerCount = 4 }: GamePageContentPro
                     </button>
                   )}
                   
-                  {/* ИСПРАВЛЕННАЯ ЛОГИКА кнопок подсчета карт */}
+                  {/* НОВАЯ ЛОГИКА кнопок подсчета карт с системой штрафов */}
                   {gameStage === 2 && humanPlayer && (() => {
                     const humanOpenCards = humanPlayer.cards.filter(c => c.open).length;
-                    const opponentWithOneCard = players.find(p => p.id !== humanPlayer.id && p.cards.filter(c => c.open).length === 1);
+                    const humanNeedsToDeclaree = oneCardTimers[humanPlayer.id] && !oneCardDeclarations[humanPlayer.id];
+                    const someoneHasOneCard = playersWithOneCard.some(playerId => playerId !== humanPlayer.id);
                     
                     return (
                       <>
-                        {/* Кнопка "Одна карта!" - показывается у игрока когда у него 1 карта */}
-                        {humanOpenCards === 1 && humanPlayer.id === currentPlayerId && (
+                        {/* Кнопка "Одна карта!" - ОБЯЗАТЕЛЬНАЯ когда у игрока 1 карта и активен таймер */}
+                        {humanNeedsToDeclaree && (
                           <div className={styles.cardCountButtonsContainer}>
                             <button 
                               className={styles.cardCountButton}
                               onClick={() => {
-                                console.log('🃏 [GamePageContent] Объявляю: одна карта!');
+                                console.log('🃏 [GamePageContent] ОБЯЗАТЕЛЬНОЕ объявление: одна карта!');
+                                announceLastCard();
+                              }}
+                              style={{ 
+                                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                                animation: 'pulseRed 1s infinite',
+                                boxShadow: '0 0 20px rgba(239, 68, 68, 0.6)'
+                              }}
+                            >
+                              ⚠️ ОДНА КАРТА! (ОБЯЗАТЕЛЬНО)
+                            </button>
+                          </div>
+                        )}
+                        
+                        {/* Альтернативная кнопка "Одна карта!" для обычного объявления */}
+                        {humanOpenCards === 1 && !humanNeedsToDeclaree && !oneCardDeclarations[humanPlayer.id] && (
+                          <div className={styles.cardCountButtonsContainer}>
+                            <button 
+                              className={styles.cardCountButton}
+                              onClick={() => {
+                                console.log('🃏 [GamePageContent] Добровольное объявление: одна карта!');
                                 announceLastCard();
                               }}
                               style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}
@@ -1202,17 +1236,21 @@ function GamePageContentComponent({ initialPlayerCount = 4 }: GamePageContentPro
                           </div>
                         )}
                         
-                        {/* Кнопка "Сколько карт?" - показывается всем когда у соперника 1 карта */}
-                        {opponentWithOneCard && (
+                        {/* Кнопка "Сколько карт?" - показывается когда у кого-то есть 1 карта (можно поймать) */}
+                        {someoneHasOneCard && (
                           <div className={styles.cardCountButtonsContainer}>
                             <button 
                               className={styles.cardCountButton}
                               onClick={() => {
-                                console.log(`🃏 [GamePageContent] Сколько карт у ${opponentWithOneCard.name}?`);
+                                console.log('🃏 [GamePageContent] Проверяем штрафы: сколько карт?');
                                 showOpponentsCardCount();
                               }}
+                              style={{ 
+                                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                                border: '2px solid #ffd700'
+                              }}
                             >
-                              🔍 Сколько карт?
+                              🎯 Сколько карт?
                             </button>
                           </div>
                         )}

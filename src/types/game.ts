@@ -11,7 +11,7 @@ export type Player = {
   name: string;
   avatar: string;
   cards: Card[];
-  penki?: Card[]; // Пеньки (2 закрытые карты, доступны в 3-й стадии)
+  penki: Card[]; // Пеньки (2 закрытые карты, доступны в 3-й стадии)
   isUser: boolean;
   isBot?: boolean; // Является ли игрок ботом
   difficulty?: 'easy' | 'medium' | 'hard'; // Сложность бота

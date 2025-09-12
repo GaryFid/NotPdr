@@ -1248,6 +1248,22 @@
   }
 }
 
+/* Анимация для ОБЯЗАТЕЛЬНОЙ кнопки "Одна карта!" */
+@keyframes pulseRed {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.6);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.9);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.6);
+  }
+}
+
 /* Элегантный индикатор для клика по колоде */
 .deckHintContainer {
   position: absolute;
