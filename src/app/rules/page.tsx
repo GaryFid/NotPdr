@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Book, Users, Star, Crown, AlertTriangle, ListOrdered, Target, Shield, Brain, GamepadIcon } from 'lucide-react';
+import { ArrowLeft, Book, Users, Star, Crown, AlertTriangle, ListOrdered, Target, Shield, Brain, GamepadIcon, Clock, Search, Coins, Eye } from 'lucide-react';
 import BottomNav from '../../components/BottomNav';
 
 export default function RulesPage() {
@@ -10,6 +10,7 @@ export default function RulesPage() {
   const sections = [
     { id: 'basics', name: 'ОСНОВЫ', icon: Book },
     { id: 'stages', name: 'СТАДИИ', icon: ListOrdered },
+    { id: 'onecard', name: 'ОДНА КАРТА!', icon: AlertTriangle },
     { id: 'strategy', name: 'СТРАТЕГИЯ', icon: Brain },
   ];
 
@@ -41,13 +42,17 @@ export default function RulesPage() {
               return (
                 <motion.button
                   key={section.id}
-                  className={`nav-btn ${activeSection === section.id ? 'active' : ''} ${section.id === 'strategy' ? 'strategy' : ''}`}
+                  className={`nav-btn ${activeSection === section.id ? 'active' : ''} ${section.id === 'strategy' ? 'strategy' : ''} ${section.id === 'onecard' ? 'onecard-btn' : ''}`}
                   onClick={() => setActiveSection(section.id)}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.3, delay: index * 0.1 }}
                   whileHover={{ scale: section.id === 'strategy' ? 0.7 : 1.05 }}
                   whileTap={{ scale: section.id === 'strategy' ? 0.63 : 0.95 }}
+                  style={section.id === 'onecard' ? { 
+                    background: 'linear-gradient(135deg, #ff4444 0%, #dc2626 100%)',
+                    boxShadow: activeSection === section.id ? '0 0 20px rgba(255, 68, 68, 0.6)' : '0 0 10px rgba(255, 68, 68, 0.3)'
+                  } : {}}
                 >
                   <IconComponent className="nav-icon" />
                   <span className="nav-name">{section.name}</span>
@@ -201,8 +206,9 @@ export default function RulesPage() {
                     <div className="rule-point">
                       <span><strong>Пики только Пикями!</strong></span>
                     </div>
-                    <div className="rule-point">
-                      <span><strong>"Последняя!":</strong> Объявлять при одной карте</span>
+                    <div className="rule-point" style={{ color: '#ff4444', fontWeight: 'bold' }}>
+                      <AlertTriangle className="point-icon" style={{ color: '#ff4444' }} />
+                      <span><strong>⚠️ "ОДНА КАРТА!":</strong> ОБЯЗАТЕЛЬНО объявлять за 5 сек!</span>
                     </div>
                   </div>
                   <div className="algorithm-box">
@@ -234,11 +240,123 @@ export default function RulesPage() {
                     <div className="rule-point">
                       <span><strong>Особенности:</strong> Игрок открывает пеньки и играет ими</span>
                     </div>
+                    <div className="rule-point" style={{ color: '#ff4444', fontWeight: 'bold' }}>
+                      <AlertTriangle className="point-icon" style={{ color: '#ff4444' }} />
+                      <span><strong>⚠️ "ОДНА КАРТА!":</strong> ОБЯЗАТЕЛЬНО объявлять при 1 пеньке!</span>
+                    </div>
                     <div className="rule-point">
                       <span><strong>Победа:</strong> Побеждает тот, кто первый остался без карт</span>
                     </div>
                     <div className="rule-point">
                       <span><strong>Поражение:</strong> Проигравший - если у всех закончились карты, а у данного игрока еще есть</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeSection === 'onecard' && (
+            <div className="content-section">
+              {/* One Card System Overview */}
+              <div className="rule-card" style={{ border: '2px solid #ff4444', background: 'linear-gradient(135deg, rgba(255, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%)' }}>
+                <div className="rule-header">
+                  <AlertTriangle className="rule-icon" style={{ color: '#ff4444' }} />
+                  <h3 className="rule-title" style={{ color: '#ff4444' }}>СИСТЕМА "ОДНА КАРТА!" И ШТРАФОВ</h3>
+                </div>
+                <div className="rule-content">
+                  <p className="rule-description" style={{ color: '#ff6666', fontSize: '16px', fontWeight: 'bold' }}>
+                    ⚠️ Ключевая механика P.I.D.R.! Когда у игрока остается 1 открытая карта - он ОБЯЗАН объявить это!
+                  </p>
+                  <div className="rule-points">
+                    <div className="rule-point">
+                      <Clock className="point-icon" style={{ color: '#ff4444' }} />
+                      <span><strong>Автотаймер:</strong> Система запускает 5-секундный отсчет</span>
+                    </div>
+                    <div className="rule-point">
+                      <Search className="point-icon" style={{ color: '#6366f1' }} />
+                      <span><strong>Поймать:</strong> Другие могут проверить забывчивого игрока</span>
+                    </div>
+                    <div className="rule-point">
+                      <Coins className="point-icon" style={{ color: '#dc2626' }} />
+                      <span><strong>Штраф:</strong> ВСЕ скидывают забывчивому плохие карты!</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Detailed Rules */}
+              <div className="rule-card">
+                <div className="rule-header">
+                  <Clock className="rule-icon" />
+                  <h3 className="rule-title">ОБЯЗАТЕЛЬНОЕ ОБЪЯВЛЕНИЕ</h3>
+                </div>
+                <div className="rule-content">
+                  <div className="algorithm-box">
+                    <h5 className="algorithm-title">Когда объявлять:</h5>
+                    <ol className="algorithm-steps">
+                      <li><strong>Во 2-й стадии:</strong> При 1 открытой карте в руке</li>
+                      <li><strong>В 3-й стадии:</strong> При активации пеньков и 1 карте</li>
+                      <li><strong>После хода:</strong> Если стало 1 карта - немедленно объявить</li>
+                    </ol>
+                  </div>
+                  <div className="rule-points">
+                    <div className="rule-point">
+                      <span><strong>Таймер:</strong> 5 секунд на объявление с момента обнаружения</span>
+                    </div>
+                    <div className="rule-point">
+                      <span><strong>Кнопка:</strong> Красная пульсирующая "⚠️ ОДНА КАРТА! (ОБЯЗАТЕЛЬНО)"</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Penalty System */}
+              <div className="rule-card">
+                <div className="rule-header">
+                  <Coins className="rule-icon" />
+                  <h3 className="rule-title">ШТРАФНАЯ СИСТЕМА</h3>
+                </div>
+                <div className="rule-content">
+                  <div className="algorithm-box">
+                    <h5 className="algorithm-title">Как поймать забывчивого:</h5>
+                    <ol className="algorithm-steps">
+                      <li><strong>Увидел:</strong> У соперника 1 карта, но он не объявил</li>
+                      <li><strong>Действие:</strong> Нажать кнопку "🎯 Сколько карт?"</li>
+                      <li><strong>Проверка:</strong> Система проверяет - объявил ли он вовремя</li>
+                      <li><strong>Штраф:</strong> Если не объявил - ВСЕ скидывают ему плохие карты</li>
+                    </ol>
+                  </div>
+                  <div className="rule-points">
+                    <div className="rule-point">
+                      <span><strong>Плохие карты:</strong> Некозырные низкого ранга (2-7)</span>
+                    </div>
+                    <div className="rule-point">
+                      <span><strong>Запасные:</strong> Любые некозырные карты</span>
+                    </div>
+                    <div className="rule-point">
+                      <span><strong>Крайний случай:</strong> Низкие козыри</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Visual Guide */}
+              <div className="rule-card">
+                <div className="rule-header">
+                  <Eye className="rule-icon" />
+                  <h3 className="rule-title">ВИЗУАЛЬНЫЕ ПОДСКАЗКИ</h3>
+                </div>
+                <div className="rule-content">
+                  <div className="rule-points">
+                    <div className="rule-point" style={{ background: 'rgba(255, 68, 68, 0.1)', padding: '8px', borderRadius: '8px' }}>
+                      <span><strong style={{ color: '#ff4444' }}>🚨 КРАСНАЯ КНОПКА:</strong> "⚠️ ОДНА КАРТА! (ОБЯЗАТЕЛЬНО)" - пульсирует</span>
+                    </div>
+                    <div className="rule-point" style={{ background: 'rgba(99, 102, 241, 0.1)', padding: '8px', borderRadius: '8px' }}>
+                      <span><strong style={{ color: '#6366f1' }}>🎯 СИНЯЯ КНОПКА:</strong> "Сколько карт?" - поймать забывчивого</span>
+                    </div>
+                    <div className="rule-point" style={{ background: 'rgba(245, 158, 11, 0.1)', padding: '8px', borderRadius: '8px' }}>
+                      <span><strong style={{ color: '#f59e0b' }}>☝️ ЖЕЛТАЯ КНОПКА:</strong> "Одна карта!" - добровольное объявление</span>
                     </div>
                   </div>
                 </div>
@@ -273,6 +391,7 @@ export default function RulesPage() {
                       <li><strong>Проверка масти:</strong> та же масть или козырь</li>
                       <li><strong>Проверка ранга:</strong> карта должна быть старше</li>
                       <li><strong>Если нельзя побить:</strong> взять все карты</li>
+                      <li style={{ color: '#ff4444', fontWeight: 'bold' }}><strong>⚠️ ОДНА КАРТА:</strong> объявить за 5 сек или ШТРАФ!</li>
                       <li><strong>Подкидывание:</strong> карты того же ранга</li>
                     </ol>
                   </div>
