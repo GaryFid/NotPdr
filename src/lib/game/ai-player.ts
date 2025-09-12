@@ -463,9 +463,9 @@ export class AIPlayer {
   async makeDecisionWithDelay(gameState: any): Promise<AIDecision> {
     // Задержка зависит от сложности (уменьшена в 2 раза)
     const delays = {
-      easy: 250 + Math.random() * 500,
-      medium: 500 + Math.random() * 750,
-      hard: 750 + Math.random() * 1000
+      easy: 170 + Math.random() * 330,    // Ускорено в 1.5 раза (было 250 + 500)
+      medium: 330 + Math.random() * 500,  // Ускорено в 1.5 раза (было 500 + 750)
+      hard: 500 + Math.random() * 670     // Ускорено в 1.5 раза (было 750 + 1000)
     };
     
     const delay = delays[this.difficulty];

@@ -107,12 +107,12 @@ function GamePageContentComponent({ initialPlayerCount = 4 }: GamePageContentPro
     isGameActive, gameStage, turnPhase, stage2TurnPhase,
     players, currentPlayerId, deck, availableTargets,
     selectedHandCard, revealedDeckCard, tableStack, trumpSuit,
-    oneCardDeclarations, oneCardTimers, playersWithOneCard,
+    oneCardDeclarations, oneCardTimers, playersWithOneCard, pendingPenalty,
     gameCoins,
     startGame, endGame, 
     drawCard, makeMove, onDeckClick, placeCardOnSelfByRules,
     selectHandCard, playSelectedCard, takeTableCards, showNotification,
-    declareOneCard, askHowManyCards
+    declareOneCard, askHowManyCards, contributePenaltyCard, cancelPenalty
   } = useGameStore();
 
   // Мониторинг tableStack убран - система работает корректно
@@ -1237,7 +1237,7 @@ function GamePageContentComponent({ initialPlayerCount = 4 }: GamePageContentPro
                         )}
                         
                         {/* Кнопка "Сколько карт?" - показывается когда у кого-то есть 1 карта (можно поймать) */}
-                        {someoneHasOneCard && (
+                        {someoneHasOneCard && !pendingPenalty && (
                           <div className={styles.cardCountButtonsContainer}>
                             <button 
                               className={styles.cardCountButton}
@@ -1254,6 +1254,35 @@ function GamePageContentComponent({ initialPlayerCount = 4 }: GamePageContentPro
                             </button>
                           </div>
                         )}
+                        
+                        {/* Индикация активного штрафа */}
+                        {pendingPenalty && humanPlayer && (
+                          <div className={styles.cardCountButtonsContainer}>
+                            {pendingPenalty.contributorsNeeded.includes(humanPlayer.id) ? (
+                              <div 
+                                className={styles.cardCountButton}
+                                style={{ 
+                                  background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                                  animation: 'pulse 1s infinite',
+                                  border: '2px solid #ffd700',
+                                  cursor: 'default'
+                                }}
+                              >
+                                💸 Выберите карту для штрафа!
+                              </div>
+                            ) : (
+                              <div 
+                                className={styles.cardCountButton}
+                                style={{ 
+                                  background: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
+                                  cursor: 'default'
+                                }}
+                              >
+                                ⏳ Ждем других игроков...
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </>
                     );
                   })()}
@@ -1261,11 +1290,18 @@ function GamePageContentComponent({ initialPlayerCount = 4 }: GamePageContentPro
               </div>
               <div className={styles.handCards}>
                 {humanPlayer.cards.map((card, index) => {
+                  const isSelectableStage1 = gameStage === 1 && 
+                    humanPlayer.id === currentPlayerId && 
+                    !humanPlayer.isBot;
                   const isSelectableStage2 = card.open && 
                     gameStage === 2 && 
                     stage2TurnPhase === 'selecting_card' && 
                     humanPlayer.id === currentPlayerId && 
                     !humanPlayer.isBot;
+                  const isSelectablePenalty = pendingPenalty && 
+                    humanPlayer && 
+                    pendingPenalty.contributorsNeeded.includes(humanPlayer.id) && 
+                    card.open;
                   const isSelected = selectedHandCard?.id === card.id;
                   const baseStep = 10;
                   const mobileSteps = {
@@ -1295,7 +1331,7 @@ function GamePageContentComponent({ initialPlayerCount = 4 }: GamePageContentPro
                   return (
                     <div 
                       key={card.id} 
-                      className={`${styles.handCard} ${card.open ? styles.open : styles.closed} ${isSelectableStage2 ? styles.playable : ''}`}
+                      className={`${styles.handCard} ${card.open ? styles.open : styles.closed} ${(isSelectableStage1 || isSelectableStage2 || isSelectablePenalty) ? styles.playable : ''}`}
                       style={{ 
                         position: 'absolute',
                         left: `${cardOffset}px`,
@@ -1308,7 +1344,28 @@ function GamePageContentComponent({ initialPlayerCount = 4 }: GamePageContentPro
                         height: `${size.h}px`,
                       }}
                       onClick={() => {
-                        // Разрешаем клики только в свой ход во 2-й стадии
+                        // ПРИОРИТЕТ: Если идет штраф - игрок отдает карту
+                        if (pendingPenalty && humanPlayer && pendingPenalty.contributorsNeeded.includes(humanPlayer.id)) {
+                          if (!card.open) {
+                            showNotification('❌ Можно отдавать только открытые карты!', 'error', 3000);
+                            return;
+                          }
+                          
+                          console.log(`💸 [GamePageContent] Игрок выбрал карту ${card.image} для штрафа`);
+                          contributePenaltyCard(humanPlayer.id, card.id);
+                          return;
+                        }
+                        
+                        // 1-я стадия: ходим любой картой
+                        if (gameStage === 1 && 
+                            humanPlayer.id === currentPlayerId && 
+                            !humanPlayer.isBot) {
+                          console.log(`🎮 [HandCard Click] Ход в 1-й стадии: ${card.image}`);
+                          makeMove(card.id);
+                          return;
+                        }
+                        
+                        // 2-я и 3-я стадии: разрешаем клики только в свой ход
                         if (isSelectableStage2 && 
                             gameStage === 2 && 
                             humanPlayer.id === currentPlayerId && 
