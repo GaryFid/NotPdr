@@ -212,14 +212,16 @@ export default function RulesPage() {
                     </div>
                   </div>
                   <div className="algorithm-box">
-                    <h5 className="algorithm-title">Алгоритм битья:</h5>
+                    <h5 className="algorithm-title">Алгоритм битья P.I.D.R.:</h5>
                     <ol className="algorithm-steps">
-                      <li>Атакующий кладет карту</li>
+                      <li>Атакующий кладет карту на стол</li>
                       <li>Защищающийся может:</li>
                       <li className="sub-step">• Побить картой старше той же масти</li>
                       <li className="sub-step">• Побить козырем (если атака не козырная)</li>
-                      <li className="sub-step">• Взять карты</li>
-                      <li>Если побил - может подкинуть карты того же ранга</li>
+                      <li className="sub-step">• Взять нижнюю карту со стола</li>
+                      <li><strong>Если побил:</strong> Ход переходит следующему игроку</li>
+                      <li><strong>Следующий игрок:</strong> Пытается побить верхнюю карту</li>
+                      <li style={{ color: '#ff4444', fontWeight: 'bold' }}><strong>ВАЖНО:</strong> Никакого подкидывания карт нет!</li>
                     </ol>
                   </div>
                 </div>
@@ -384,15 +386,16 @@ export default function RulesPage() {
                   </div>
                   
                   <div className="algorithm-box">
-                    <h5 className="algorithm-title">Стадия 2 - Алгоритм:</h5>
+                    <h5 className="algorithm-title">Стадия 2 - Алгоритм P.I.D.R.:</h5>
                     <ol className="algorithm-steps">
                       <li><strong>Атака:</strong> выбрать карту для хода</li>
                       <li><strong>Защита:</strong> найти подходящую карту для битья</li>
                       <li><strong>Проверка масти:</strong> та же масть или козырь</li>
                       <li><strong>Проверка ранга:</strong> карта должна быть старше</li>
-                      <li><strong>Если нельзя побить:</strong> взять все карты</li>
+                      <li><strong>Если нельзя побить:</strong> взять нижнюю карту со стола</li>
+                      <li><strong>Если побил:</strong> ход переходит следующему игроку</li>
                       <li style={{ color: '#ff4444', fontWeight: 'bold' }}><strong>⚠️ ОДНА КАРТА:</strong> объявить за 5 сек или ШТРАФ!</li>
-                      <li><strong>Подкидывание:</strong> карты того же ранга</li>
+                      <li style={{ color: '#ff4444', fontWeight: 'bold' }}><strong>ВАЖНО:</strong> Никакого подкидывания карт нет!</li>
                     </ol>
                   </div>
 
