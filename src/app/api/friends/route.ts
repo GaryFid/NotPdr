@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '../../../lib/supabase';
 import jwt from 'jsonwebtoken';
-import { ratelimit, getRateLimitId } from '../../../lib/ratelimit';
+import { checkRateLimit, getRateLimitId } from '../../../lib/ratelimit';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -153,7 +153,7 @@ export async function POST(req: NextRequest) {
 
   // Rate limiting
   const id = getRateLimitId(req);
-  const { success } = await ratelimit.limit(`friends:${id}`);
+  const { success } = await checkRateLimit(`friends:${id}`);
   if (!success) {
     return NextResponse.json({ success: false, message: 'Too many requests' }, { status: 429 });
   }

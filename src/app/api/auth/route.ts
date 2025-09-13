@@ -3,7 +3,7 @@ import { supabase } from '../../../lib/supabase';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { verifyTelegramInitData } from '../../../lib/telegram';
-import { ratelimit, getRateLimitId } from '../../../lib/ratelimit';
+import { checkRateLimit, getRateLimitId } from '../../../lib/ratelimit';
 import { z } from 'zod';
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -28,7 +28,7 @@ const TelegramAuthSchema = z.object({
 export async function POST(req: NextRequest) {
   // Rate limiting
   const id = getRateLimitId(req);
-  const { success } = await ratelimit.limit(`auth:${id}`);
+  const { success } = await checkRateLimit(`auth:${id}`);
   if (!success) {
     return NextResponse.json({ success: false, message: 'Too many requests' }, { status: 429 });
   }

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { redis } from '../../../../lib/redis';
 import jwt from 'jsonwebtoken';
 import { randomUUID } from 'crypto'
-import { ratelimit, getRateLimitId } from '../../../lib/ratelimit'
+import { checkRateLimit, getRateLimitId } from '../../../lib/ratelimit'
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const BOT_TOKEN = process.env.BOT_TOKEN || '';
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
 
   // Rate limiting per requester
   const id = getRateLimitId(req);
-  const { success } = await ratelimit.limit(`game:create:${id}`);
+  const { success } = await checkRateLimit(`game:create:${id}`);
   if (!success) {
     return NextResponse.json({ success: false, message: 'Too many requests' }, { status: 429 });
   }
