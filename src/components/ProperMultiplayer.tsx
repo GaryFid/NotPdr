@@ -7,6 +7,7 @@ import {
   Gamepad2, Wifi, WifiOff
 } from 'lucide-react';
 import { useTelegram } from '../hooks/useTelegram';
+import WaitingRoomProfessional from './WaitingRoomProfessional';
 
 interface ProperMultiplayerProps {
   onBack: () => void;
@@ -47,11 +48,13 @@ const gameModesConfig = {
 export default function ProperMultiplayer({ onBack }: ProperMultiplayerProps) {
   const { user } = useTelegram();
   
-  const [view, setView] = useState<'lobby' | 'create' | 'join'>('lobby');
+  const [view, setView] = useState<'lobby' | 'create' | 'join' | 'waiting'>('lobby');
+  const [currentRoom, setCurrentRoom] = useState<any>(null);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [localRooms, setLocalRooms] = useState<Room[]>([]); // Локальные комнаты
   
   // Create room state
   const [createData, setCreateData] = useState({
@@ -76,14 +79,26 @@ export default function ProperMultiplayer({ onBack }: ProperMultiplayerProps) {
         if (response.ok) {
           const data = await response.json();
           if (data.success) {
-            setRooms(data.rooms || []);
+            const serverRooms = data.rooms || [];
+            // Объединяем серверные комнаты с локальными, избегая дубликатов
+            const allRooms = [...serverRooms];
+            
+            // Добавляем локальные комнаты, которых нет на сервере
+            localRooms.forEach(localRoom => {
+              if (!serverRooms.find((room: Room) => room.code === localRoom.code)) {
+                allRooms.push(localRoom);
+              }
+            });
+            
+            setRooms(allRooms);
             setIsConnected(true);
           }
         }
       } catch (err) {
         console.warn('Failed to load rooms:', err);
         setIsConnected(false);
-        setRooms([]); // Пустой список при ошибке
+        // При ошибке показываем только локальные комнаты
+        setRooms([...localRooms]);
       } finally {
         setLoading(false);
       }
@@ -91,10 +106,26 @@ export default function ProperMultiplayer({ onBack }: ProperMultiplayerProps) {
 
     loadRooms();
 
-    // Обновляем список каждые 10 секунд для синхронизации
-    const interval = setInterval(loadRooms, 10000);
+    // Обновляем список каждые 30 секунд (увеличили интервал)
+    const interval = setInterval(loadRooms, 30000);
 
     return () => clearInterval(interval);
+  }, [localRooms]); // Добавили зависимость от localRooms
+
+  // Очистка старых локальных комнат
+  useEffect(() => {
+    const cleanupInterval = setInterval(() => {
+      const now = new Date();
+      setLocalRooms(prevLocal => 
+        prevLocal.filter(room => {
+          // Удаляем комнаты старше 10 минут (для демо)
+          const roomAge = now.getTime() - new Date(room.id).getTime();
+          return roomAge < 10 * 60 * 1000; // 10 минут
+        })
+      );
+    }, 60000); // Проверяем каждую минуту
+
+    return () => clearInterval(cleanupInterval);
   }, []);
 
   const handleCreateRoom = async () => {
@@ -138,13 +169,22 @@ export default function ProperMultiplayer({ onBack }: ProperMultiplayerProps) {
           difficulty: gameModesConfig[createData.gameMode].difficulty
         };
         
+        // Добавляем в локальные комнаты (они не удаляются при автообновлении)
+        setLocalRooms(prevLocal => {
+          const existingLocal = prevLocal.find(room => room.code === newRoom.code);
+          if (existingLocal) {
+            return prevLocal;
+          }
+          return [newRoom, ...prevLocal];
+        });
+        
+        // Добавляем в общий список
         setRooms(prevRooms => {
-          // Проверяем, нет ли уже такой комнаты
           const existingRoom = prevRooms.find(room => room.code === newRoom.code);
           if (existingRoom) {
-            return prevRooms; // Не добавляем дубликат
+            return prevRooms;
           }
-          return [newRoom, ...prevRooms]; // Добавляем в начало списка
+          return [newRoom, ...prevRooms];
         });
         
         // Сбрасываем форму
@@ -157,8 +197,35 @@ export default function ProperMultiplayer({ onBack }: ProperMultiplayerProps) {
           isPrivate: false
         });
         
-        alert(`Комната создана! Код: ${result.room.roomCode}`);
-        setView('lobby');
+        // Создаем данные для комнаты ожидания
+        const roomData = {
+          id: result.room.roomId,
+          code: result.room.roomCode,
+          name: result.room.name,
+          host: result.room.host,
+          hostId: user?.id?.toString() || 'anonymous',
+          maxPlayers: result.room.maxPlayers,
+          gameMode: createData.gameMode,
+          hasPassword: createData.hasPassword,
+          isPrivate: createData.isPrivate,
+          status: 'waiting' as const,
+          players: [{
+            id: user?.id?.toString() || 'anonymous',
+            name: user?.first_name || user?.username || result.room.host,
+            isHost: true,
+            isReady: true,
+            isBot: false,
+            joinedAt: new Date()
+          }],
+          settings: {
+            autoStart: false,
+            allowBots: true,
+            minPlayers: 2
+          }
+        };
+
+        setCurrentRoom(roomData);
+        setView('waiting');
       } else {
         throw new Error(result.error || 'Не удалось создать комнату');
       }
@@ -176,6 +243,77 @@ export default function ProperMultiplayer({ onBack }: ProperMultiplayerProps) {
     setError(null);
     
     try {
+      // Сначала пробуем найти комнату локально
+      const localRoom = localRooms.find(room => room.code.toUpperCase() === roomCode.toUpperCase());
+      
+      if (localRoom) {
+        // Проверяем пароль для локальной комнаты
+        if (localRoom.hasPassword && password !== 'demo') { // Простая проверка для демо
+          throw new Error('Неверный пароль');
+        }
+        
+        // Обновляем количество игроков в локальной комнате
+        setLocalRooms(prevLocal => 
+          prevLocal.map(room => 
+            room.code === localRoom.code 
+              ? { ...room, players: Math.min(room.players + 1, room.maxPlayers) }
+              : room
+          )
+        );
+        
+        // Обновляем основной список
+        setRooms(prevRooms => 
+          prevRooms.map(room => 
+            room.code === localRoom.code 
+              ? { ...room, players: Math.min(room.players + 1, room.maxPlayers) }
+              : room
+          )
+        );
+        
+        // Создаем данные для комнаты ожидания (локальная комната)
+        const roomData = {
+          id: localRoom.id,
+          code: localRoom.code,
+          name: localRoom.name,
+          host: 'Хост',
+          hostId: 'host_id',
+          maxPlayers: localRoom.maxPlayers,
+          gameMode: localRoom.gameMode,
+          hasPassword: localRoom.hasPassword,
+          isPrivate: localRoom.isPrivate || false,
+          status: 'waiting' as const,
+          players: [
+            {
+              id: 'host_id',
+              name: 'Хост',
+              isHost: true,
+              isReady: true,
+              isBot: false,
+              joinedAt: new Date()
+            },
+            {
+              id: user?.id?.toString() || 'anonymous',
+              name: user?.first_name || user?.username || 'Игрок',
+              isHost: false,
+              isReady: false,
+              isBot: false,
+              joinedAt: new Date()
+            }
+          ],
+          settings: {
+            autoStart: false,
+            allowBots: true,
+            minPlayers: 2
+          }
+        };
+
+        console.log('✅ Joined local room:', localRoom.code);
+        setCurrentRoom(roomData);
+        setView('waiting');
+        return;
+      }
+      
+      // Если не найдена локально, пробуем серверную комнату
       const response = await fetch('/api/rooms/join', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -190,11 +328,48 @@ export default function ProperMultiplayer({ onBack }: ProperMultiplayerProps) {
       const result = await response.json();
       
       if (result.success) {
-        console.log('✅ Joined room:', result.room);
-        alert(`Присоединились к комнате ${roomCode}!`);
-        setView('lobby');
+        // Создаем данные для комнаты ожидания (серверная комната)
+        const roomData = {
+          id: result.room.roomId,
+          code: result.room.roomCode,
+          name: result.room.name,
+          host: result.room.host,
+          hostId: result.room.hostId || 'host_id',
+          maxPlayers: result.room.maxPlayers,
+          gameMode: result.room.gameMode,
+          hasPassword: result.room.hasPassword,
+          isPrivate: result.room.isPrivate || false,
+          status: 'waiting' as const,
+          players: [
+            {
+              id: result.room.hostId || 'host_id',
+              name: result.room.host,
+              isHost: true,
+              isReady: true,
+              isBot: false,
+              joinedAt: new Date()
+            },
+            {
+              id: user?.id?.toString() || 'anonymous',
+              name: user?.first_name || user?.username || 'Игрок',
+              isHost: false,
+              isReady: false,
+              isBot: false,
+              joinedAt: new Date()
+            }
+          ],
+          settings: {
+            autoStart: false,
+            allowBots: true,
+            minPlayers: 2
+          }
+        };
+
+        console.log('✅ Joined server room:', result.room);
+        setCurrentRoom(roomData);
+        setView('waiting');
       } else {
-        throw new Error(result.error || 'Не удалось войти в комнату');
+        throw new Error(result.error || 'Комната не найдена');
       }
       
     } catch (err: any) {
@@ -202,6 +377,45 @@ export default function ProperMultiplayer({ onBack }: ProperMultiplayerProps) {
       setError(err.message || 'Ошибка входа в комнату');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Обработчики для комнаты ожидания
+  const handleLeaveRoom = () => {
+    setCurrentRoom(null);
+    setView('lobby');
+  };
+
+  const handleStartGame = () => {
+    console.log('🎮 Starting game with room:', currentRoom);
+    // Здесь будет переход к игре
+    alert('Игра начинается! (В разработке)');
+  };
+
+  const handleUpdateRoom = (updates: any) => {
+    if (!currentRoom) return;
+    
+    const updatedRoom = { ...currentRoom, ...updates };
+    setCurrentRoom(updatedRoom);
+    
+    // Обновляем локальные комнаты если это локальная комната
+    if (localRooms.find(room => room.code === currentRoom.code)) {
+      setLocalRooms(prevLocal => 
+        prevLocal.map(room => 
+          room.code === currentRoom.code 
+            ? { ...room, players: updates.players?.length || room.players }
+            : room
+        )
+      );
+      
+      // Обновляем основной список
+      setRooms(prevRooms => 
+        prevRooms.map(room => 
+          room.code === currentRoom.code 
+            ? { ...room, players: updates.players?.length || room.players }
+            : room
+        )
+      );
     }
   };
 
@@ -410,6 +624,17 @@ export default function ProperMultiplayer({ onBack }: ProperMultiplayerProps) {
         </div>
       )}
 
+      {/* Waiting Room View */}
+      {view === 'waiting' && currentRoom && (
+        <WaitingRoomProfessional
+          roomData={currentRoom}
+          currentUserId={user?.id?.toString() || 'anonymous'}
+          onLeaveRoom={handleLeaveRoom}
+          onStartGame={handleStartGame}
+          onUpdateRoom={handleUpdateRoom}
+        />
+      )}
+
       {/* Main Lobby View */}
       {view === 'lobby' && (
         <>
@@ -490,6 +715,11 @@ export default function ProperMultiplayer({ onBack }: ProperMultiplayerProps) {
                       {room.difficulty === 'medium' && 'Средний'}
                       {room.difficulty === 'hard' && 'Сложный'}
                     </div>
+                    {localRooms.find(localRoom => localRoom.code === room.code) && (
+                      <div className="badge local">
+                        Локальная
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -890,6 +1120,11 @@ export default function ProperMultiplayer({ onBack }: ProperMultiplayerProps) {
         }
 
         .badge.difficulty {
+          color: white;
+        }
+
+        .badge.local {
+          background: #3b82f6;
           color: white;
         }
 
