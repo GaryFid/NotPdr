@@ -163,4 +163,10 @@
 .profileCard {
   border-color: #ff6600;
   color: #ff6600;
+}
+
+.newRoomCard {
+  border-color: #8a2be2;
+  color: #8a2be2;
+  background: linear-gradient(135deg, rgba(138, 43, 226, 0.1), rgba(75, 0, 130, 0.1));
 } 

@@ -29,6 +29,81 @@ function generateRoomCode(): string {
 
 // GET /api/rooms - Получить список комнат
 export async function GET(req: NextRequest) {
+  // Allow anonymous access for room listing
+  try {
+    // Mock rooms for demo (replace with real database query)
+    const mockRooms = [
+      {
+        id: '1',
+        code: 'GAME01',
+        name: 'Комната Новичков',
+        host: 'Алекс',
+        players: 3,
+        maxPlayers: 6,
+        gameMode: 'casual',
+        hasPassword: false,
+        isPrivate: false,
+        status: 'waiting',
+        ping: Math.floor(Math.random() * 100) + 20,
+        difficulty: 'easy',
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: '2', 
+        code: 'PRO777',
+        name: 'Турнир Мастеров',
+        host: 'Мария',
+        players: 6,
+        maxPlayers: 8,
+        gameMode: 'pro',
+        hasPassword: true,
+        isPrivate: false,
+        status: 'playing',
+        ping: Math.floor(Math.random() * 100) + 20,
+        difficulty: 'hard',
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: '3',
+        code: 'BLITZ5',
+        name: 'Быстрая игра',
+        host: 'Дмитрий',
+        players: Math.floor(Math.random() * 3) + 6,
+        maxPlayers: 9,
+        gameMode: 'blitz',
+        hasPassword: false,
+        isPrivate: false,
+        status: 'waiting',
+        ping: Math.floor(Math.random() * 100) + 20,
+        difficulty: 'hard',
+        createdAt: new Date().toISOString()
+      }
+    ];
+
+    // Simulate some rooms being full or in different states
+    mockRooms.forEach(room => {
+      if (room.players >= room.maxPlayers) {
+        room.status = 'full';
+      } else if (Math.random() > 0.7) {
+        room.status = 'playing';
+      }
+    });
+
+    return NextResponse.json({ 
+      success: true, 
+      rooms: mockRooms.filter(room => !room.isPrivate) // Only return public rooms
+    });
+  } catch (error) {
+    console.error('Rooms GET error:', error);
+    return NextResponse.json({ 
+      success: false, 
+      message: 'Internal server error' 
+    }, { status: 500 });
+  }
+}
+
+// Original authenticated function (renamed to avoid conflicts)
+async function getAuthenticatedRooms(req: NextRequest) {
   const userId = getUserIdFromRequest(req);
   if (!userId) {
     return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
