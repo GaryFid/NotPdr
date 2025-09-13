@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import ProfessionalMultiplayer from '../../components/ProfessionalMultiplayer';
+import ProperMultiplayer from '../../components/ProperMultiplayer';
 
 export default function MultiplayerPage() {
   const router = useRouter();
@@ -10,5 +10,5 @@ export default function MultiplayerPage() {
     router.push('/');
   };
 
-  return <ProfessionalMultiplayer onBack={handleBack} />;
+  return <ProperMultiplayer onBack={handleBack} />;
 }
