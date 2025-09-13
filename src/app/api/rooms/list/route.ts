@@ -9,7 +9,6 @@ export async function GET(req: NextRequest) {
       const response = await fetch(`${BACKEND_URL}/api/rooms`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
-        timeout: 5000, // 5 секунд таймаут
       });
 
       if (response.ok) {
