@@ -98,9 +98,21 @@ function getFirstPlayerIdx(players: Player[]): number {
 
 interface GamePageContentProps {
   initialPlayerCount?: number;
+  isMultiplayer?: boolean;
+  multiplayerData?: {
+    roomId: string;
+    roomCode: string;
+    isHost: boolean;
+  };
+  onGameEnd?: () => void;
 }
 
-function GamePageContentComponent({ initialPlayerCount = 4 }: GamePageContentProps) {
+function GamePageContentComponent({ 
+  initialPlayerCount = 4, 
+  isMultiplayer = false, 
+  multiplayerData,
+  onGameEnd 
+}: GamePageContentProps) {
   const { user } = useTelegram();
   
   const { 
@@ -119,28 +131,35 @@ function GamePageContentComponent({ initialPlayerCount = 4 }: GamePageContentPro
 
   const [playerCount, setPlayerCount] = useState(initialPlayerCount);
   
-  // Состояние мультиплеера
-  const [isMultiplayer, setIsMultiplayer] = useState(false);
+  // Состояние мультиплеера (используем пропсы)
   const [multiplayerRoom, setMultiplayerRoom] = useState<{
     id: string;
     code: string;
     isHost: boolean;
-  } | null>(null);
+  } | null>(multiplayerData ? {
+    id: multiplayerData.roomId,
+    code: multiplayerData.roomCode,
+    isHost: multiplayerData.isHost
+  } : null);
   
-  // Проверяем URL параметры для мультиплеера
+  // Обновляем состояние мультиплеера при изменении пропсов
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      const roomId = urlParams.get('roomId');
-      const roomCode = urlParams.get('roomCode');
-      const isHost = urlParams.get('host') === 'true';
-      
-      if (roomId && roomCode) {
-        setMultiplayerRoom({ id: roomId, code: roomCode, isHost });
-        setIsMultiplayer(true);
-      }
+    if (multiplayerData) {
+      setMultiplayerRoom({
+        id: multiplayerData.roomId,
+        code: multiplayerData.roomCode,
+        isHost: multiplayerData.isHost
+      });
     }
-  }, []);
+  }, [multiplayerData]);
+
+  // Отслеживаем завершение игры для мультиплеера
+  useEffect(() => {
+    if (isMultiplayer && !isGameActive && onGameEnd) {
+      console.log('🎮 [GamePageContent] Игра завершена в мультиплеере, вызываем onGameEnd');
+      onGameEnd();
+    }
+  }, [isGameActive, isMultiplayer, onGameEnd]);
   
   // Проверяем что все необходимые функции доступны
   useEffect(() => {
@@ -1426,7 +1445,12 @@ function GamePageContentComponent({ initialPlayerCount = 4 }: GamePageContentPro
                 <button onClick={() => window.location.reload()} className={styles.menuItem}>
                   🔄 Обновить
                 </button>
-                <button onClick={() => endGame()} className={styles.menuItem}>
+                <button onClick={() => {
+                  endGame();
+                  if (isMultiplayer && onGameEnd) {
+                    onGameEnd();
+                  }
+                }} className={styles.menuItem}>
                   🚫 Закончить игру
                 </button>
               </div>

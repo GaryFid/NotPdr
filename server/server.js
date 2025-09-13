@@ -242,7 +242,7 @@ io.on('connection', (socket) => {
 // Создание новой игровой комнаты
 app.post('/api/rooms/create', (req, res) => {
   try {
-    const { hostUserId, maxPlayers = 4 } = req.body;
+    const { hostUserId, maxPlayers = 9 } = req.body;
     
     if (!hostUserId) {
       return res.status(400).json({ error: 'hostUserId обязателен' });

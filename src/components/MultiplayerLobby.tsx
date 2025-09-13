@@ -42,14 +42,14 @@ export default function MultiplayerLobby({
   const { user } = useTelegram();
   const [lobbyState, setLobbyState] = useState<LobbyState>({
     players: [],
-    maxPlayers: 4,
+    maxPlayers: 9,
     gameInProgress: false,
     canStart: false
   });
   
   const [gameSettings, setGameSettings] = useState({
     gameMode: 'classic',
-    maxPlayers: 4,
+    maxPlayers: 9,
     timeLimit: 0, // 0 = без лимита времени
     allowBots: true
   });
@@ -110,7 +110,7 @@ export default function MultiplayerLobby({
     
     setLobbyState({
       players: roomData.players || [],
-      maxPlayers: roomData.maxPlayers || 4,
+      maxPlayers: roomData.maxPlayers || 9,
       gameInProgress: roomData.gameInProgress || false,
       canStart: roomData.canStart || false
     });

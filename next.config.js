@@ -17,9 +17,9 @@ const nextConfig = {
     ];
   },
   // Настройки для production
-  experimental: {
-    esmExternals: false,
-  },
+  // experimental: {
+  //   esmExternals: false, // Устаревшая опция, удалена в Next.js 15
+  // },
   webpack: (config, { isServer }) => {
     // Фиксы для WebSocket клиента
     if (!isServer) {

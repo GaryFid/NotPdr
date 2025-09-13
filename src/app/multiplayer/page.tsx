@@ -205,7 +205,7 @@ export default function MultiplayerPage() {
 
                 {/* Игровой компонент */}
                 <GamePageContent 
-                  initialPlayerCount={roomData?.maxPlayers || 4}
+                  initialPlayerCount={roomData?.maxPlayers || 9}
                   isMultiplayer={true}
                   multiplayerData={roomData ? {
                     roomId: roomData.roomId,

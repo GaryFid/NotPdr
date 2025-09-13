@@ -1,5 +1,5 @@
 class GameRoom {
-  constructor(id, hostUserId, maxPlayers = 4) {
+  constructor(id, hostUserId, maxPlayers = 9) {
     this.id = id;
     this.hostUserId = hostUserId;
     this.maxPlayers = maxPlayers;
@@ -182,7 +182,7 @@ class GameRoomManager {
   }
 
   // Создать новую комнату
-  createRoom(roomId, hostUserId, maxPlayers = 4) {
+  createRoom(roomId, hostUserId, maxPlayers = 9) {
     if (this.rooms.has(roomId)) {
       throw new Error('Комната с таким ID уже существует');
     }

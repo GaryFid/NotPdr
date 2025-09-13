@@ -121,7 +121,7 @@ export default function MultiplayerMenu({ onCreateRoom, onJoinRoom, onBack }: Mu
           username: user.username,
           firstName: user.first_name,
           lastName: user.last_name,
-          photoUrl: user.photo_url
+          photoUrl: (user as any).photo_url
         }),
       });
 
@@ -238,6 +238,7 @@ export default function MultiplayerMenu({ onCreateRoom, onJoinRoom, onBack }: Mu
                   <option value={5}>5 игроков</option>
                   <option value={6}>6 игроков</option>
                   <option value={8}>8 игроков</option>
+                  <option value={9}>9 игроков</option>
                 </select>
               </div>
 
