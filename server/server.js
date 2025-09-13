@@ -15,7 +15,12 @@ const server = http.createServer(app);
 
 // Настройка CORS для Express
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || ['http://localhost:3000', 'https://t.me'],
+  origin: process.env.CORS_ORIGIN || [
+    'http://localhost:3000',
+    'https://web.telegram.org',
+    'https://t.me',
+    'https://your-app.vercel.app'
+  ],
   credentials: true
 }));
 
@@ -25,7 +30,12 @@ app.use(express.json());
 const io = socketIo(server, {
   path: '/api/socket',
   cors: {
-    origin: process.env.CORS_ORIGIN || ['http://localhost:3000', 'https://t.me'],
+    origin: process.env.CORS_ORIGIN || [
+      'http://localhost:3000',
+      'https://web.telegram.org',
+      'https://t.me',
+      'https://your-app.vercel.app'
+    ],
     methods: ['GET', 'POST'],
     credentials: true
   },
@@ -238,6 +248,16 @@ io.on('connection', (socket) => {
 });
 
 // ===== HTTP API ЭНДПОИНТЫ =====
+
+// Health check для Railway
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    memory: process.memoryUsage()
+  });
+});
 
 // Создание новой игровой комнаты
 app.post('/api/rooms/create', (req, res) => {

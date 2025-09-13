@@ -1,20 +1,47 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎮 P.I.D.R. - Мультиплеер Карточная Игра
 
-## Getting Started
+**P.I.D.R.** - это инновационная карточная игра для Telegram WebApp с поддержкой мультиплеера до 9 игроков!
 
-First, run the development server:
+## 🚀 Быстрый старт
 
+### Локальная разработка:
+
+1. **Установка зависимостей:**
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Запуск backend сервера:**
+```bash
+cd server
+npm install
+npm run dev
+```
+
+3. **Запуск frontend:**
+```bash
+npm run dev
+```
+
+4. **Откройте [http://localhost:3000](http://localhost:3000) в браузере**
+
+### Продакшен деплой:
+
+📋 **Полная инструкция:** [DEPLOYMENT.md](./DEPLOYMENT.md)
+
+**Быстрый деплой:**
+```bash
+# 1. Деплой backend на Railway
+cd server
+railway up
+
+# 2. Обновите переменные в Vercel
+# NEXT_PUBLIC_WS_URL=wss://your-railway-url.railway.app
+# NEXT_PUBLIC_API_URL=https://your-railway-url.railway.app
+
+# 3. Деплой frontend на Vercel
+vercel --prod
+```
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 

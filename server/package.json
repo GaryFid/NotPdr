@@ -1,5 +1,5 @@
 {
-  "name": "pidr-websocket-server",
+  "name": "pidr-server",
   "version": "1.0.0",
   "description": "P.I.D.R. Game WebSocket Server",
   "main": "server.js",
