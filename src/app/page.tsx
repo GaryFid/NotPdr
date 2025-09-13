@@ -66,6 +66,8 @@ function HomeWithParams() {
       window.location.href = '/rules';
     } else if (page === 'game') {
       window.location.href = '/game-setup';
+    } else if (page === 'multiplayer') {
+      window.location.href = '/multiplayer';
     } else if (page === 'invite') {
       window.location.href = '/friends';
     } else if (page === 'shop') {

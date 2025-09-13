@@ -87,6 +87,14 @@ interface GameState {
   tableStack: Card[] // Стопка карт на столе (нижняя = первая, верхняя = последняя)
   selectedHandCard: Card | null // Выбранная карта в руке (для двойного клика)
   stage2TurnPhase: 'selecting_card' | 'playing_card' | 'waiting_beat' | 'round_complete' // Фазы хода 2-й стадии
+  
+  // Мультиплеер состояние
+  multiplayerData: {
+    roomId: string
+    roomCode: string
+    isHost: boolean
+    connectedPlayers: string[]
+  } | null
   roundInProgress: boolean // Идет ли текущий раунд битья
   currentRoundInitiator: string | null // Кто начал текущий раунд
   roundFinisher: string | null // Игрок который должен завершить круг (позиция -1 от инициатора)
@@ -110,7 +118,7 @@ interface GameState {
   } | null
   
   // Действия игры
-  startGame: (mode: 'single' | 'multiplayer', playersCount?: number) => void
+  startGame: (mode: 'single' | 'multiplayer', playersCount?: number, multiplayerConfig?: any) => void
   endGame: () => void
   playCard: (cardId: string) => void
   drawCard: () => void
@@ -164,6 +172,11 @@ interface GameState {
   selectCard: (card: Card | null) => void
   addCardToDeck: (card: Card) => void
   removeCardFromDeck: (cardId: string) => void
+  
+  // Мультиплеер методы
+  syncGameState: (gameState: any) => void
+  sendPlayerMove: (moveData: any) => void
+  applyRemoteMove: (moveData: any) => void
   
   // Игроки
   addPlayer: (name: string) => void
@@ -256,6 +269,9 @@ export const useGameStore = create<GameState>()(
       roundFinisher: null,
       initiatorTookCard: false,
       
+      // Мультиплеер состояние
+      multiplayerData: null,
+      
       // Состояния хода для новой логики
       turnPhase: 'analyzing_hand',
       revealedDeckCard: null,
@@ -288,8 +304,8 @@ export const useGameStore = create<GameState>()(
       notification: null,
       
       // Игровые действия
-      startGame: (mode, playersCount = 2) => {
-        console.log('🎮 [GameStore] startGame вызван с параметрами:', { mode, playersCount });
+      startGame: (mode, playersCount = 2, multiplayerConfig = null) => {
+        console.log('🎮 [GameStore] startGame вызван с параметрами:', { mode, playersCount, multiplayerConfig });
         
         try {
           // Создаем полную стандартную колоду карт (52 карты)
@@ -437,7 +453,14 @@ export const useGameStore = create<GameState>()(
           lastDrawnCard: null,
           lastPlayerToDrawCard: null,
           trumpSuit: null,
-          drawnHistory: []
+          drawnHistory: [],
+          // Устанавливаем мультиплеер данные
+          multiplayerData: mode === 'multiplayer' && multiplayerConfig ? {
+            roomId: multiplayerConfig.roomId,
+            roomCode: multiplayerConfig.roomCode,
+            isHost: multiplayerConfig.isHost,
+            connectedPlayers: multiplayerConfig.players?.map((p: any) => p.id) || []
+          } : null
         });
         
         console.log('🎮 [GameStore] Игра успешно создана, показываем уведомление...');
@@ -2313,6 +2336,105 @@ export const useGameStore = create<GameState>()(
              const cardRank = get().getCardRank(card.image || '');
              return cardRank < worstRank ? card : worst;
            });
+         },
+         
+         // ===== МУЛЬТИПЛЕЕР МЕТОДЫ =====
+         
+         // Синхронизация состояния игры от сервера
+         syncGameState: (remoteGameState) => {
+           const { multiplayerData } = get();
+           if (!multiplayerData) return;
+           
+           console.log(`🌐 [Multiplayer] Синхронизация состояния игры:`, remoteGameState);
+           
+           // Осторожно обновляем состояние, проверяя каждое поле
+           const stateUpdates: any = {};
+           
+           // Синхронизируем базовые поля игры
+           if (remoteGameState.gameStage !== undefined) stateUpdates.gameStage = remoteGameState.gameStage;
+           if (remoteGameState.currentPlayerId !== undefined) stateUpdates.currentPlayerId = remoteGameState.currentPlayerId;
+           if (remoteGameState.trumpSuit !== undefined) stateUpdates.trumpSuit = remoteGameState.trumpSuit;
+           if (remoteGameState.tableStack !== undefined) stateUpdates.tableStack = [...remoteGameState.tableStack];
+           if (remoteGameState.stage2TurnPhase !== undefined) stateUpdates.stage2TurnPhase = remoteGameState.stage2TurnPhase;
+           
+           // Синхронизируем игроков (осторожно, не перезаписывая локального пользователя)
+           if (remoteGameState.players && Array.isArray(remoteGameState.players)) {
+             const { players } = get();
+             const updatedPlayers = players.map(localPlayer => {
+               const remotePlayer = remoteGameState.players.find((p: any) => p.id === localPlayer.id);
+               if (remotePlayer && !localPlayer.isUser) {
+                 // Обновляем данные бота/других игроков
+                 return {
+                   ...localPlayer,
+                   cards: remotePlayer.cards || localPlayer.cards,
+                   penki: remotePlayer.penki || localPlayer.penki
+                 };
+               }
+               return localPlayer;
+             });
+             stateUpdates.players = updatedPlayers;
+           }
+           
+           // Применяем обновления
+           set(stateUpdates);
+         },
+         
+         // Отправка хода игрока
+         sendPlayerMove: (moveData) => {
+           const { multiplayerData } = get();
+           if (!multiplayerData) return;
+           
+           console.log(`🌐 [Multiplayer] Отправляем ход игрока:`, moveData);
+           
+           // TODO: Интегрироваться с WebSocket из useWebSocket
+           // const { sendPlayerMove } = useWebSocket();
+           // sendPlayerMove(moveData);
+         },
+         
+         // Применение хода от удаленного игрока
+         applyRemoteMove: (moveData) => {
+           console.log(`🌐 [Multiplayer] Применяем удаленный ход:`, moveData);
+           
+           const { multiplayerData } = get();
+           if (!multiplayerData) return;
+           
+           try {
+             // Обрабатываем различные типы ходов
+             switch (moveData.type) {
+               case 'card_played':
+                 // Применяем сыгранную карту
+                 if (moveData.cardId && moveData.playerId) {
+                   // TODO: Реализовать применение хода с картой
+                 }
+                 break;
+                 
+               case 'card_taken':
+                 // Игрок взял карту
+                 if (moveData.playerId) {
+                   // TODO: Реализовать взятие карты
+                 }
+                 break;
+                 
+               case 'one_card_declared':
+                 // Игрок объявил "одна карта"
+                 if (moveData.playerId) {
+                   get().declareOneCard(moveData.playerId);
+                 }
+                 break;
+                 
+               case 'penalty_card_contributed':
+                 // Игрок отдал штрафную карту
+                 if (moveData.contributorId && moveData.cardId) {
+                   get().contributePenaltyCard(moveData.contributorId, moveData.cardId);
+                 }
+                 break;
+                 
+               default:
+                 console.warn(`🌐 [Multiplayer] Неизвестный тип хода:`, moveData.type);
+             }
+           } catch (error) {
+             console.error(`🌐 [Multiplayer] Ошибка применения удаленного хода:`, error);
+           }
          }
     }),
     {
