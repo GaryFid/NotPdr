@@ -19,7 +19,7 @@ interface Room {
   host: string;
   players: number;
   maxPlayers: number;
-  gameMode: 'casual' | 'competitive' | 'pro' | 'blitz';
+  gameMode: 'casual' | 'competitive';
   hasPassword: boolean;
   isPrivate: boolean;
   status: 'waiting' | 'playing' | 'full';
@@ -36,25 +36,11 @@ const gameModesConfig = {
     difficulty: 'easy' as const
   },
   competitive: {
-    name: 'Соревновательный', 
+    name: 'Рейтинговый', 
     icon: <Trophy size={24} />,
     description: 'С рейтингом',
     maxPlayers: 8,
     difficulty: 'medium' as const
-  },
-  pro: {
-    name: 'Профессиональный',
-    icon: <Crown size={24} />,
-    description: 'Для мастеров',
-    maxPlayers: 8,
-    difficulty: 'hard' as const
-  },
-  blitz: {
-    name: 'Блиц',
-    icon: <Zap size={24} />,
-    description: 'Молниеносно',
-    maxPlayers: 9,
-    difficulty: 'hard' as const
   }
 };
 
@@ -116,31 +102,17 @@ export default function ProperMultiplayer({ onBack }: ProperMultiplayerProps) {
           },
           {
             id: '2', 
-            code: 'PRO777',
-            name: 'Турнир Мастеров',
+            code: 'RANK1',
+            name: 'Рейтинговая игра',
             host: 'Мария',
-            players: 6,
+            players: 5,
             maxPlayers: 8,
-            gameMode: 'pro',
-            hasPassword: true,
-            isPrivate: false,
-            status: 'playing',
-            ping: 23,
-            difficulty: 'hard'
-          },
-          {
-            id: '3',
-            code: 'BLITZ5',
-            name: 'Быстрая игра',
-            host: 'Дмитрий',
-            players: 7,
-            maxPlayers: 9,
-            gameMode: 'blitz',
+            gameMode: 'competitive',
             hasPassword: false,
             isPrivate: false,
             status: 'waiting',
-            ping: 67,
-            difficulty: 'hard'
+            ping: 23,
+            difficulty: 'medium'
           }
         ]);
       } finally {
@@ -175,6 +147,35 @@ export default function ProperMultiplayer({ onBack }: ProperMultiplayerProps) {
       
       if (result.success) {
         console.log('✅ Room created:', result.room);
+        
+        // Добавляем созданную комнату в список
+        const newRoom: Room = {
+          id: result.room.roomId,
+          code: result.room.roomCode,
+          name: result.room.name,
+          host: result.room.host,
+          players: 1, // Создатель уже в комнате
+          maxPlayers: result.room.maxPlayers,
+          gameMode: createData.gameMode,
+          hasPassword: createData.hasPassword,
+          isPrivate: createData.isPrivate,
+          status: 'waiting',
+          ping: Math.floor(Math.random() * 50) + 20, // Случайный пинг 20-70ms
+          difficulty: gameModesConfig[createData.gameMode].difficulty
+        };
+        
+        setRooms(prevRooms => [newRoom, ...prevRooms]); // Добавляем в начало списка
+        
+        // Сбрасываем форму
+        setCreateData({
+          name: '',
+          maxPlayers: 6,
+          gameMode: 'casual',
+          hasPassword: false,
+          password: '',
+          isPrivate: false
+        });
+        
         alert(`Комната создана! Код: ${result.room.roomCode}`);
         setView('lobby');
       } else {
@@ -467,8 +468,8 @@ export default function ProperMultiplayer({ onBack }: ProperMultiplayerProps) {
                 >
                   <div className="room-header">
                     <div className="room-mode">
-                      <div className="mode-icon">{gameModesConfig[room.gameMode].icon}</div>
-                      <div className="mode-text">{gameModesConfig[room.gameMode].name}</div>
+                      <div className="mode-icon">{gameModesConfig[room.gameMode]?.icon || <Users size={24} />}</div>
+                      <div className="mode-text">{gameModesConfig[room.gameMode]?.name || 'Обычный'}</div>
                     </div>
                     <div className="room-code">{room.code}</div>
                   </div>
