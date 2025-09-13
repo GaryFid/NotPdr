@@ -67,12 +67,12 @@ export default function ProperMultiplayer({ onBack }: ProperMultiplayerProps) {
   const [joinCode, setJoinCode] = useState('');
   const [joinPassword, setJoinPassword] = useState('');
 
-  // Load rooms
+  // Load rooms and set up real-time updates
   useEffect(() => {
     const loadRooms = async () => {
       setLoading(true);
       try {
-        const response = await fetch('/api/rooms');
+        const response = await fetch('/api/rooms/list');
         if (response.ok) {
           const data = await response.json();
           if (data.success) {
@@ -81,46 +81,20 @@ export default function ProperMultiplayer({ onBack }: ProperMultiplayerProps) {
           }
         }
       } catch (err) {
-        console.warn('Using fallback data:', err);
+        console.warn('Failed to load rooms:', err);
         setIsConnected(false);
-        
-        // Fallback mock data
-        setRooms([
-          {
-            id: '1',
-            code: 'GAME01',
-            name: 'Комната Новичков',
-            host: 'Алекс',
-            players: 3,
-            maxPlayers: 6,
-            gameMode: 'casual',
-            hasPassword: false,
-            isPrivate: false,
-            status: 'waiting',
-            ping: 45,
-            difficulty: 'easy'
-          },
-          {
-            id: '2', 
-            code: 'RANK1',
-            name: 'Рейтинговая игра',
-            host: 'Мария',
-            players: 5,
-            maxPlayers: 8,
-            gameMode: 'competitive',
-            hasPassword: false,
-            isPrivate: false,
-            status: 'waiting',
-            ping: 23,
-            difficulty: 'medium'
-          }
-        ]);
+        setRooms([]); // Пустой список при ошибке
       } finally {
         setLoading(false);
       }
     };
 
     loadRooms();
+
+    // Обновляем список каждые 10 секунд для синхронизации
+    const interval = setInterval(loadRooms, 10000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleCreateRoom = async () => {
@@ -164,7 +138,14 @@ export default function ProperMultiplayer({ onBack }: ProperMultiplayerProps) {
           difficulty: gameModesConfig[createData.gameMode].difficulty
         };
         
-        setRooms(prevRooms => [newRoom, ...prevRooms]); // Добавляем в начало списка
+        setRooms(prevRooms => {
+          // Проверяем, нет ли уже такой комнаты
+          const existingRoom = prevRooms.find(room => room.code === newRoom.code);
+          if (existingRoom) {
+            return prevRooms; // Не добавляем дубликат
+          }
+          return [newRoom, ...prevRooms]; // Добавляем в начало списка
+        });
         
         // Сбрасываем форму
         setCreateData({

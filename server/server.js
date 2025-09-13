@@ -6,6 +6,8 @@ const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 require('dotenv').config();
 
+const roomsManager = require('./roomsManager');
+
 const Database = require('./database');
 const GameRoomManager = require('./gameRoomManager');
 const PlayerStatsManager = require('./playerStatsManager');
@@ -362,14 +364,173 @@ app.get('/api/leaderboard', async (req, res) => {
   }
 });
 
+// ====== НОВЫЕ API ENDPOINTS ДЛЯ КОМНАТ ======
+
+// Получение списка всех комнат
+app.get('/api/rooms', (req, res) => {
+  try {
+    const rooms = roomsManager.getAllRooms();
+    const stats = roomsManager.getRoomStats();
+    
+    res.json({
+      success: true,
+      rooms: rooms,
+      stats: stats
+    });
+  } catch (error) {
+    console.error('❌ Error getting rooms:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Ошибка получения списка комнат'
+    });
+  }
+});
+
+// Создание новой комнаты
+app.post('/api/rooms/create', (req, res) => {
+  try {
+    const { 
+      hostUserId, 
+      hostName, 
+      maxPlayers, 
+      gameMode, 
+      roomName, 
+      hasPassword, 
+      password, 
+      isPrivate 
+    } = req.body;
+
+    if (!hostUserId || !hostName) {
+      return res.status(400).json({
+        success: false,
+        error: 'Требуются hostUserId и hostName'
+      });
+    }
+
+    const room = roomsManager.createRoom(hostUserId, {
+      hostName,
+      maxPlayers,
+      gameMode,
+      roomName,
+      hasPassword,
+      password,
+      isPrivate
+    });
+
+    // Уведомляем всех о новой комнате через WebSocket
+    io.emit('room_created', {
+      id: room.id,
+      code: room.code,
+      name: room.name,
+      host: room.host,
+      players: room.players.length,
+      maxPlayers: room.maxPlayers,
+      gameMode: room.gameMode,
+      hasPassword: room.hasPassword,
+      isPrivate: room.isPrivate,
+      status: room.status,
+      ping: Math.floor(Math.random() * 50) + 20,
+      difficulty: room.gameMode === 'casual' ? 'easy' : 'medium',
+      createdAt: room.createdAt
+    });
+
+    res.json({
+      success: true,
+      message: 'Комната создана успешно',
+      room: {
+        roomId: room.id,
+        roomCode: room.code,
+        name: room.name,
+        host: room.host,
+        maxPlayers: room.maxPlayers,
+        gameMode: room.gameMode,
+        hasPassword: room.hasPassword,
+        isPrivate: room.isPrivate,
+        status: room.status,
+        createdAt: room.createdAt
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error creating room:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Ошибка создания комнаты'
+    });
+  }
+});
+
+// Присоединение к комнате
+app.post('/api/rooms/join', (req, res) => {
+  try {
+    const { roomCode, userId, userName, password } = req.body;
+
+    if (!roomCode || !userId || !userName) {
+      return res.status(400).json({
+        success: false,
+        error: 'Требуются roomCode, userId и userName'
+      });
+    }
+
+    const room = roomsManager.joinRoom(roomCode, userId, { userName }, password);
+
+    // Уведомляем всех о изменении в комнате через WebSocket
+    io.emit('room_updated', {
+      id: room.id,
+      code: room.code,
+      name: room.name,
+      host: room.host,
+      players: room.players.length,
+      maxPlayers: room.maxPlayers,
+      gameMode: room.gameMode,
+      hasPassword: room.hasPassword,
+      isPrivate: room.isPrivate,
+      status: room.status,
+      ping: Math.floor(Math.random() * 50) + 20,
+      difficulty: room.gameMode === 'casual' ? 'easy' : 'medium',
+      createdAt: room.createdAt
+    });
+
+    res.json({
+      success: true,
+      message: 'Успешно присоединились к комнате',
+      room: {
+        roomId: room.id,
+        roomCode: room.code,
+        name: room.name,
+        host: room.host,
+        maxPlayers: room.maxPlayers,
+        currentPlayers: room.players.length,
+        gameMode: room.gameMode,
+        hasPassword: room.hasPassword,
+        isPrivate: room.isPrivate,
+        status: room.status
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error joining room:', error);
+    res.status(400).json({
+      success: false,
+      error: error.message || 'Ошибка присоединения к комнате'
+    });
+  }
+});
+
 // Проверка здоровья сервера
 app.get('/api/health', (req, res) => {
+  const roomStats = roomsManager.getRoomStats();
+  
   res.json({
     status: 'OK',
     uptime: process.uptime(),
     timestamp: Date.now(),
     activeRooms: gameRoomManager.getRoomCount(),
-    connectedClients: io.sockets.sockets.size
+    connectedClients: io.sockets.sockets.size,
+    newRoomSystem: {
+      totalRooms: roomStats.totalRooms,
+      waitingRooms: roomStats.waitingRooms,
+      playingRooms: roomStats.playingRooms,
+      totalPlayers: roomStats.totalPlayers
+    }
   });
 });
 
