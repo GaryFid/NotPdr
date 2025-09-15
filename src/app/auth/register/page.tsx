@@ -119,7 +119,15 @@ export default function RegisterPage() {
         // Перенаправляем в игру
         setTimeout(() => {
           if (typeof window !== 'undefined') {
-            window.location.href = '/';
+            if (window.Telegram?.WebApp) {
+              // Для Telegram WebApp используем принудительную перезагрузку
+              console.log('🔄 Перенаправление в Telegram WebApp (регистрация)');
+              window.history.pushState({}, '', '/');
+              window.location.reload();
+            } else {
+              // Обычное перенаправление
+              window.location.href = '/';
+            }
           } else {
             router.push('/');
           }

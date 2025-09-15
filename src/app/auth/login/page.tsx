@@ -80,7 +80,15 @@ export default function LoginPage() {
         // Перенаправляем в игру
         setTimeout(() => {
           if (typeof window !== 'undefined') {
-            window.location.href = '/';
+            if (window.Telegram?.WebApp) {
+              // Для Telegram WebApp используем принудительную перезагрузку
+              console.log('🔄 Перенаправление в Telegram WebApp (локальный вход)');
+              window.history.pushState({}, '', '/');
+              window.location.reload();
+            } else {
+              // Обычное перенаправление
+              window.location.href = '/';
+            }
           } else {
             router.push('/');
           }
@@ -170,14 +178,22 @@ export default function LoginPage() {
           
           showToast('Успешно!', `Добро пожаловать, ${data.user.username}!`, 'success');
 
-          // Перенаправляем в игру (Telegram)
-          setTimeout(() => {
-            if (typeof window !== 'undefined') {
-              window.location.href = '/';
+        // Перенаправляем в игру (Telegram)
+        setTimeout(() => {
+          if (typeof window !== 'undefined') {
+            if (window.Telegram?.WebApp) {
+              // Для Telegram WebApp используем принудительную перезагрузку
+              console.log('🔄 Перенаправление в Telegram WebApp');
+              window.history.pushState({}, '', '/');
+              window.location.reload();
             } else {
-              router.push('/');
+              // Обычное перенаправление
+              window.location.href = '/';
             }
-          }, 1500);
+          } else {
+            router.push('/');
+          }
+        }, 1500);
         } else {
           setError(data.message || 'Ошибка входа через Telegram');
         }
