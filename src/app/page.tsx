@@ -163,9 +163,30 @@ function HomeWithParams() {
           console.log('❌ UserData exists:', !!userData);
           console.log('❌ CurrentUser exists:', !!currentUser);
           
-          // Если это обычный браузер - на регистрацию, если WebApp - на логин
-          const redirectPath = window.Telegram?.WebApp ? '/auth/login' : '/auth/register';
-          console.log('🔄 Перенаправляем на:', redirectPath);
+          // ВРЕМЕННО: пропускаем авторизацию для тестирования
+          console.log('⚠️ ВРЕМЕННЫЙ РЕЖИМ: создаем тестового пользователя');
+          const tempUser = {
+            id: 'temp_user_' + Date.now(),
+            username: 'TestUser',
+            coins: 1000,
+            rating: 0,
+            gamesPlayed: 0,
+            gamesWon: 0
+          };
+          
+          localStorage.setItem('auth_token', 'temp_token_' + Date.now());
+          localStorage.setItem('user', JSON.stringify(tempUser));
+          localStorage.setItem('current_user', JSON.stringify(tempUser));
+          
+          setUser(tempUser);
+          setLoading(false);
+          
+          console.log('✅ Временный пользователь создан, переходим в игру');
+          return;
+          
+          // Закомментировано до исправления Supabase
+          // const redirectPath = window.Telegram?.WebApp ? '/auth/login' : '/auth/register';
+          // console.log('🔄 Перенаправляем на:', redirectPath);
           
           setTimeout(() => {
             router.push(redirectPath);
