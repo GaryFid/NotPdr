@@ -556,13 +556,3 @@ export async function POST(req: NextRequest) {
     message: 'Неизвестный тип авторизации' 
   }, { status: 400 });
 }
-
-export async function GET() {
-  return NextResponse.json({
-    status: 'SUPABASE Auth API работает!',
-    timestamp: new Date().toISOString(),
-    supabase: !!process.env.SUPABASE_URL,
-    jwt: !!process.env.JWT_SECRET,
-    bot: !!process.env.BOT_TOKEN
-  });
-}
