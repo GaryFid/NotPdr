@@ -24,6 +24,103 @@ const TelegramAuthSchema = z.object({
   initData: z.string().optional(),
 });
 
+export async function GET(req: NextRequest) {
+  console.log('🔍 GET Auth API - получение данных пользователя');
+  
+  const { searchParams } = new URL(req.url);
+  const userId = searchParams.get('userId');
+  
+  if (!userId) {
+    return NextResponse.json({ 
+      success: false, 
+      message: 'userId обязателен' 
+    }, { status: 400 });
+  }
+
+  // Проверяем Authorization header
+  const authHeader = req.headers.get('authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return NextResponse.json({ 
+      success: false, 
+      message: 'Токен авторизации отсутствует' 
+    }, { status: 401 });
+  }
+
+  const token = authHeader.split(' ')[1];
+  
+  try {
+    // Проверяем JWT токен
+    if (!JWT_SECRET) {
+      throw new Error('JWT_SECRET не настроен');
+    }
+    
+    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    console.log('✅ JWT токен валиден для пользователя:', decoded.userId);
+
+    // Проверяем Supabase подключение
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_ANON_KEY;
+    const useSupabase = !!(supabaseUrl && supabaseKey);
+    
+    if (useSupabase) {
+      // Загружаем из Supabase
+      const { data: user, error } = await supabase
+        .from('users')
+        .select('id, username, email, telegramId, firstName, lastName, photoUrl, coins, rating, gamesPlayed, gamesWon, createdAt')
+        .or(`id.eq.${userId},telegramId.eq.${userId}`)
+        .single();
+
+      if (error) {
+        console.error('❌ Ошибка загрузки пользователя из Supabase:', error);
+        return NextResponse.json({ 
+          success: false, 
+          message: 'Пользователь не найден в базе данных' 
+        }, { status: 404 });
+      }
+
+      console.log('✅ Пользователь загружен из Supabase:', user);
+      
+      return NextResponse.json({
+        success: true,
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          telegramId: user.telegramId,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          photoUrl: user.photoUrl,
+          coins: user.coins || 1000,
+          rating: user.rating || 0,
+          gamesPlayed: user.gamesPlayed || 0,
+          gamesWon: user.gamesWon || 0,
+          createdAt: user.createdAt
+        }
+      });
+    } else {
+      console.warn('⚠️ Supabase не настроен, возвращаем базовые данные');
+      return NextResponse.json({
+        success: true,
+        user: {
+          id: userId,
+          username: `user_${userId}`,
+          coins: 1000,
+          rating: 0,
+          gamesPlayed: 0,
+          gamesWon: 0
+        }
+      });
+    }
+
+  } catch (error) {
+    console.error('❌ Ошибка проверки токена или загрузки пользователя:', error);
+    return NextResponse.json({ 
+      success: false, 
+      message: 'Неверный токен авторизации' 
+    }, { status: 401 });
+  }
+}
+
 export async function POST(req: NextRequest) {
   console.log('🚀 SUPABASE Auth API вызван');
   

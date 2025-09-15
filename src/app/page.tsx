@@ -22,12 +22,124 @@ function HomeWithParams() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  // Функция для загрузки пользователя из базы данных
+  const loadUserFromDatabase = async (userId: string, token: string) => {
+    try {
+      console.log('🔄 Загружаем данные пользователя из БД:', userId);
+      
+      const response = await fetch(`/api/auth?userId=${userId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.user) {
+          console.log('✅ Данные пользователя загружены из БД:', data.user);
+          
+          // Обновляем локальные данные
+          localStorage.setItem('user', JSON.stringify(data.user));
+          localStorage.setItem('current_user', JSON.stringify(data.user));
+          
+          // Диспатчим событие обновления монет
+          window.dispatchEvent(new CustomEvent('coinsUpdated', { 
+            detail: { coins: data.user.coins } 
+          }));
+          
+          setUser(data.user);
+          setLoading(false);
+          return;
+        }
+      }
+      
+      console.warn('⚠️ Не удалось загрузить данные из БД, используем локальные');
+      const localData = localStorage.getItem('user') || localStorage.getItem('current_user');
+      if (localData) {
+        const parsedUser = JSON.parse(localData);
+        setUser(parsedUser);
+      }
+      setLoading(false);
+      
+    } catch (error) {
+      console.error('❌ Ошибка загрузки данных из БД:', error);
+      
+      // Используем локальные данные как fallback
+      const localData = localStorage.getItem('user') || localStorage.getItem('current_user');
+      if (localData) {
+        const parsedUser = JSON.parse(localData);
+        setUser(parsedUser);
+      }
+      setLoading(false);
+    }
+  };
+
   // Проверка авторизации при загрузке
   useEffect(() => {
-    const checkAuth = () => {
+    const checkAuth = async () => {
       console.log('🔍 Проверка авторизации на главной странице');
+      console.log('🔍 window.Telegram?.WebApp:', !!window.Telegram?.WebApp);
       
-      // Даем время для сохранения данных после перезагрузки
+      // Если это Telegram WebApp и нет токена - автоматически авторизуемся
+      if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+        const token = localStorage.getItem('auth_token');
+        
+        if (!token) {
+          console.log('🤖 Автоматическая авторизация через Telegram WebApp');
+          
+          const tg = window.Telegram.WebApp;
+          const initData = tg.initData;
+          const user = tg.initDataUnsafe?.user;
+
+          if (initData && user) {
+            try {
+              console.log('📡 Отправляем запрос на автоавторизацию:', user);
+              
+              const response = await fetch('/api/auth', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  type: 'telegram',
+                  id: user.id,
+                  username: user.username,
+                  first_name: user.first_name,
+                  last_name: user.last_name,
+                  photo_url: user.photo_url,
+                  initData: initData,
+                })
+              });
+
+              const data = await response.json();
+
+              if (data.success) {
+                console.log('✅ Автоматическая Telegram авторизация успешна:', data.user);
+                
+                // Сохраняем данные пользователя
+                localStorage.setItem('auth_token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                localStorage.setItem('current_user', JSON.stringify(data.user));
+                
+                // Диспатчим событие обновления монет
+                window.dispatchEvent(new CustomEvent('coinsUpdated', { 
+                  detail: { coins: data.user.coins } 
+                }));
+                
+                setUser(data.user);
+                setLoading(false);
+                return;
+              } else {
+                console.error('❌ Ошибка автоавторизации:', data.message);
+              }
+            } catch (error) {
+              console.error('❌ Ошибка сети при автоавторизации:', error);
+            }
+          }
+        }
+      }
+      
+      // Обычная проверка авторизации
       setTimeout(() => {
         const token = localStorage.getItem('auth_token');
         const userData = localStorage.getItem('user');
@@ -51,8 +163,12 @@ function HomeWithParams() {
           console.log('❌ UserData exists:', !!userData);
           console.log('❌ CurrentUser exists:', !!currentUser);
           
+          // Если это обычный браузер - на регистрацию, если WebApp - на логин
+          const redirectPath = window.Telegram?.WebApp ? '/auth/login' : '/auth/register';
+          console.log('🔄 Перенаправляем на:', redirectPath);
+          
           setTimeout(() => {
-            router.push('/auth/login');
+            router.push(redirectPath);
           }, 500);
           return;
         }
@@ -61,8 +177,10 @@ function HomeWithParams() {
           const parsedUser = JSON.parse(userDataSource);
           console.log('✅ Пользователь найден:', parsedUser.username);
           console.log('💰 Монеты пользователя:', parsedUser.coins);
-          setUser(parsedUser);
-          setLoading(false);
+          
+          // Загружаем свежие данные из базы данных
+          loadUserFromDatabase(parsedUser.id || parsedUser.telegramId, token);
+          
         } catch (error) {
           console.error('❌ Ошибка парсинга данных пользователя:', error);
           console.error('❌ Проблемные данные:', userDataSource);
@@ -72,12 +190,13 @@ function HomeWithParams() {
           localStorage.removeItem('user');
           localStorage.removeItem('current_user');
           
+          const redirectPath = window.Telegram?.WebApp ? '/auth/login' : '/auth/register';
           setTimeout(() => {
-            router.push('/auth/login');
+            router.push(redirectPath);
           }, 500);
           return;
         }
-      }, 200); // Даем 200мс для сохранения данных
+      }, 200);
     };
 
     checkAuth();
