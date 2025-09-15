@@ -460,24 +460,45 @@ export default function LoginPage() {
           </VStack>
 
           {/* Register Link */}
-          <Text textAlign="center" color="#94a3b8" fontSize="0.9rem">
-            Нет аккаунта?{' '}
-            <Link href="/auth/register">
-              <Text 
-                as="span" 
-                color="#22c55e" 
-                fontWeight="600" 
-                transition="all 0.3s ease"
-                _hover={{ 
-                  color: '#ffd700',
-                  textDecoration: 'underline',
-                  textShadow: '0 0 10px rgba(255, 215, 0, 0.5)'
-                }}
-              >
-                Зарегистрироваться
-              </Text>
-            </Link>
-          </Text>
+          <VStack gap={2}>
+            <Text textAlign="center" color="#94a3b8" fontSize="0.9rem">
+              Нет аккаунта?{' '}
+              <Link href="/auth/register">
+                <Text 
+                  as="span" 
+                  color="#22c55e" 
+                  fontWeight="600" 
+                  transition="all 0.3s ease"
+                  _hover={{ 
+                    color: '#ffd700',
+                    textDecoration: 'underline',
+                    textShadow: '0 0 10px rgba(255, 215, 0, 0.5)'
+                  }}
+                >
+                  Зарегистрироваться
+                </Text>
+              </Link>
+            </Text>
+            
+            {/* Test Login Link */}
+            <Text textAlign="center" color="#64748b" fontSize="0.8rem">
+              Проблемы с входом?{' '}
+              <Link href="/auth/test-login">
+                <Text 
+                  as="span" 
+                  color="#f59e0b" 
+                  fontWeight="500" 
+                  transition="all 0.3s ease"
+                  _hover={{ 
+                    color: '#ffd700',
+                    textDecoration: 'underline'
+                  }}
+                >
+                  Тестовый вход
+                </Text>
+              </Link>
+            </Text>
+          </VStack>
         </VStack>
       </Box>
     </Box>
