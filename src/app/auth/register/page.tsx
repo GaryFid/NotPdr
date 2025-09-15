@@ -117,18 +117,32 @@ export default function RegisterPage() {
         }
 
         // Перенаправляем в игру
+        console.log('🚀 Начинаем перенаправление (регистрация) через 1.5 сек');
+        console.log('🔍 window.Telegram?.WebApp:', !!window.Telegram?.WebApp);
+        
         setTimeout(() => {
+          console.log('⏰ setTimeout выполнился (регистрация)');
+          
           if (typeof window !== 'undefined') {
             if (window.Telegram?.WebApp) {
               // Для Telegram WebApp используем принудительную перезагрузку
               console.log('🔄 Перенаправление в Telegram WebApp (регистрация)');
-              window.history.pushState({}, '', '/');
-              window.location.reload();
+              try {
+                window.history.pushState({}, '', '/');
+                console.log('✅ pushState выполнен (регистрация)');
+                window.location.reload();
+                console.log('✅ reload вызван (регистрация)');
+              } catch (error) {
+                console.error('❌ Ошибка перенаправления (регистрация):', error);
+                window.location.href = '/';
+              }
             } else {
               // Обычное перенаправление
+              console.log('🔄 Обычное перенаправление (регистрация)');
               window.location.href = '/';
             }
           } else {
+            console.log('🔄 Server-side перенаправление (регистрация)');
             router.push('/');
           }
         }, 1500);

@@ -78,18 +78,32 @@ export default function LoginPage() {
         }
 
         // Перенаправляем в игру
+        console.log('🚀 Начинаем перенаправление (локальный вход) через 1.5 сек');
+        console.log('🔍 window.Telegram?.WebApp:', !!window.Telegram?.WebApp);
+        
         setTimeout(() => {
+          console.log('⏰ setTimeout выполнился (локальный)');
+          
           if (typeof window !== 'undefined') {
             if (window.Telegram?.WebApp) {
               // Для Telegram WebApp используем принудительную перезагрузку
               console.log('🔄 Перенаправление в Telegram WebApp (локальный вход)');
-              window.history.pushState({}, '', '/');
-              window.location.reload();
+              try {
+                window.history.pushState({}, '', '/');
+                console.log('✅ pushState выполнен (локальный)');
+                window.location.reload();
+                console.log('✅ reload вызван (локальный)');
+              } catch (error) {
+                console.error('❌ Ошибка перенаправления (локальный):', error);
+                window.location.href = '/';
+              }
             } else {
               // Обычное перенаправление
+              console.log('🔄 Обычное перенаправление (локальный)');
               window.location.href = '/';
             }
           } else {
+            console.log('🔄 Server-side перенаправление (локальный)');
             router.push('/');
           }
         }, 1500);
@@ -178,22 +192,37 @@ export default function LoginPage() {
           
           showToast('Успешно!', `Добро пожаловать, ${data.user.username}!`, 'success');
 
-        // Перенаправляем в игру (Telegram)
-        setTimeout(() => {
-          if (typeof window !== 'undefined') {
-            if (window.Telegram?.WebApp) {
-              // Для Telegram WebApp используем принудительную перезагрузку
-              console.log('🔄 Перенаправление в Telegram WebApp');
-              window.history.pushState({}, '', '/');
-              window.location.reload();
+          // Перенаправляем в игру (Telegram)
+          console.log('🚀 Начинаем перенаправление через 1.5 сек');
+          console.log('🔍 window.Telegram?.WebApp:', !!window.Telegram?.WebApp);
+          
+          setTimeout(() => {
+            console.log('⏰ setTimeout выполнился');
+            
+            if (typeof window !== 'undefined') {
+              if (window.Telegram?.WebApp) {
+                // Для Telegram WebApp используем принудительную перезагрузку
+                console.log('🔄 Перенаправление в Telegram WebApp');
+                try {
+                  window.history.pushState({}, '', '/');
+                  console.log('✅ pushState выполнен');
+                  window.location.reload();
+                  console.log('✅ reload вызван');
+                } catch (error) {
+                  console.error('❌ Ошибка перенаправления:', error);
+                  // Пробуем альтернативный способ
+                  window.location.href = '/';
+                }
+              } else {
+                // Обычное перенаправление
+                console.log('🔄 Обычное перенаправление');
+                window.location.href = '/';
+              }
             } else {
-              // Обычное перенаправление
-              window.location.href = '/';
+              console.log('🔄 Server-side перенаправление');
+              router.push('/');
             }
-          } else {
-            router.push('/');
-          }
-        }, 1500);
+          }, 1500);
         } else {
           setError(data.message || 'Ошибка входа через Telegram');
         }
