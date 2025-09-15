@@ -27,10 +27,14 @@ const TelegramAuthSchema = z.object({
 
 export async function POST(req: NextRequest) {
   // Rate limiting
-  const id = getRateLimitId(req);
-  const { success } = await checkRateLimit(`auth:${id}`);
-  if (!success) {
-    return NextResponse.json({ success: false, message: 'Too many requests' }, { status: 429 });
+  try {
+    const id = getRateLimitId(req);
+    const { success } = await checkRateLimit(`auth:${id}`);
+    if (!success) {
+      return NextResponse.json({ success: false, message: 'Too many requests' }, { status: 429 });
+    }
+  } catch (error) {
+    console.warn('Rate limiting unavailable:', error);
   }
 
   if (!JWT_SECRET) {
@@ -57,31 +61,46 @@ export async function POST(req: NextRequest) {
 
     const { username, password } = parsed.data;
 
-    const { data: users, error } = await supabase
-      .from('users')
-      .select('id, username, password, firstName, lastName, avatar')
-      .eq('username', username)
-      .limit(1);
+    try {
+      const { data: users, error } = await supabase
+        .from('users')
+        .select('id, username, password, firstName, lastName, avatar, coins, rating, gamesPlayed, gamesWon, referralCode')
+        .eq('username', username)
+        .limit(1);
 
-    if (error) {
-      return NextResponse.json({ success: false, message: 'Auth error' }, { status: 500 });
+      if (error) {
+        console.error('Supabase error:', error);
+        return NextResponse.json({ success: false, message: 'Database error' }, { status: 500 });
+      }
+
+      const user = users && users[0];
+      if (!user || !user.password) {
+        return NextResponse.json({ success: false, message: 'Пользователь не найден' }, { status: 401 });
+      }
+
+      const valid = await bcrypt.compare(password, user.password);
+      if (!valid) {
+        return NextResponse.json({ success: false, message: 'Неверный пароль' }, { status: 401 });
+      }
+
+      const token = jwt.sign({ userId: user.id, username: user.username }, JWT_SECRET, { expiresIn: '30d' });
+
+      // Обновляем статус пользователя
+      await supabase
+        .from('user_status')
+        .upsert({
+          user_id: user.id,
+          status: 'online',
+          last_seen: new Date().toISOString()
+        });
+
+      // Никогда не возвращаем password
+      const { password: _omit, ...safeUser } = user;
+      return NextResponse.json({ success: true, token, user: safeUser });
+    } catch (error) {
+      console.error('Auth error:', error);
+      return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
     }
-
-    const user = users && users[0];
-    if (!user || !user.password) {
-      return NextResponse.json({ success: false, message: 'Пользователь не найден' }, { status: 401 });
-    }
-
-    const valid = await bcrypt.compare(password, user.password);
-    if (!valid) {
-      return NextResponse.json({ success: false, message: 'Неверный пароль' }, { status: 401 });
-    }
-
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '30d' });
-
-    // Никогда не возвращаем password
-    const { password: _omit, ...safeUser } = user;
-    return NextResponse.json({ success: true, token, user: safeUser });
   }
 
   // 2. Авторизация через Telegram WebApp
@@ -93,21 +112,34 @@ export async function POST(req: NextRequest) {
 
     const { id, username, first_name, last_name, photo_url, initData } = parsed.data;
 
-    if (!BOT_TOKEN || !initData || !verifyTelegramInitData(initData, BOT_TOKEN)) {
-      return NextResponse.json({ success: false, message: 'Invalid Telegram init data' }, { status: 401 });
+    // Проверка Telegram данных
+    if (BOT_TOKEN && initData) {
+      try {
+        if (!verifyTelegramInitData(initData, BOT_TOKEN)) {
+          return NextResponse.json({ success: false, message: 'Invalid Telegram init data' }, { status: 401 });
+        }
+      } catch (error) {
+        console.error('Telegram verification error:', error);
+        return NextResponse.json({ success: false, message: 'Telegram verification failed' }, { status: 401 });
+      }
+    } else {
+      console.warn('BOT_TOKEN not configured, skipping Telegram verification');
     }
 
     const idStr = id.toString();
 
-          const { data: users, error } = await supabase
-      .from('users')
-      .select('id, username, firstName, lastName, avatar, telegramId, referralCode')
-      .eq('telegramId', idStr)
-      .limit(1);
+    try {
 
-    if (error) {
-      return NextResponse.json({ success: false, message: 'Auth error' }, { status: 500 });
-    }
+      const { data: users, error } = await supabase
+        .from('users')
+        .select('id, username, firstName, lastName, avatar, telegramId, referralCode, coins, rating, gamesPlayed, gamesWon')
+        .eq('telegramId', idStr)
+        .limit(1);
+
+      if (error) {
+        console.error('Supabase error:', error);
+        return NextResponse.json({ success: false, message: 'Database error' }, { status: 500 });
+      }
 
     let user = users && users[0];
     if (!user) {
@@ -141,10 +173,11 @@ export async function POST(req: NextRequest) {
             referralCode,
           }
         ])
-        .select('id, username, firstName, lastName, avatar, telegramId, referralCode');
+        .select('id, username, firstName, lastName, avatar, telegramId, referralCode, coins, rating, gamesPlayed, gamesWon');
 
       if (insertError) {
-        return NextResponse.json({ success: false, message: 'Auth error' }, { status: 500 });
+        console.error('Insert error:', insertError);
+        return NextResponse.json({ success: false, message: 'Registration error' }, { status: 500 });
       }
 
       user = newUsers && newUsers[0];
@@ -161,12 +194,27 @@ export async function POST(req: NextRequest) {
         .eq('id', user.id);
 
       if (updateError) {
-        return NextResponse.json({ success: false, message: 'Auth error' }, { status: 500 });
+        console.error('Update error:', updateError);
+        return NextResponse.json({ success: false, message: 'Update error' }, { status: 500 });
       }
     }
 
+    // Обновляем статус пользователя
+    await supabase
+      .from('user_status')
+      .upsert({
+        user_id: user.id,
+        status: 'online',
+        last_seen: new Date().toISOString()
+      });
+
     const token = jwt.sign({ userId: user.id, telegramId: user.telegramId }, JWT_SECRET, { expiresIn: '30d' });
     return NextResponse.json({ success: true, token, user });
+    
+    } catch (error) {
+      console.error('Telegram auth error:', error);
+      return NextResponse.json({ success: false, message: 'Server error' }, { status: 500 });
+    }
   }
 
   return NextResponse.json({ success: false, message: 'Unknown auth type' }, { status: 400 });

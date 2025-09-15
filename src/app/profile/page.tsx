@@ -1,8 +1,9 @@
 'use client'
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Trophy, Medal, Users, User, Star, Award, Target, Camera, Upload } from 'lucide-react';
+import { ArrowLeft, Trophy, Medal, Users, User, Star, Award, Target, Camera, Upload, Wallet } from 'lucide-react';
 import BottomNav from '../../components/BottomNav';
+import WalletManager from '../../components/WalletManager';
 
 export default function ProfilePage() {
   const [stats, setStats] = useState({
@@ -20,6 +21,7 @@ export default function ProfilePage() {
   });
 
   const [avatarUrl, setAvatarUrl] = useState('😎');
+  const [activeSection, setActiveSection] = useState('stats'); // 'stats', 'achievements', 'wallet'
 
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -121,75 +123,180 @@ export default function ProfilePage() {
           </div>
         </motion.div>
 
-        {/* Stats Grid */}
+        {/* Navigation Tabs */}
         <motion.div 
-          className="stats-container"
+          className="profile-nav"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '12px',
+            margin: '20px 0',
+            padding: '0 20px'
+          }}
         >
-          <h3 className="stats-title">СТАТИСТИКА</h3>
-          <div className="stats-grid">
-            <div className="stat-card">
-              <div className="stat-value rating">{stats.rating}</div>
-              <div className="stat-label">Рейтинг</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-value games">{stats.gamesPlayed}</div>
-              <div className="stat-label">Игр сыграно</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-value wins">{stats.wins}</div>
-              <div className="stat-label">Побед</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-value losses">{stats.losses}</div>
-              <div className="stat-label">Поражений</div>
-            </div>
-            <div className="stat-card full-width">
-              <div className="stat-value winrate">{stats.winRate}%</div>
-              <div className="stat-label">Процент побед</div>
-            </div>
-          </div>
+          <button
+            onClick={() => setActiveSection('stats')}
+            className={`nav-tab ${activeSection === 'stats' ? 'active' : ''}`}
+            style={{
+              background: activeSection === 'stats' ? 
+                'linear-gradient(135deg, rgba(34, 197, 94, 0.8) 0%, rgba(22, 163, 74, 0.6) 100%)' : 
+                'linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%)',
+              border: '1px solid',
+              borderColor: activeSection === 'stats' ? 'rgba(34, 197, 94, 0.4)' : 'rgba(100, 116, 139, 0.3)',
+              borderRadius: '12px',
+              padding: '8px 16px',
+              color: activeSection === 'stats' ? '#e2e8f0' : '#94a3b8',
+              fontSize: '0.9rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <Target size={16} />
+            Статистика
+          </button>
+          
+          <button
+            onClick={() => setActiveSection('achievements')}
+            className={`nav-tab ${activeSection === 'achievements' ? 'active' : ''}`}
+            style={{
+              background: activeSection === 'achievements' ? 
+                'linear-gradient(135deg, rgba(139, 92, 246, 0.8) 0%, rgba(124, 58, 237, 0.6) 100%)' : 
+                'linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%)',
+              border: '1px solid',
+              borderColor: activeSection === 'achievements' ? 'rgba(139, 92, 246, 0.4)' : 'rgba(100, 116, 139, 0.3)',
+              borderRadius: '12px',
+              padding: '8px 16px',
+              color: activeSection === 'achievements' ? '#e2e8f0' : '#94a3b8',
+              fontSize: '0.9rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <Award size={16} />
+            Достижения
+          </button>
+          
+          <button
+            onClick={() => setActiveSection('wallet')}
+            className={`nav-tab ${activeSection === 'wallet' ? 'active' : ''}`}
+            style={{
+              background: activeSection === 'wallet' ? 
+                'linear-gradient(135deg, rgba(59, 130, 246, 0.8) 0%, rgba(37, 99, 235, 0.6) 100%)' : 
+                'linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%)',
+              border: '1px solid',
+              borderColor: activeSection === 'wallet' ? 'rgba(59, 130, 246, 0.4)' : 'rgba(100, 116, 139, 0.3)',
+              borderRadius: '12px',
+              padding: '8px 16px',
+              color: activeSection === 'wallet' ? '#e2e8f0' : '#94a3b8',
+              fontSize: '0.9rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <Wallet size={16} />
+            Кошельки
+          </button>
         </motion.div>
 
-        {/* Achievements */}
-        <motion.div 
-          className="achievements-container"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <div className="achievements-header">
-            <h3 className="achievements-title">ДОСТИЖЕНИЯ</h3>
-          </div>
-          
-          <div className="achievements-grid">
-            {stats.achievements.map((achievement, index) => {
-              const IconComponent = achievement.icon;
-              return (
-                <motion.div 
-                  key={achievement.id}
-                  className={`achievement-card ${achievement.unlocked ? 'unlocked' : 'locked'}`}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.3, delay: 0.1 * index }}
-                >
-                  <div className="achievement-icon">
-                    <IconComponent className="achievement-icon-svg" />
-                  </div>
-                  <div className="achievement-info">
-                    <h4 className="achievement-name">{achievement.name}</h4>
-                    <p className="achievement-description">{achievement.description}</p>
-                  </div>
-                  {achievement.unlocked && (
-                    <div className="achievement-badge">✓</div>
-                  )}
-                </motion.div>
-              );
-            })}
-          </div>
-        </motion.div>
+        {/* Content Sections */}
+        {activeSection === 'stats' && (
+          <motion.div 
+            className="stats-container"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <h3 className="stats-title">СТАТИСТИКА</h3>
+            <div className="stats-grid">
+              <div className="stat-card">
+                <div className="stat-value rating">{stats.rating}</div>
+                <div className="stat-label">Рейтинг</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-value games">{stats.gamesPlayed}</div>
+                <div className="stat-label">Игр сыграно</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-value wins">{stats.wins}</div>
+                <div className="stat-label">Побед</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-value losses">{stats.losses}</div>
+                <div className="stat-label">Поражений</div>
+              </div>
+              <div className="stat-card full-width">
+                <div className="stat-value winrate">{stats.winRate}%</div>
+                <div className="stat-label">Процент побед</div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {activeSection === 'achievements' && (
+          <motion.div 
+            className="achievements-container"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="achievements-header">
+              <h3 className="achievements-title">ДОСТИЖЕНИЯ</h3>
+            </div>
+            
+            <div className="achievements-grid">
+              {stats.achievements.map((achievement, index) => {
+                const IconComponent = achievement.icon;
+                return (
+                  <motion.div 
+                    key={achievement.id}
+                    className={`achievement-card ${achievement.unlocked ? 'unlocked' : 'locked'}`}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 * index }}
+                  >
+                    <div className="achievement-icon">
+                      <IconComponent className="achievement-icon-svg" />
+                    </div>
+                    <div className="achievement-info">
+                      <h4 className="achievement-name">{achievement.name}</h4>
+                      <p className="achievement-description">{achievement.description}</p>
+                    </div>
+                    {achievement.unlocked && (
+                      <div className="achievement-badge">✓</div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+
+        {activeSection === 'wallet' && (
+          <motion.div 
+            className="wallet-section"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            style={{ padding: '0 20px', marginBottom: '100px' }}
+          >
+            <WalletManager showExchange={true} />
+          </motion.div>
+        )}
 
         <BottomNav />
       </div>

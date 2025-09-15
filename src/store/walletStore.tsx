@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { tonConnector } from '../lib/wallets/ton-connector';
 import { solanaConnector } from '../lib/wallets/solana-connector';
 import { ethereumConnector } from '../lib/wallets/ethereum-connector';
+import { walletService, CryptoType, DepositTransaction, ExchangeRate } from '../lib/wallets/wallet-service';
 
 interface WalletState {
   // TON
@@ -24,6 +25,11 @@ interface WalletState {
   isConnecting: boolean;
   error: string | null;
   
+  // Депозиты и обмен
+  exchangeRates: ExchangeRate[];
+  transactions: DepositTransaction[];
+  isExchanging: boolean;
+  
   // Actions
   connectTonWallet: () => Promise<void>;
   disconnectTonWallet: () => Promise<void>;
@@ -33,6 +39,12 @@ interface WalletState {
   disconnectEthereumWallet: () => Promise<void>;
   updateBalances: () => Promise<void>;
   clearError: () => void;
+  
+  // Новые actions для обмена
+  loadExchangeRates: () => void;
+  exchangeCryptoToCoins: (crypto: CryptoType, amount: number) => Promise<{ success: boolean; gameCoinsAdded: number; txId: string }>;
+  loadUserTransactions: (userId: string) => void;
+  calculateGameCoins: (crypto: CryptoType, amount: number) => number;
 }
 
 export const useWalletStore = create<WalletState>((set, get) => ({
@@ -52,6 +64,11 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   
   isConnecting: false,
   error: null,
+  
+  // Депозиты и обмен
+  exchangeRates: [],
+  transactions: [],
+  isExchanging: false,
   
   // TON Actions
   connectTonWallet: async () => {
@@ -171,4 +188,46 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   },
   
   clearError: () => set({ error: null }),
+  
+  // Новые actions для обмена
+  loadExchangeRates: () => {
+    const rates = walletService.getExchangeRates();
+    set({ exchangeRates: rates });
+  },
+  
+  exchangeCryptoToCoins: async (crypto: CryptoType, amount: number) => {
+    set({ isExchanging: true, error: null });
+    try {
+      // Получаем текущего пользователя
+      const user = typeof window !== 'undefined' ? 
+        JSON.parse(localStorage.getItem('user') || '{}') : {};
+      
+      if (!user.id) {
+        throw new Error('User not logged in');
+      }
+      
+      const result = await walletService.exchangeToGameCoins(user.id, crypto, amount);
+      
+      // Обновляем транзакции
+      const transactions = walletService.getUserTransactions(user.id);
+      set({ transactions, isExchanging: false });
+      
+      return result;
+    } catch (error: any) {
+      set({ 
+        error: error.message || 'Exchange failed', 
+        isExchanging: false 
+      });
+      throw error;
+    }
+  },
+  
+  loadUserTransactions: (userId: string) => {
+    const transactions = walletService.getUserTransactions(userId);
+    set({ transactions });
+  },
+  
+  calculateGameCoins: (crypto: CryptoType, amount: number) => {
+    return walletService.calculateGameCoins(crypto, amount);
+  },
 }));

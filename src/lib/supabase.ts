@@ -1,34 +1,25 @@
-// Для работы с Supabase установи пакет: npm install @supabase/supabase-js
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL || '';
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 
-// Mock Supabase client для сборки без переменных окружения
-class MockSupabaseClient {
-  from(table: string) {
-    return {
-      select: () => ({ 
-        eq: () => ({ 
-          limit: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } }) 
-        }),
-        limit: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } })
-      }),
-      insert: () => ({ 
-        select: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } }) 
-      }),
-      update: () => ({ 
-        eq: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } }) 
-      }),
-      delete: () => ({ 
-        eq: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } }) 
-      })
-    };
-  }
+console.log('Supabase config check:', {
+  hasUrl: !!supabaseUrl,
+  hasKey: !!supabaseAnonKey,
+  urlStart: supabaseUrl?.substring(0, 20),
+  keyStart: supabaseAnonKey?.substring(0, 20),
+});
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase environment variables. Please check SUPABASE_URL and SUPABASE_ANON_KEY');
 }
 
-export const supabase = (supabaseUrl && supabaseAnonKey && 
-  !supabaseUrl.includes('your-project') && 
-  supabaseUrl.startsWith('https://'))
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : new MockSupabaseClient() as any; 
+if (!supabaseUrl.startsWith('https://')) {
+  throw new Error('SUPABASE_URL must start with https://');
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: false, // Отключаем автосессии для API роутов
+  },
+}); 

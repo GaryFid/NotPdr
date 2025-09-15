@@ -115,11 +115,12 @@ export default function LoginPage() {
       const user = tg.initDataUnsafe?.user;
 
       if (!initData || !user) {
-      showToast('Ошибка', 'Откройте приложение через Telegram', 'error');
+        setError('Откройте приложение через Telegram');
         return;
       }
 
       setLoading(true);
+      setError('');
 
       try {
         const response = await fetch('/api/auth', {
@@ -132,7 +133,7 @@ export default function LoginPage() {
             first_name: user.first_name,
             last_name: user.last_name,
             photo_url: user.photo_url,
-            initData
+            initData: initData,
           })
         });
 
@@ -187,16 +188,53 @@ export default function LoginPage() {
   };
 
   return (
-    <Box minH="100vh" bg="linear-gradient(135deg, #667eea 0%, #764ba2 100%)" display="flex" alignItems="center" justifyContent="center" p={4}>
-      <Box maxW="400px" w="full" bg="white" borderRadius="xl" boxShadow="2xl" p={8}>
+    <Box 
+      minH="100vh" 
+      bg="linear-gradient(135deg, #0f172a 0%, #1e293b 30%, #0f172a 60%, #064e3b 100%)"
+      display="flex" 
+      alignItems="center" 
+      justifyContent="center" 
+      p={4}
+      position="relative"
+      _before={{
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        background: 'radial-gradient(circle at 20% 20%, rgba(34, 197, 94, 0.08) 0%, transparent 50%), radial-gradient(circle at 80% 60%, rgba(255, 215, 0, 0.05) 0%, transparent 50%), radial-gradient(circle at 40% 80%, rgba(59, 130, 246, 0.06) 0%, transparent 50%)',
+        pointerEvents: 'none'
+      }}
+    >
+      <Box 
+        maxW="450px" 
+        w="full" 
+        bg="linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.90) 100%)"
+        backdropFilter="blur(20px)"
+        border="1px solid"
+        borderColor="rgba(34, 197, 94, 0.3)"
+        borderRadius="20px" 
+        boxShadow="0 12px 48px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
+        p={8}
+        position="relative"
+        zIndex={2}
+      >
         <VStack gap={6}>
           {/* Header */}
           <Box textAlign="center">
-            <Text fontSize="2xl" fontWeight="bold" color="gray.800" mb={2}>
-              Добро пожаловать!
+            <Text 
+              fontSize="2xl" 
+              fontWeight="800" 
+              color="#ffd700" 
+              mb={2}
+              letterSpacing="2px"
+              textShadow="0 0 20px rgba(255, 215, 0, 0.5)"
+            >
+              P.I.D.R.
             </Text>
-            <Text color="gray.600">
-              Войдите в свой аккаунт P.I.D.R.
+            <Text color="#e2e8f0" fontSize="lg" mb={4}>
+              Войдите в свой аккаунт
             </Text>
           </Box>
 
@@ -215,33 +253,51 @@ export default function LoginPage() {
             <form onSubmit={handleLogin}>
               <VStack gap={4}>
                 <Box>
-                  <Text mb={2} fontWeight="medium">Логин</Text>
+                  <Text mb={3} fontWeight="600" color="#e2e8f0">
+                    Логин
+                  </Text>
                   <Input
                     type="text"
                     value={credentials.username}
                     onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
                     placeholder="Введите ваш логин"
-                    bg="gray.50"
+                    bg="linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%)"
+                    backdropFilter="blur(10px)"
                     border="1px solid"
-                    borderColor="gray.200"
-                    _hover={{ borderColor: 'blue.300' }}
-                    _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px #3182ce' }}
+                    borderColor="rgba(34, 197, 94, 0.3)"
+                    borderRadius="12px"
+                    color="#e2e8f0"
+                    _placeholder={{ color: '#64748b' }}
+                    _hover={{ borderColor: 'rgba(255, 215, 0, 0.4)' }}
+                    _focus={{ 
+                      borderColor: 'rgba(255, 215, 0, 0.6)', 
+                      boxShadow: '0 0 20px rgba(255, 215, 0, 0.1)' 
+                    }}
                   />
                 </Box>
 
                 <Box>
-                  <Text mb={2} fontWeight="medium">Пароль</Text>
+                  <Text mb={3} fontWeight="600" color="#e2e8f0">
+                    Пароль
+                  </Text>
                   <Box position="relative">
                     <Input
                       type={showPassword ? 'text' : 'password'}
                       value={credentials.password}
                       onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
                       placeholder="Введите пароль"
-                      bg="gray.50"
+                      bg="linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%)"
+                      backdropFilter="blur(10px)"
                       border="1px solid"
-                      borderColor="gray.200"
-                      _hover={{ borderColor: 'blue.300' }}
-                      _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px #3182ce' }}
+                      borderColor="rgba(34, 197, 94, 0.3)"
+                      borderRadius="12px"
+                      color="#e2e8f0"
+                      _placeholder={{ color: '#64748b' }}
+                      _hover={{ borderColor: 'rgba(255, 215, 0, 0.4)' }}
+                      _focus={{ 
+                        borderColor: 'rgba(255, 215, 0, 0.6)', 
+                        boxShadow: '0 0 20px rgba(255, 215, 0, 0.1)' 
+                      }}
                       pr="3rem"
                     />
                     <Button
@@ -252,8 +308,8 @@ export default function LoginPage() {
                       top="50%"
                       transform="translateY(-50%)"
                       onClick={() => setShowPassword(!showPassword)}
-                      color="gray.500"
-                      _hover={{ color: 'gray.700' }}
+                      color="#94a3b8"
+                      _hover={{ color: '#ffd700' }}
                     >
                       {showPassword ? <FaEyeSlash /> : <FaEye />}
                     </Button>
@@ -262,13 +318,35 @@ export default function LoginPage() {
 
                 <Button
                   type="submit"
-                  colorScheme="blue"
                   size="lg"
                   w="full"
                   disabled={loading}
-                  mt={2}
+                  mt={4}
+                  bg="linear-gradient(135deg, rgba(34, 197, 94, 0.8) 0%, rgba(22, 163, 74, 0.6) 100%)"
+                  border="1px solid"
+                  borderColor="rgba(34, 197, 94, 0.4)"
+                  borderRadius="16px"
+                  boxShadow="0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
+                  backdropFilter="blur(10px)"
+                  color="#e2e8f0"
+                  fontWeight="600"
+                  fontSize="1.1rem"
+                  letterSpacing="0.5px"
+                  transition="all 0.3s ease"
+                  _hover={{
+                    borderColor: 'rgba(255, 215, 0, 0.6)',
+                    bg: 'linear-gradient(135deg, rgba(22, 163, 74, 0.9) 0%, rgba(21, 128, 61, 0.8) 100%)',
+                    color: '#ffd700',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.1)'
+                  }}
+                  _disabled={{
+                    opacity: 0.6,
+                    cursor: 'not-allowed',
+                    _hover: {}
+                  }}
                 >
-                  Войти
+                  {loading ? 'ВХОД...' : 'ВОЙТИ'}
                 </Button>
               </VStack>
             </form>
@@ -276,42 +354,104 @@ export default function LoginPage() {
 
           {/* Divider */}
           <Flex align="center" w="full">
-            <Box flex="1" height="1px" bg="gray.300" />
-            <Text px={3} color="gray.500" fontSize="sm">
+            <Box flex="1" height="1px" bg="rgba(100, 116, 139, 0.3)" />
+            <Text px={4} color="#94a3b8" fontSize="sm" fontWeight="500">
               или
             </Text>
-            <Box flex="1" height="1px" bg="gray.300" />
+            <Box flex="1" height="1px" bg="rgba(100, 116, 139, 0.3)" />
           </Flex>
 
           {/* Social Login */}
-          <VStack gap={3} w="full">
+          <VStack gap={4} w="full">
             <Button
               onClick={handleTelegramLogin}
-              colorScheme="telegram"
-              variant="outline"
               size="lg"
               w="full"
               disabled={loading}
+              bg="linear-gradient(135deg, rgba(34, 139, 230, 0.8) 0%, rgba(29, 78, 216, 0.6) 100%)"
+              border="1px solid"
+              borderColor="rgba(34, 139, 230, 0.4)"
+              borderRadius="16px"
+              boxShadow="0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
+              backdropFilter="blur(10px)"
+              color="#e2e8f0"
+              fontWeight="600"
+              fontSize="1.1rem"
+              letterSpacing="0.5px"
+              transition="all 0.3s ease"
+              _hover={{
+                borderColor: 'rgba(255, 215, 0, 0.6)',
+                bg: 'linear-gradient(135deg, rgba(29, 78, 216, 0.9) 0%, rgba(30, 64, 175, 0.8) 100%)',
+                color: '#ffd700',
+                transform: 'translateY(-2px)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.1)'
+              }}
+              _disabled={{
+                opacity: 0.6,
+                cursor: 'not-allowed',
+                _hover: {}
+              }}
             >
-              <FaTelegram style={{ marginRight: 8 }} /> Войти через Telegram
+              <FaTelegram style={{ marginRight: 12 }} size={20} />
+              {loading ? 'ВХОД...' : 'ВОЙТИ ЧЕРЕЗ TELEGRAM'}
             </Button>
 
             <HStack gap={3} w="full">
               <Button
                 onClick={handleGoogleLogin}
-                colorScheme="red"
-                variant="outline"
                 size="md"
                 flex={1}
+                disabled={loading}
+                bg="linear-gradient(135deg, rgba(239, 68, 68, 0.8) 0%, rgba(220, 38, 38, 0.6) 100%)"
+                border="1px solid"
+                borderColor="rgba(239, 68, 68, 0.4)"
+                borderRadius="12px"
+                boxShadow="0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
+                backdropFilter="blur(10px)"
+                color="#e2e8f0"
+                fontWeight="600"
+                transition="all 0.3s ease"
+                _hover={{
+                  borderColor: 'rgba(255, 215, 0, 0.6)',
+                  bg: 'linear-gradient(135deg, rgba(220, 38, 38, 0.9) 0%, rgba(185, 28, 28, 0.8) 100%)',
+                  color: '#ffd700',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.1)'
+                }}
+                _disabled={{
+                  opacity: 0.6,
+                  cursor: 'not-allowed',
+                  _hover: {}
+                }}
               >
                 <FaGoogle style={{ marginRight: 8 }} /> Google
               </Button>
               <Button
                 onClick={handleVKLogin}
-                colorScheme="blue"
-                variant="outline"
                 size="md"
                 flex={1}
+                disabled={loading}
+                bg="linear-gradient(135deg, rgba(79, 172, 254, 0.8) 0%, rgba(37, 99, 235, 0.6) 100%)"
+                border="1px solid"
+                borderColor="rgba(79, 172, 254, 0.4)"
+                borderRadius="12px"
+                boxShadow="0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
+                backdropFilter="blur(10px)"
+                color="#e2e8f0"
+                fontWeight="600"
+                transition="all 0.3s ease"
+                _hover={{
+                  borderColor: 'rgba(255, 215, 0, 0.6)',
+                  bg: 'linear-gradient(135deg, rgba(37, 99, 235, 0.9) 0%, rgba(30, 64, 175, 0.8) 100%)',
+                  color: '#ffd700',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.1)'
+                }}
+                _disabled={{
+                  opacity: 0.6,
+                  cursor: 'not-allowed',
+                  _hover: {}
+                }}
               >
                 <VKIcon />
                 <span style={{ marginLeft: 8 }}>VK</span>

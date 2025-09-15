@@ -9,16 +9,22 @@ const JWT_SECRET = process.env.JWT_SECRET;
 
 const RegisterSchema = z.object({
   username: z.string().min(3).max(32).regex(/^[a-zA-Z0-9_]+$/, 'Только буквы, цифры и подчеркивания'),
-  email: z.string().email('Неверный формат email'),
-  password: z.string().min(6).max(128).regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Пароль должен содержать как минимум одну строчную букву, одну заглавную букву и одну цифру')
+  email: z.string().email('Неверный формат email').optional(),
+  password: z.string().min(6).max(128),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
   // Rate limiting
-  const id = getRateLimitId(req);
-  const { success } = await checkRateLimit(`register:${id}`);
-  if (!success) {
-    return NextResponse.json({ success: false, message: 'Слишком много попыток регистрации' }, { status: 429 });
+  try {
+    const id = getRateLimitId(req);
+    const { success } = await checkRateLimit(`register:${id}`);
+    if (!success) {
+      return NextResponse.json({ success: false, message: 'Слишком много попыток регистрации' }, { status: 429 });
+    }
+  } catch (error) {
+    console.warn('Rate limiting unavailable:', error);
   }
 
   if (!JWT_SECRET) {
@@ -38,7 +44,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, message: errors }, { status: 400 });
   }
 
-  const { username, email, password } = parsed.data;
+  const { username, email, password, firstName, lastName } = parsed.data;
 
   try {
     // Проверяем, существует ли уже пользователь с таким username или email

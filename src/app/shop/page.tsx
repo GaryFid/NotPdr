@@ -1,8 +1,9 @@
 'use client'
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Palette, Wand2, Zap, Gift, Coins, ShoppingBag, Star, Crown, Flame } from 'lucide-react';
+import { ArrowLeft, Palette, Wand2, Zap, Gift, Coins, ShoppingBag, Star, Crown, Flame, Wallet } from 'lucide-react';
 import BottomNav from '../../components/BottomNav';
+import WalletManager from '../../components/WalletManager';
 
 export default function ShopPage() {
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -14,7 +15,27 @@ export default function ShopPage() {
     { id: 'skins', name: 'СКИНЫ', icon: Palette },
     { id: 'effects', name: 'ЭФФЕКТЫ', icon: Wand2 },
     { id: 'boosters', name: 'БУСТЕРЫ', icon: Zap },
+    { id: 'wallet', name: 'КОШЕЛЕК', icon: Wallet },
   ];
+
+  useEffect(() => {
+    // Слушаем обновления баланса монет
+    const handleCoinsUpdate = (event: CustomEvent) => {
+      setCoins(event.detail.newBalance);
+    };
+
+    window.addEventListener('coinsUpdated', handleCoinsUpdate as EventListener);
+    
+    // Загружаем текущий баланс из localStorage
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (user.coins) {
+      setCoins(user.coins);
+    }
+
+    return () => {
+      window.removeEventListener('coinsUpdated', handleCoinsUpdate as EventListener);
+    };
+  }, []);
 
   const shopItems = {
     skins: [
@@ -105,14 +126,15 @@ export default function ShopPage() {
         </motion.div>
 
         {/* Items Grid */}
-        <motion.div 
-          className="shop-items-section"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <div className="shop-items-grid">
-            {getFilteredItems().map((item, index) => {
+        {selectedCategory !== 'wallet' && (
+          <motion.div 
+            className="shop-items-section"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <div className="shop-items-grid">
+              {getFilteredItems().map((item, index) => {
               const IconComponent = item.icon;
               const isPurchased = purchasedItems.includes(item.id);
               const canAfford = coins >= item.price;
@@ -165,16 +187,31 @@ export default function ShopPage() {
                 </motion.div>
               );
             })}
-          </div>
-        </motion.div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Wallet Section */}
+        {selectedCategory === 'wallet' && (
+          <motion.div 
+            className="wallet-section"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            style={{ padding: '0 20px', marginBottom: '100px' }}
+          >
+            <WalletManager showExchange={true} onCoinsAdded={(amount) => setCoins(prev => prev + amount)} />
+          </motion.div>
+        )}
 
         {/* Special Offers */}
-        <motion.div 
-          className="special-offers-section"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-        >
+        {selectedCategory !== 'wallet' && (
+          <motion.div 
+            className="special-offers-section"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
           <h3 className="offers-title">
             <Gift className="offers-icon" />
             СПЕЦИАЛЬНЫЕ ПРЕДЛОЖЕНИЯ
@@ -213,7 +250,8 @@ export default function ShopPage() {
               </motion.button>
             </motion.div>
           </div>
-        </motion.div>
+          </motion.div>
+        )}
 
         <BottomNav />
       </div>
