@@ -132,12 +132,7 @@ export default function LoginPage() {
       const result = await response.json();
       if (result.success) {
         localStorage.removeItem('pending_referral_code');
-        toast({
-          title: '🎉 Бонус получен!',
-          description: result.message,
-          status: 'success',
-          duration: 5000,
-        });
+        showToast('🎉 Бонус получен!', result.message, 'success');
       }
     } catch (error) {
       console.error('Error processing pending referral:', error);
