@@ -12,10 +12,11 @@ export default function NewRoomPage() {
   };
 
   const handleStartGame = (gameData: any) => {
-    console.log('Game data:', gameData);
+    console.log('🎮 Начинаем игру с данными:', gameData);
     
-    // Here you would integrate with the actual game system
-    // For now, redirect to game page with the settings
+    // Сохраняем данные игры в localStorage для передачи в игру
+    localStorage.setItem('multiplayer_game_data', JSON.stringify(gameData));
+    
     const searchParams = new URLSearchParams({
       mode: 'multiplayer',
       players: gameData.players.length.toString(),
@@ -23,7 +24,20 @@ export default function NewRoomPage() {
       roomCode: gameData.roomCode
     });
     
-    router.push(`/game?${searchParams.toString()}`);
+    console.log('🔄 Перенаправляем в игру:', `/game?${searchParams.toString()}`);
+    
+    // Используем window.location для надежного перехода
+    setTimeout(() => {
+      if (typeof window !== 'undefined') {
+        if (window.Telegram?.WebApp) {
+          console.log('📱 Переход в Telegram WebApp');
+          window.location.href = `/game?${searchParams.toString()}`;
+        } else {
+          console.log('💻 Обычный переход');
+          router.push(`/game?${searchParams.toString()}`);
+        }
+      }
+    }, 500);
   };
 
   return (

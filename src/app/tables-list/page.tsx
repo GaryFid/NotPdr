@@ -46,8 +46,9 @@ export default function TablesListPage() {
   const loadRooms = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('auth_token');
-      if (!token) return;
+      const token = localStorage.getItem('auth_token') || 'no-auth-token';
+      
+      console.log('🔄 Загружаем комнаты с фильтром:', filter);
 
       const response = await fetch(`/api/rooms?type=${filter === 'all' ? 'public' : 'joinable'}`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -69,8 +70,8 @@ export default function TablesListPage() {
 
   const handleCreateRoom = async () => {
     try {
-      const token = localStorage.getItem('auth_token');
-      if (!token) return;
+      const token = localStorage.getItem('auth_token') || 'no-auth-token';
+      console.log('🏗️ Создаем комнату:', newRoomData);
 
       const response = await fetch('/api/rooms', {
         method: 'POST',
@@ -102,8 +103,8 @@ export default function TablesListPage() {
 
   const handleJoinRoom = async (roomCodeToJoin?: string) => {
     try {
-      const token = localStorage.getItem('auth_token');
-      if (!token) return;
+      const token = localStorage.getItem('auth_token') || 'no-auth-token';
+      console.log('🚪 Присоединяемся к комнате:', roomCodeToJoin || roomCode);
 
       const codeToUse = roomCodeToJoin || roomCode;
       if (!codeToUse) return;
