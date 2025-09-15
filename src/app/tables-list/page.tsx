@@ -320,13 +320,18 @@ export default function TablesListPage() {
                         <Users className="w-4 h-4" />
                       </button>
 
-                      {room.status === 'waiting' && room.current_players < room.max_players && (
+                      {room.status === 'waiting' && (
                         <button
                           onClick={() => handleJoinRoom(room.room_code)}
-                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition-colors"
+                          className={`px-4 py-2 rounded-lg transition-colors ${
+                            room.current_players < room.max_players
+                              ? 'bg-green-600 text-white hover:bg-green-500'
+                              : 'bg-yellow-600 text-white hover:bg-yellow-500'
+                          }`}
+                          title={room.current_players >= room.max_players ? 'Комната заполнена, но админ может войти' : 'Присоединиться к игре'}
                         >
                           <Play className="w-4 h-4 mr-2" />
-                          Играть
+                          {room.current_players >= room.max_players ? 'Войти (Админ)' : 'Играть'}
                         </button>
                       )}
 

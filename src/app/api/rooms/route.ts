@@ -29,75 +29,123 @@ function generateRoomCode(): string {
 
 // GET /api/rooms - Получить список комнат
 export async function GET(req: NextRequest) {
-  // Allow anonymous access for room listing
+  console.log('🔍 GET /api/rooms - загружаем реальные комнаты');
+  
   try {
-    // Mock rooms for demo (replace with real database query)
-    const mockRooms = [
-      {
-        id: '1',
-        code: 'GAME01',
-        name: 'Комната Новичков',
-        host: 'Алекс',
-        players: 3,
-        maxPlayers: 6,
-        gameMode: 'casual',
-        hasPassword: false,
-        isPrivate: false,
-        status: 'waiting',
-        ping: Math.floor(Math.random() * 100) + 20,
-        difficulty: 'easy',
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: '2', 
-        code: 'PRO777',
-        name: 'Турнир Мастеров',
-        host: 'Мария',
-        players: 6,
-        maxPlayers: 8,
-        gameMode: 'pro',
-        hasPassword: true,
-        isPrivate: false,
-        status: 'playing',
-        ping: Math.floor(Math.random() * 100) + 20,
-        difficulty: 'hard',
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: '3',
-        code: 'BLITZ5',
-        name: 'Быстрая игра',
-        host: 'Дмитрий',
-        players: Math.floor(Math.random() * 3) + 6,
-        maxPlayers: 9,
-        gameMode: 'blitz',
-        hasPassword: false,
-        isPrivate: false,
-        status: 'waiting',
-        ping: Math.floor(Math.random() * 100) + 20,
-        difficulty: 'hard',
-        createdAt: new Date().toISOString()
-      }
-    ];
+    const { searchParams } = new URL(req.url);
+    const type = searchParams.get('type') || 'public';
+    
+    console.log('📋 Тип запроса комнат:', type);
 
-    // Simulate some rooms being full or in different states
-    mockRooms.forEach(room => {
-      if (room.players >= room.maxPlayers) {
-        room.status = 'full';
-      } else if (Math.random() > 0.7) {
-        room.status = 'playing';
-      }
+    // Проверяем подключение к Supabase
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.log('⚠️ Supabase не настроен, возвращаем пустой список');
+      return NextResponse.json({ 
+        success: true, 
+        rooms: [],
+        message: 'Supabase не настроен'
+      });
+    }
+
+    // Загружаем реальные комнаты из базы данных с подсчетом игроков
+    let query = supabase
+      .from('game_rooms')
+      .select(`
+        id, 
+        room_code, 
+        name, 
+        max_players, 
+        current_players, 
+        status, 
+        is_private, 
+        created_at,
+        users!game_rooms_host_id_fkey (
+          username, 
+          first_name,
+          photo_url
+        ),
+        room_players (
+          user_id,
+          position,
+          is_ready,
+          users (
+            username,
+            first_name
+          )
+        )
+      `);
+
+    // Фильтры в зависимости от типа
+    if (type === 'joinable') {
+      query = query
+        .eq('status', 'waiting')
+        .eq('is_private', false)
+        .lt('current_players', 'max_players');
+    } else if (type === 'playing') {
+      query = query.eq('status', 'playing');
+    } else {
+      // public - все публичные комнаты
+      query = query
+        .eq('is_private', false)
+        .in('status', ['waiting', 'playing']);
+    }
+
+    const { data: rooms, error } = await query
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (error) {
+      console.error('❌ Ошибка загрузки комнат:', error);
+      return NextResponse.json({ 
+        success: false, 
+        message: 'Ошибка загрузки комнат: ' + error.message 
+      }, { status: 500 });
+    }
+
+    console.log(`✅ Загружено ${rooms?.length || 0} комнат`);
+
+    // Преобразуем данные для фронтенда с реальным подсчетом игроков
+    const formattedRooms = (rooms || []).map(room => {
+      // Реальное количество игроков из таблицы room_players
+      const actualPlayerCount = room.room_players?.length || 0;
+      
+      console.log(`🎮 Комната ${room.room_code}: ${actualPlayerCount} игроков (было ${room.current_players})`);
+
+      return {
+        id: room.id,
+        room_code: room.room_code,
+        name: room.name,
+        max_players: room.max_players,
+        current_players: actualPlayerCount, // Используем реальное количество
+        status: room.status,
+        is_private: room.is_private,
+        created_at: room.created_at,
+        users: room.users ? {
+          username: room.users.username || room.users.first_name || 'Игрок',
+          avatar: room.users.photo_url || null
+        } : null,
+        players: room.room_players?.map((player: any) => ({
+          userId: player.user_id,
+          position: player.position,
+          isReady: player.is_ready,
+          username: player.users?.username || player.users?.first_name || 'Игрок'
+        })) || []
+      };
     });
 
     return NextResponse.json({ 
       success: true, 
-      rooms: mockRooms.filter(room => !room.isPrivate) // Only return public rooms
+      rooms: formattedRooms
     });
+
   } catch (error) {
-    console.error('Rooms GET error:', error);
+    console.error('❌ Rooms GET error:', error);
     return NextResponse.json({ 
       success: false, 
-      message: 'Internal server error' 
+      message: 'Ошибка сервера: ' + (error as Error).message
     }, { status: 500 });
   }
 }
@@ -319,12 +367,66 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, message: 'Комната недоступна для присоединения' }, { status: 400 });
       }
 
-      if (room.current_players >= room.max_players) {
-        return NextResponse.json({ success: false, message: 'Комната заполнена' }, { status: 400 });
+      // Особая проверка для хоста - хост всегда может войти в свою комнату
+      if (room.host_id === userId) {
+        console.log('👑 Хост заходит в свою комнату:', roomCode);
+        
+        // Проверяем, не находится ли хост уже в комнате
+        const { data: existingPlayer } = await supabase
+          .from('room_players')
+          .select('id')
+          .eq('room_id', room.id)
+          .eq('user_id', userId)
+          .single();
+
+        if (existingPlayer) {
+          return NextResponse.json({ 
+            success: true, 
+            room: {
+              id: room.id,
+              roomCode,
+              name: room.name,
+              position: 0 // Хост всегда на позиции 0
+            },
+            message: 'Добро пожаловать обратно в вашу комнату!'
+          });
+        }
+
+        // Если хоста нет в списке игроков, добавляем его
+        const { error: hostJoinError } = await supabase
+          .from('room_players')
+          .insert({
+            room_id: room.id,
+            user_id: userId,
+            position: 0,
+            is_ready: true
+          });
+
+        if (hostJoinError) {
+          console.error('❌ Ошибка добавления хоста в комнату:', hostJoinError);
+        } else {
+          // Обновляем количество игроков
+          await supabase
+            .from('game_rooms')
+            .update({ current_players: room.current_players + 1 })
+            .eq('id', room.id);
+        }
+
+        return NextResponse.json({ 
+          success: true, 
+          room: {
+            id: room.id,
+            roomCode,
+            name: room.name,
+            position: 0
+          },
+          message: 'Добро пожаловать в вашу комнату!'
+        });
       }
 
-      if (room.host_id === userId) {
-        return NextResponse.json({ success: false, message: 'Вы уже хост этой комнаты' }, { status: 400 });
+      // Для обычных игроков проверяем заполненность
+      if (room.current_players >= room.max_players) {
+        return NextResponse.json({ success: false, message: 'Комната заполнена' }, { status: 400 });
       }
 
       // Проверяем пароль для приватных комнат
