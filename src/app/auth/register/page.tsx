@@ -245,9 +245,12 @@ export default function RegisterPage() {
 
           {/* Error Alert */}
           {error && (
-            <Alert status="error" borderRadius="md" p={3} bg="red.100" color="red.800">
-              ❌ {error}
-            </Alert>
+            <Alert.Root status="error">
+              <Alert.Indicator />
+              <Alert.Content borderRadius="md" p={3} bg="red.100" color="red.800">
+                ❌ {error}
+              </Alert.Content>
+            </Alert.Root>
           )}
 
           {/* Registration Form */}
@@ -371,9 +374,7 @@ export default function RegisterPage() {
                   colorScheme="blue"
                   size="lg"
                   w="full"
-                  isLoading={loading}
-                  loadingText="Создание аккаунта..."
-                  isDisabled={!validation.username || !validation.email || !validation.password || !validation.confirmPassword}
+                  disabled={loading || !validation.username || !validation.email || !validation.password || !validation.confirmPassword}
                   mt={2}
                 >
                   Создать аккаунт
@@ -395,38 +396,36 @@ export default function RegisterPage() {
           <VStack gap={3} w="full">
             <Button
               onClick={handleTelegramRegister}
-              leftIcon={<FaTelegram />}
               colorScheme="telegram"
               variant="outline"
               size="lg"
               w="full"
-              isLoading={loading}
+              disabled={loading}
             >
-              Регистрация через Telegram
+              <FaTelegram style={{ marginRight: 8 }} /> Регистрация через Telegram
             </Button>
 
             <HStack gap={3} w="full">
               <Button
                 onClick={handleGoogleRegister}
-                leftIcon={<FaGoogle />}
                 colorScheme="red"
                 variant="outline"
                 size="md"
                 flex={1}
-                isLoading={loading}
+                disabled={loading}
               >
-                Google
+                <FaGoogle style={{ marginRight: 8 }} /> Google
               </Button>
               <Button
                 onClick={handleVKRegister}
-                leftIcon={<VKIcon />}
                 colorScheme="blue"
                 variant="outline"
                 size="md"
                 flex={1}
-                isLoading={loading}
+                disabled={loading}
               >
-                VK
+                <VKIcon />
+                <span style={{ marginLeft: 8 }}>VK</span>
               </Button>
             </HStack>
           </VStack>
