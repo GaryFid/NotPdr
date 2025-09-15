@@ -22,206 +22,41 @@ function HomeWithParams() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Функция для загрузки пользователя из базы данных
-  const loadUserFromDatabase = async (userId: string, token: string) => {
-    try {
-      console.log('🔄 Загружаем данные пользователя из БД:', userId);
-      
-      const response = await fetch(`/api/auth?userId=${userId}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.user) {
-          console.log('✅ Данные пользователя загружены из БД:', data.user);
-          
-          // Обновляем локальные данные
-          localStorage.setItem('user', JSON.stringify(data.user));
-          localStorage.setItem('current_user', JSON.stringify(data.user));
-          
-          // Диспатчим событие обновления монет
-          window.dispatchEvent(new CustomEvent('coinsUpdated', { 
-            detail: { coins: data.user.coins } 
-          }));
-          
-          setUser(data.user);
-          setLoading(false);
-          return;
-        }
-      }
-      
-      console.warn('⚠️ Не удалось загрузить данные из БД, используем локальные');
-      const localData = localStorage.getItem('user') || localStorage.getItem('current_user');
-      if (localData) {
-        const parsedUser = JSON.parse(localData);
-        setUser(parsedUser);
-      }
-      setLoading(false);
-      
-    } catch (error) {
-      console.error('❌ Ошибка загрузки данных из БД:', error);
-      
-      // Используем локальные данные как fallback
-      const localData = localStorage.getItem('user') || localStorage.getItem('current_user');
-      if (localData) {
-        const parsedUser = JSON.parse(localData);
-        setUser(parsedUser);
-      }
-      setLoading(false);
-    }
-  };
-
-  // Проверка авторизации при загрузке
+  // Простая инициализация пользователя без авторизации
   useEffect(() => {
-    const checkAuth = async () => {
-      console.log('🔍 Проверка авторизации на главной странице');
-      console.log('🔍 window.Telegram?.WebApp:', !!window.Telegram?.WebApp);
-      
-      // Если это Telegram WebApp и нет токена - автоматически авторизуемся
-      if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
-        const token = localStorage.getItem('auth_token');
-        
-        if (!token) {
-          console.log('🤖 Автоматическая авторизация через Telegram WebApp');
-          
-          const tg = window.Telegram.WebApp;
-          const initData = tg.initData;
-          const user = tg.initDataUnsafe?.user;
-
-          if (initData && user) {
-            try {
-              console.log('📡 Отправляем запрос на автоавторизацию:', user);
-              
-              const response = await fetch('/api/auth', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  type: 'telegram',
-                  id: user.id,
-                  username: user.username,
-                  first_name: user.first_name,
-                  last_name: user.last_name,
-                  photo_url: user.photo_url,
-                  initData: initData,
-                })
-              });
-
-              const data = await response.json();
-
-              if (data.success) {
-                console.log('✅ Автоматическая Telegram авторизация успешна:', data.user);
-                
-                // Сохраняем данные пользователя
-                localStorage.setItem('auth_token', data.token);
-                localStorage.setItem('user', JSON.stringify(data.user));
-                localStorage.setItem('current_user', JSON.stringify(data.user));
-                
-                // Диспатчим событие обновления монет
-                window.dispatchEvent(new CustomEvent('coinsUpdated', { 
-                  detail: { coins: data.user.coins } 
-                }));
-                
-                setUser(data.user);
-                setLoading(false);
-                return;
-              } else {
-                console.error('❌ Ошибка автоавторизации:', data.message);
-              }
-            } catch (error) {
-              console.error('❌ Ошибка сети при автоавторизации:', error);
-            }
-          }
-        }
-      }
-      
-      // Обычная проверка авторизации
-      setTimeout(() => {
-        const token = localStorage.getItem('auth_token');
-        const userData = localStorage.getItem('user');
-        const currentUser = localStorage.getItem('current_user');
-        
-        console.log('🔍 Проверяем данные авторизации:');
-        console.log('Token:', !!token, token ? token.substring(0, 20) + '...' : 'null');
-        console.log('UserData:', !!userData);
-        console.log('CurrentUser:', !!currentUser);
-        
-        if (userData) {
-          console.log('📝 UserData содержимое:', userData.substring(0, 100) + '...');
-        }
-        
-        // Проверяем любой из источников данных пользователя
-        const userDataSource = userData || currentUser;
-        
-        if (!token || !userDataSource) {
-          console.log('❌ Нет токена или данных пользователя, перенаправляем на логин');
-          console.log('❌ Token exists:', !!token);
-          console.log('❌ UserData exists:', !!userData);
-          console.log('❌ CurrentUser exists:', !!currentUser);
-          
-          // ВРЕМЕННО: пропускаем авторизацию для тестирования
-          console.log('⚠️ ВРЕМЕННЫЙ РЕЖИМ: создаем тестового пользователя');
-          const tempUser = {
-            id: 'temp_user_' + Date.now(),
-            username: 'TestUser',
-            coins: 1000,
-            rating: 0,
-            gamesPlayed: 0,
-            gamesWon: 0
-          };
-          
-          localStorage.setItem('auth_token', 'temp_token_' + Date.now());
-          localStorage.setItem('user', JSON.stringify(tempUser));
-          localStorage.setItem('current_user', JSON.stringify(tempUser));
-          
-          setUser(tempUser);
-          setLoading(false);
-          
-          console.log('✅ Временный пользователь создан, переходим в игру');
-          return;
-          
-          // Закомментировано до исправления Supabase
-          // const redirectPath = window.Telegram?.WebApp ? '/auth/login' : '/auth/register';
-          // console.log('🔄 Перенаправляем на:', redirectPath);
-          
-          setTimeout(() => {
-            router.push(redirectPath);
-          }, 500);
-          return;
-        }
-
-        try {
-          const parsedUser = JSON.parse(userDataSource);
-          console.log('✅ Пользователь найден:', parsedUser.username);
-          console.log('💰 Монеты пользователя:', parsedUser.coins);
-          
-          // Загружаем свежие данные из базы данных
-          loadUserFromDatabase(parsedUser.id || parsedUser.telegramId, token);
-          
-        } catch (error) {
-          console.error('❌ Ошибка парсинга данных пользователя:', error);
-          console.error('❌ Проблемные данные:', userDataSource);
-          
-          // Очищаем поврежденные данные
-          localStorage.removeItem('auth_token');
-          localStorage.removeItem('user');
-          localStorage.removeItem('current_user');
-          
-          const redirectPath = window.Telegram?.WebApp ? '/auth/login' : '/auth/register';
-          setTimeout(() => {
-            router.push(redirectPath);
-          }, 500);
-          return;
-        }
-      }, 200);
+    console.log('🎮 ИНИЦИАЛИЗАЦИЯ ИГРЫ БЕЗ АВТОРИЗАЦИИ');
+    
+    // Создаем игрока по умолчанию
+    const defaultUser = {
+      id: 'player_' + Date.now(),
+      username: window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name || 'Игрок',
+      firstName: window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name || 'Игрок',
+      lastName: window.Telegram?.WebApp?.initDataUnsafe?.user?.last_name || '',
+      telegramId: window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || null,
+      coins: 1000,
+      rating: 0,
+      gamesPlayed: 0,
+      gamesWon: 0,
+      photoUrl: window.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url || null
     };
 
-    checkAuth();
-  }, [router]);
+    console.log('✅ Создан игрок:', defaultUser);
+    
+    // Сохраняем данные игрока
+    localStorage.setItem('user', JSON.stringify(defaultUser));
+    localStorage.setItem('current_user', JSON.stringify(defaultUser));
+    
+    // Диспатчим событие обновления монет
+    window.dispatchEvent(new CustomEvent('coinsUpdated', { 
+      detail: { coins: defaultUser.coins } 
+    }));
+    
+    setUser(defaultUser);
+    setLoading(false);
+    
+    console.log('🚀 ИГРА ГОТОВА К ЗАПУСКУ!');
+  }, []);
 
   // Обработка реферального кода из URL
   useEffect(() => {
