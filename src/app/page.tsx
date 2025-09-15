@@ -27,35 +27,57 @@ function HomeWithParams() {
     const checkAuth = () => {
       console.log('🔍 Проверка авторизации на главной странице');
       
-      const token = localStorage.getItem('auth_token');
-      const userData = localStorage.getItem('user');
-      
-      console.log('Token:', !!token);
-      console.log('UserData:', !!userData);
-      
-      if (!token || !userData) {
-        console.log('❌ Нет токена или данных пользователя, перенаправляем на логин');
-        setTimeout(() => {
-          router.push('/auth/login');
-        }, 100);
-        return;
-      }
+      // Даем время для сохранения данных после перезагрузки
+      setTimeout(() => {
+        const token = localStorage.getItem('auth_token');
+        const userData = localStorage.getItem('user');
+        const currentUser = localStorage.getItem('current_user');
+        
+        console.log('🔍 Проверяем данные авторизации:');
+        console.log('Token:', !!token, token ? token.substring(0, 20) + '...' : 'null');
+        console.log('UserData:', !!userData);
+        console.log('CurrentUser:', !!currentUser);
+        
+        if (userData) {
+          console.log('📝 UserData содержимое:', userData.substring(0, 100) + '...');
+        }
+        
+        // Проверяем любой из источников данных пользователя
+        const userDataSource = userData || currentUser;
+        
+        if (!token || !userDataSource) {
+          console.log('❌ Нет токена или данных пользователя, перенаправляем на логин');
+          console.log('❌ Token exists:', !!token);
+          console.log('❌ UserData exists:', !!userData);
+          console.log('❌ CurrentUser exists:', !!currentUser);
+          
+          setTimeout(() => {
+            router.push('/auth/login');
+          }, 500);
+          return;
+        }
 
-      try {
-        const parsedUser = JSON.parse(userData);
-        console.log('✅ Пользователь найден:', parsedUser.username);
-        setUser(parsedUser);
-        setLoading(false);
-      } catch (error) {
-        console.error('❌ Ошибка парсинга данных пользователя:', error);
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('current_user');
-        setTimeout(() => {
-          router.push('/auth/login');
-        }, 100);
-        return;
-      }
+        try {
+          const parsedUser = JSON.parse(userDataSource);
+          console.log('✅ Пользователь найден:', parsedUser.username);
+          console.log('💰 Монеты пользователя:', parsedUser.coins);
+          setUser(parsedUser);
+          setLoading(false);
+        } catch (error) {
+          console.error('❌ Ошибка парсинга данных пользователя:', error);
+          console.error('❌ Проблемные данные:', userDataSource);
+          
+          // Очищаем поврежденные данные
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('user');
+          localStorage.removeItem('current_user');
+          
+          setTimeout(() => {
+            router.push('/auth/login');
+          }, 500);
+          return;
+        }
+      }, 200); // Даем 200мс для сохранения данных
     };
 
     checkAuth();

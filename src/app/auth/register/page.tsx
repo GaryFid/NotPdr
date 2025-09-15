@@ -125,15 +125,13 @@ export default function RegisterPage() {
           
           if (typeof window !== 'undefined') {
             if (window.Telegram?.WebApp) {
-              // Для Telegram WebApp используем принудительную перезагрузку
-              console.log('🔄 Перенаправление в Telegram WebApp (регистрация)');
+              // Для Telegram WebApp используем router.replace
+              console.log('🔄 Перенаправление в Telegram WebApp (регистрация) через router');
               try {
-                window.history.pushState({}, '', '/');
-                console.log('✅ pushState выполнен (регистрация)');
-                window.location.reload();
-                console.log('✅ reload вызван (регистрация)');
+                router.replace('/');
+                console.log('✅ router.replace выполнен (регистрация)');
               } catch (error) {
-                console.error('❌ Ошибка перенаправления (регистрация):', error);
+                console.error('❌ Ошибка router.replace (регистрация):', error);
                 window.location.href = '/';
               }
             } else {

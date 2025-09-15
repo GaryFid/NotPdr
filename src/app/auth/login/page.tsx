@@ -86,15 +86,13 @@ export default function LoginPage() {
           
           if (typeof window !== 'undefined') {
             if (window.Telegram?.WebApp) {
-              // Для Telegram WebApp используем принудительную перезагрузку
-              console.log('🔄 Перенаправление в Telegram WebApp (локальный вход)');
+              // Для Telegram WebApp используем router.replace
+              console.log('🔄 Перенаправление в Telegram WebApp (локальный) через router');
               try {
-                window.history.pushState({}, '', '/');
-                console.log('✅ pushState выполнен (локальный)');
-                window.location.reload();
-                console.log('✅ reload вызван (локальный)');
+                router.replace('/');
+                console.log('✅ router.replace выполнен (локальный)');
               } catch (error) {
-                console.error('❌ Ошибка перенаправления (локальный):', error);
+                console.error('❌ Ошибка router.replace (локальный):', error);
                 window.location.href = '/';
               }
             } else {
@@ -201,16 +199,14 @@ export default function LoginPage() {
             
             if (typeof window !== 'undefined') {
               if (window.Telegram?.WebApp) {
-                // Для Telegram WebApp используем принудительную перезагрузку
-                console.log('🔄 Перенаправление в Telegram WebApp');
+                // Для Telegram WebApp используем router.replace
+                console.log('🔄 Перенаправление в Telegram WebApp через router');
                 try {
-                  window.history.pushState({}, '', '/');
-                  console.log('✅ pushState выполнен');
-                  window.location.reload();
-                  console.log('✅ reload вызван');
+                  router.replace('/');
+                  console.log('✅ router.replace выполнен');
                 } catch (error) {
-                  console.error('❌ Ошибка перенаправления:', error);
-                  // Пробуем альтернативный способ
+                  console.error('❌ Ошибка router.replace:', error);
+                  // Пробуем window.location
                   window.location.href = '/';
                 }
               } else {
