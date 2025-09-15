@@ -29,12 +29,10 @@ export async function POST(req: NextRequest) {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_ANON_KEY;
   
-  if (!supabaseUrl || !supabaseKey) {
-    console.error('❌ Supabase переменные не настроены');
-    return NextResponse.json({ 
-      success: false, 
-      message: 'Ошибка конфигурации базы данных' 
-    }, { status: 500 });
+  const useSupabase = !!(supabaseUrl && supabaseKey);
+  
+  if (!useSupabase) {
+    console.warn('⚠️ Supabase переменные не настроены, используем временное хранилище');
   }
 
   let body: any;
@@ -61,8 +59,50 @@ export async function POST(req: NextRequest) {
 
   const { username, email, password, firstName, lastName } = parsed.data;
 
+  // FALLBACK: Если Supabase не настроен, используем временное хранилище
+  if (!useSupabase) {
+    console.log('🔄 Используем временное хранилище (без Supabase)');
+    
+    // Создаем пользователя без базы данных
+    const tempUser = {
+      id: `temp_${Date.now()}`,
+      username,
+      email: email || null,
+      firstName: firstName || username,
+      lastName: lastName || '',
+      avatar: null,
+      coins: 1000,
+      rating: 1000,
+      gamesPlayed: 0,
+      gamesWon: 0,
+      referralCode: 'TEMP' + Date.now().toString().slice(-4),
+      createdAt: new Date().toISOString()
+    };
+
+    // Генерация JWT токена
+    const token = jwt.sign(
+      { 
+        userId: tempUser.id, 
+        username: tempUser.username,
+        type: 'local_temp'
+      },
+      JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+
+    console.log('✅ Временный пользователь создан:', tempUser.username);
+
+    return NextResponse.json({
+      success: true,
+      token,
+      user: tempUser,
+      message: 'Регистрация успешна! (Временный режим)',
+      warning: 'База данных не подключена. Данные не сохранятся.'
+    });
+  }
+
   try {
-    console.log('🔍 Проверка существования пользователя:', username);
+    console.log('🔍 Проверка существования пользователя в Supabase:', username);
 
     // Проверяем не существует ли уже такой пользователь
     const { data: existingUsers, error: checkError } = await supabase

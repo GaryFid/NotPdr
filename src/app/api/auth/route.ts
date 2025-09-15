@@ -39,12 +39,10 @@ export async function POST(req: NextRequest) {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_ANON_KEY;
   
-  if (!supabaseUrl || !supabaseKey) {
-    console.error('❌ Supabase переменные не настроены');
-    return NextResponse.json({ 
-      success: false, 
-      message: 'Ошибка конфигурации базы данных' 
-    }, { status: 500 });
+  const useSupabase = !!(supabaseUrl && supabaseKey);
+  
+  if (!useSupabase) {
+    console.warn('⚠️ Supabase переменные не настроены, используем временное хранилище');
   }
 
   let body: any;
@@ -69,7 +67,7 @@ export async function POST(req: NextRequest) {
 
   // 1. Локальная авторизация
   if (body.type === 'local') {
-    console.log('👤 Локальная авторизация через Supabase');
+    console.log('👤 Локальная авторизация');
     
     const parsed = LocalAuthSchema.safeParse(body);
     if (!parsed.success) {
@@ -81,6 +79,46 @@ export async function POST(req: NextRequest) {
     }
 
     const { username, password } = parsed.data;
+
+    // FALLBACK: Если Supabase не настроен
+    if (!useSupabase) {
+      console.log('🔄 Используем временное хранилище (без Supabase)');
+      
+      // Создаем временного пользователя для входа
+      const tempUser = {
+        id: `temp_${Date.now()}`,
+        username,
+        firstName: username,
+        lastName: '',
+        avatar: null,
+        coins: 1000,
+        rating: 1000,
+        gamesPlayed: 0,
+        gamesWon: 0,
+        referralCode: 'TEMP' + Date.now().toString().slice(-4)
+      };
+
+      // Генерация JWT токена
+      const token = jwt.sign(
+        { 
+          userId: tempUser.id, 
+          username: tempUser.username,
+          type: 'local_temp'
+        },
+        JWT_SECRET,
+        { expiresIn: '30d' }
+      );
+
+      console.log('✅ Временная авторизация:', tempUser.username);
+
+      return NextResponse.json({
+        success: true,
+        token,
+        user: tempUser,
+        message: 'Успешный вход! (Временный режим)',
+        warning: 'База данных не подключена. Данные не сохранятся.'
+      });
+    }
 
     try {
       console.log('🔍 Поиск пользователя в Supabase:', username);
@@ -179,7 +217,7 @@ export async function POST(req: NextRequest) {
 
   // 2. Авторизация через Telegram WebApp
   if (body.type === 'telegram') {
-    console.log('📱 Telegram авторизация через Supabase');
+    console.log('📱 Telegram авторизация');
     
     const parsed = TelegramAuthSchema.safeParse(body);
     if (!parsed.success) {
@@ -192,6 +230,47 @@ export async function POST(req: NextRequest) {
 
     const { id, username, first_name, last_name, photo_url, initData } = parsed.data;
     console.log('👤 Данные пользователя Telegram:', { id, username, first_name, last_name });
+
+    // FALLBACK: Если Supabase не настроен
+    if (!useSupabase) {
+      console.log('🔄 Используем временное хранилище для Telegram (без Supabase)');
+      
+      const tempUser = {
+        id: `temp_tg_${id}`,
+        telegramId: id.toString(),
+        username: username || first_name || `tg_user_${id}`,
+        firstName: first_name || '',
+        lastName: last_name || '',
+        avatar: photo_url,
+        coins: 1000,
+        rating: 1000,
+        gamesPlayed: 0,
+        gamesWon: 0,
+        referralCode: 'TG' + Date.now().toString().slice(-4)
+      };
+
+      // Генерация JWT токена
+      const token = jwt.sign(
+        { 
+          userId: tempUser.id, 
+          telegramId: tempUser.telegramId,
+          username: tempUser.username,
+          type: 'telegram_temp'
+        },
+        JWT_SECRET,
+        { expiresIn: '30d' }
+      );
+
+      console.log('✅ Временная Telegram авторизация:', tempUser.username);
+
+      return NextResponse.json({
+        success: true,
+        token,
+        user: tempUser,
+        message: 'Успешный Telegram вход! (Временный режим)',
+        warning: 'База данных не подключена. Данные не сохранятся.'
+      });
+    }
 
     // Проверка Telegram данных (если есть BOT_TOKEN)
     if (BOT_TOKEN && initData && initData !== 'demo_init_data') {
