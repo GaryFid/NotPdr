@@ -54,11 +54,7 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(homeUrl);
   }
 
-  // Если пользователь не авторизован и заходит на главную страницу
-  if (!isAuthenticated && pathname === '/') {
-    const loginUrl = new URL('/auth/login', req.url);
-    return NextResponse.redirect(loginUrl);
-  }
+  // Убрано: теперь главная страница доступна всем без авторизации
 
   return NextResponse.next();
 }
