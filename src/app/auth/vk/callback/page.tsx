@@ -138,9 +138,12 @@ function VKCallbackContent() {
             >
               <Text fontSize="2xl">✅</Text>
             </Box>
-            <Alert status="success" borderRadius="md" p={3} bg="green.100" color="green.800">
-              ✅ {message}
-            </Alert>
+            <Alert.Root status="success">
+              <Alert.Indicator />
+              <Alert.Content borderRadius="md" p={3} bg="green.100" color="green.800">
+                ✅ {message}
+              </Alert.Content>
+            </Alert.Root>
             <Text fontSize="sm" color="gray.500">
               Перенаправление в игру...
             </Text>
@@ -160,9 +163,12 @@ function VKCallbackContent() {
             >
               <Text fontSize="2xl">❌</Text>
             </Box>
-            <Alert status="error" borderRadius="md" p={3} bg="red.100" color="red.800">
-              ❌ {message}
-            </Alert>
+            <Alert.Root status="error">
+              <Alert.Indicator />
+              <Alert.Content borderRadius="md" p={3} bg="red.100" color="red.800">
+                ❌ {message}
+              </Alert.Content>
+            </Alert.Root>
             <Text fontSize="sm" color="gray.500">
               Перенаправление на страницу входа...
             </Text>

@@ -202,9 +202,12 @@ export default function LoginPage() {
 
           {/* Error Alert */}
           {error && (
-            <Alert status="error" borderRadius="md" p={3} bg="red.100" color="red.800">
-              ❌ {error}
-            </Alert>
+            <Alert.Root status="error">
+              <Alert.Indicator />
+              <Alert.Content borderRadius="md" p={3} bg="red.100" color="red.800">
+                ❌ {error}
+              </Alert.Content>
+            </Alert.Root>
           )}
 
           {/* Login Form */}
@@ -262,8 +265,7 @@ export default function LoginPage() {
                   colorScheme="blue"
                   size="lg"
                   w="full"
-                  isLoading={loading}
-                  loadingText="Вход..."
+                  disabled={loading}
                   mt={2}
                 >
                   Войти
@@ -285,45 +287,53 @@ export default function LoginPage() {
           <VStack gap={3} w="full">
             <Button
               onClick={handleTelegramLogin}
-              leftIcon={<FaTelegram />}
               colorScheme="telegram"
               variant="outline"
               size="lg"
               w="full"
-              isLoading={loading}
+              disabled={loading}
             >
-              Войти через Telegram
+              <FaTelegram style={{ marginRight: 8 }} /> Войти через Telegram
             </Button>
 
             <HStack gap={3} w="full">
               <Button
                 onClick={handleGoogleLogin}
-                leftIcon={<FaGoogle />}
                 colorScheme="red"
                 variant="outline"
                 size="md"
                 flex={1}
               >
-                Google
+                <FaGoogle style={{ marginRight: 8 }} /> Google
               </Button>
               <Button
                 onClick={handleVKLogin}
-                leftIcon={<VKIcon />}
                 colorScheme="blue"
                 variant="outline"
                 size="md"
                 flex={1}
               >
-                VK
+                <VKIcon />
+                <span style={{ marginLeft: 8 }}>VK</span>
               </Button>
             </HStack>
           </VStack>
 
           {/* Register Link */}
-          <Text textAlign="center" color="gray.600">
+          <Text textAlign="center" color="#94a3b8" fontSize="0.9rem">
             Нет аккаунта?{' '}
             <Link href="/auth/register">
-              <Text as="span" color="blue.500" fontWeight="medium" _hover={{ textDecoration: 'underline' }}>
+              <Text 
+                as="span" 
+                color="#22c55e" 
+                fontWeight="600" 
+                transition="all 0.3s ease"
+                _hover={{ 
+                  color: '#ffd700',
+                  textDecoration: 'underline',
+                  textShadow: '0 0 10px rgba(255, 215, 0, 0.5)'
+                }}
+              >
                 Зарегистрироваться
               </Text>
             </Link>

@@ -1,11 +1,11 @@
 "use client";
 
-import { Box, VStack, HStack, Text, Badge, Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon, Code, Alert, AlertIcon, useColorModeValue, Divider } from '@chakra-ui/react';
+import { Box, VStack, HStack, Text, Badge, Code, Alert } from '@chakra-ui/react';
 import { FaCheck, FaExclamationTriangle, FaInfo } from 'react-icons/fa';
 
 export default function TestingGuide() {
-  const bg = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.600');
+  const bg = 'white';
+  const borderColor = 'gray.200';
 
   const testScenarios = [
     {
@@ -190,11 +190,11 @@ export default function TestingGuide() {
             <Text fontSize="xl" fontWeight="semibold">Сценарии тестирования</Text>
           </HStack>
 
-          <Accordion allowToggle allowMultiple>
+          <VStack gap={4}>
             {testScenarios.map((category, categoryIndex) => (
-              <AccordionItem key={categoryIndex}>
-                <AccordionButton p={4}>
-                  <HStack flex="1" textAlign="left">
+              <Box key={categoryIndex} border="1px solid" borderColor="gray.200" borderRadius="lg">
+                <Box p={4} bg="gray.50" borderTopRadius="lg">
+                  <HStack>
                     <Badge 
                       colorScheme={category.status === 'ready' ? 'green' : 'yellow'}
                       variant="solid"
@@ -203,9 +203,8 @@ export default function TestingGuide() {
                     </Badge>
                     <Text fontWeight="semibold" fontSize="lg">{category.category}</Text>
                   </HStack>
-                  <AccordionIcon />
-                </AccordionButton>
-                <AccordionPanel pb={4}>
+                </Box>
+                <Box p={4}>
                   <VStack gap={6} align="stretch">
                     {category.tests.map((test, testIndex) => (
                       <Box key={testIndex} p={4} bg="gray.50" borderRadius="lg">
@@ -216,7 +215,7 @@ export default function TestingGuide() {
                           
                           <Text color="gray.700" fontSize="sm">{test.description}</Text>
                           
-                          <Divider />
+                          <Box height="1px" bg="gray.300" />
                           
                           <Box>
                             <Text fontWeight="semibold" mb={2} color="gray.800">Шаги:</Text>
@@ -238,17 +237,17 @@ export default function TestingGuide() {
                       </Box>
                     ))}
                   </VStack>
-                </AccordionPanel>
-              </AccordionItem>
+                </Box>
+              </Box>
             ))}
-          </Accordion>
+          </VStack>
         </Box>
 
         {/* Critical Warnings */}
         <Box>
-          <Alert status="warning" borderRadius="lg">
-            <AlertIcon />
-            <Box>
+          <Alert.Root status="warning">
+            <Alert.Indicator />
+            <Alert.Content borderRadius="lg">
               <Text fontWeight="bold">⚠️ Важно для превью:</Text>
               <VStack align="start" mt={2} gap={1}>
                 <Text>• Убедитесь, что база данных Supabase настроена с актуальной схемой</Text>
@@ -257,8 +256,8 @@ export default function TestingGuide() {
                 <Text>• Проверьте работу системы авторизации (middleware)</Text>
                 <Text>• Убедитесь в стабильности Telegram WebApp интеграции</Text>
               </VStack>
-            </Box>
-          </Alert>
+            </Alert.Content>
+          </Alert.Root>
         </Box>
 
         {/* Quick Start */}

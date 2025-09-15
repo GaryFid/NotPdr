@@ -221,25 +221,62 @@ export default function RegisterPage() {
   };
 
   const getInputProps = (field: keyof FormValidation, hasValue: boolean) => ({
-    borderColor: hasValue ? (validation[field] ? 'green.300' : 'red.300') : 'gray.200',
-    _hover: { borderColor: hasValue ? (validation[field] ? 'green.400' : 'red.400') : 'blue.300' },
+    borderColor: hasValue ? (validation[field] ? 'rgba(34, 197, 94, 0.6)' : 'rgba(239, 68, 68, 0.6)') : 'rgba(34, 197, 94, 0.3)',
+    _hover: { borderColor: hasValue ? (validation[field] ? 'rgba(34, 197, 94, 0.8)' : 'rgba(239, 68, 68, 0.8)') : 'rgba(255, 215, 0, 0.4)' },
     _focus: { 
-      borderColor: hasValue ? (validation[field] ? 'green.500' : 'red.500') : 'blue.500',
-      boxShadow: `0 0 0 1px ${hasValue ? (validation[field] ? '#38a169' : '#e53e3e') : '#3182ce'}`
+      borderColor: hasValue ? (validation[field] ? 'rgba(34, 197, 94, 1)' : 'rgba(239, 68, 68, 1)') : 'rgba(255, 215, 0, 0.6)',
+      boxShadow: hasValue ? (validation[field] ? '0 0 20px rgba(34, 197, 94, 0.3)' : '0 0 20px rgba(239, 68, 68, 0.3)') : '0 0 20px rgba(255, 215, 0, 0.1)'
     }
   });
 
   return (
-    <Box minH="100vh" bg="linear-gradient(135deg, #667eea 0%, #764ba2 100%)" display="flex" alignItems="center" justifyContent="center" p={4}>
-      <Box maxW="450px" w="full" bg="white" borderRadius="xl" boxShadow="2xl" p={8}>
+    <Box 
+      minH="100vh" 
+      bg="linear-gradient(135deg, #0f172a 0%, #1e293b 30%, #0f172a 60%, #064e3b 100%)"
+      display="flex" 
+      alignItems="center" 
+      justifyContent="center" 
+      p={4}
+      position="relative"
+      _before={{
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        background: 'radial-gradient(circle at 20% 20%, rgba(34, 197, 94, 0.08) 0%, transparent 50%), radial-gradient(circle at 80% 60%, rgba(255, 215, 0, 0.05) 0%, transparent 50%), radial-gradient(circle at 40% 80%, rgba(59, 130, 246, 0.06) 0%, transparent 50%)',
+        pointerEvents: 'none'
+      }}
+    >
+      <Box 
+        maxW="450px" 
+        w="full" 
+        bg="linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.90) 100%)"
+        backdropFilter="blur(20px)"
+        border="1px solid"
+        borderColor="rgba(34, 197, 94, 0.3)"
+        borderRadius="20px" 
+        boxShadow="0 12px 48px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
+        p={8}
+        position="relative"
+        zIndex={2}
+      >
         <VStack gap={6}>
           {/* Header */}
           <Box textAlign="center">
-            <Text fontSize="2xl" fontWeight="bold" color="gray.800" mb={2}>
-              Создать аккаунт
+            <Text 
+              fontSize="2xl" 
+              fontWeight="800" 
+              color="#ffd700" 
+              mb={2}
+              letterSpacing="2px"
+              textShadow="0 0 20px rgba(255, 215, 0, 0.5)"
+            >
+              P.I.D.R.
             </Text>
-            <Text color="gray.600">
-              Присоединяйтесь к P.I.D.R. прямо сейчас!
+            <Text color="#e2e8f0" fontSize="lg" mb={4}>
+              Создайте свой аккаунт
             </Text>
           </Box>
 
@@ -258,12 +295,12 @@ export default function RegisterPage() {
             <form onSubmit={handleRegister}>
               <VStack gap={4}>
                 <Box>
-                  <Text mb={2} fontWeight="medium">
+                  <Text mb={2} fontWeight="600" color="#e2e8f0">
                     Логин
                     {formData.username && (
                       validation.username ? 
-                        <FaCheckCircle style={{ display: 'inline', marginLeft: '8px', color: 'green' }} /> : 
-                        <Text as="span" color="red.500" fontSize="sm" ml={2}>(3-32 символа, только буквы, цифры, _)</Text>
+                        <FaCheckCircle style={{ display: 'inline', marginLeft: '8px', color: '#22c55e' }} /> : 
+                        <Text as="span" color="#ef4444" fontSize="sm" ml={2}>(3-32 символа, только буквы, цифры, _)</Text>
                     )}
                   </Text>
                   <Input
@@ -271,19 +308,23 @@ export default function RegisterPage() {
                     value={formData.username}
                     onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                     placeholder="username123"
-                    bg="gray.50"
+                    bg="linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%)"
+                    backdropFilter="blur(10px)"
                     border="1px solid"
+                    borderRadius="12px"
+                    color="#e2e8f0"
+                    _placeholder={{ color: '#64748b' }}
                     {...getInputProps('username', !!formData.username)}
                   />
                 </Box>
 
                 <Box>
-                  <Text mb={2} fontWeight="medium">
+                  <Text mb={2} fontWeight="600" color="#e2e8f0">
                     Email
                     {formData.email && (
                       validation.email ? 
-                        <FaCheckCircle style={{ display: 'inline', marginLeft: '8px', color: 'green' }} /> : 
-                        <Text as="span" color="red.500" fontSize="sm" ml={2}>(неверный формат)</Text>
+                        <FaCheckCircle style={{ display: 'inline', marginLeft: '8px', color: '#22c55e' }} /> : 
+                        <Text as="span" color="#ef4444" fontSize="sm" ml={2}>(неверный формат)</Text>
                     )}
                   </Text>
                   <Input
@@ -291,19 +332,23 @@ export default function RegisterPage() {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="example@email.com"
-                    bg="gray.50"
+                    bg="linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%)"
+                    backdropFilter="blur(10px)"
                     border="1px solid"
+                    borderRadius="12px"
+                    color="#e2e8f0"
+                    _placeholder={{ color: '#64748b' }}
                     {...getInputProps('email', !!formData.email)}
                   />
                 </Box>
 
                 <Box>
-                  <Text mb={2} fontWeight="medium">
+                  <Text mb={2} fontWeight="600" color="#e2e8f0">
                     Пароль
                     {formData.password && (
                       validation.password ? 
-                        <FaCheckCircle style={{ display: 'inline', marginLeft: '8px', color: 'green' }} /> : 
-                        <Text as="span" color="red.500" fontSize="sm" ml={2}>(мин. 6 символов, большая и маленькая буквы, цифра)</Text>
+                        <FaCheckCircle style={{ display: 'inline', marginLeft: '8px', color: '#22c55e' }} /> : 
+                        <Text as="span" color="#ef4444" fontSize="sm" ml={2}>(мин. 6 символов, большая и маленькая буквы, цифра)</Text>
                     )}
                   </Text>
                   <Box position="relative">
@@ -312,8 +357,12 @@ export default function RegisterPage() {
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                       placeholder="Введите пароль"
-                      bg="gray.50"
+                      bg="linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%)"
+                      backdropFilter="blur(10px)"
                       border="1px solid"
+                      borderRadius="12px"
+                      color="#e2e8f0"
+                      _placeholder={{ color: '#64748b' }}
                       {...getInputProps('password', !!formData.password)}
                       pr="3rem"
                     />
@@ -325,8 +374,8 @@ export default function RegisterPage() {
                       top="50%"
                       transform="translateY(-50%)"
                       onClick={() => setShowPassword(!showPassword)}
-                      color="gray.500"
-                      _hover={{ color: 'gray.700' }}
+                      color="#64748b"
+                      _hover={{ color: '#ffd700' }}
                     >
                       {showPassword ? <FaEyeSlash /> : <FaEye />}
                     </Button>
@@ -334,12 +383,12 @@ export default function RegisterPage() {
                 </Box>
 
                 <Box>
-                  <Text mb={2} fontWeight="medium">
+                  <Text mb={2} fontWeight="600" color="#e2e8f0">
                     Подтвердить пароль
                     {formData.confirmPassword && (
                       validation.confirmPassword ? 
-                        <FaCheckCircle style={{ display: 'inline', marginLeft: '8px', color: 'green' }} /> : 
-                        <Text as="span" color="red.500" fontSize="sm" ml={2}>(пароли не совпадают)</Text>
+                        <FaCheckCircle style={{ display: 'inline', marginLeft: '8px', color: '#22c55e' }} /> : 
+                        <Text as="span" color="#ef4444" fontSize="sm" ml={2}>(пароли не совпадают)</Text>
                     )}
                   </Text>
                   <Box position="relative">
@@ -348,8 +397,12 @@ export default function RegisterPage() {
                       value={formData.confirmPassword}
                       onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                       placeholder="Повторите пароль"
-                      bg="gray.50"
+                      bg="linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%)"
+                      backdropFilter="blur(10px)"
                       border="1px solid"
+                      borderRadius="12px"
+                      color="#e2e8f0"
+                      _placeholder={{ color: '#64748b' }}
                       {...getInputProps('confirmPassword', !!formData.confirmPassword)}
                       pr="3rem"
                     />
@@ -361,8 +414,8 @@ export default function RegisterPage() {
                       top="50%"
                       transform="translateY(-50%)"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      color="gray.500"
-                      _hover={{ color: 'gray.700' }}
+                      color="#64748b"
+                      _hover={{ color: '#ffd700' }}
                     >
                       {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
                     </Button>
@@ -371,13 +424,35 @@ export default function RegisterPage() {
 
                 <Button
                   type="submit"
-                  colorScheme="blue"
                   size="lg"
                   w="full"
                   disabled={loading || !validation.username || !validation.email || !validation.password || !validation.confirmPassword}
-                  mt={2}
+                  mt={4}
+                  bg="linear-gradient(135deg, rgba(34, 197, 94, 0.8) 0%, rgba(22, 163, 74, 0.6) 100%)"
+                  border="1px solid"
+                  borderColor="rgba(34, 197, 94, 0.4)"
+                  borderRadius="16px"
+                  boxShadow="0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
+                  backdropFilter="blur(10px)"
+                  color="#e2e8f0"
+                  fontWeight="600"
+                  fontSize="1.1rem"
+                  letterSpacing="0.5px"
+                  transition="all 0.3s ease"
+                  _hover={{
+                    borderColor: 'rgba(255, 215, 0, 0.6)',
+                    bg: 'linear-gradient(135deg, rgba(22, 163, 74, 0.9) 0%, rgba(21, 128, 61, 0.8) 100%)',
+                    color: '#ffd700',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.1)'
+                  }}
+                  _disabled={{
+                    opacity: 0.6,
+                    cursor: 'not-allowed',
+                    _hover: {}
+                  }}
                 >
-                  Создать аккаунт
+                  {loading ? 'Создание...' : 'СОЗДАТЬ АККАУНТ'}
                 </Button>
               </VStack>
             </form>
@@ -385,22 +460,43 @@ export default function RegisterPage() {
 
           {/* Divider */}
           <Flex align="center" w="full">
-            <Box flex="1" height="1px" bg="gray.300" />
-            <Text px={3} color="gray.500" fontSize="sm">
+            <Box flex="1" height="1px" bg="rgba(34, 197, 94, 0.3)" />
+            <Text px={3} color="#94a3b8" fontSize="sm" fontWeight="600">
               или
             </Text>
-            <Box flex="1" height="1px" bg="gray.300" />
+            <Box flex="1" height="1px" bg="rgba(34, 197, 94, 0.3)" />
           </Flex>
 
           {/* Social Registration */}
           <VStack gap={3} w="full">
             <Button
               onClick={handleTelegramRegister}
-              colorScheme="telegram"
-              variant="outline"
               size="lg"
               w="full"
               disabled={loading}
+              bg="linear-gradient(135deg, rgba(0, 136, 255, 0.8) 0%, rgba(0, 102, 204, 0.6) 100%)"
+              border="1px solid"
+              borderColor="rgba(0, 136, 255, 0.4)"
+              borderRadius="16px"
+              boxShadow="0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
+              backdropFilter="blur(10px)"
+              color="#e2e8f0"
+              fontWeight="600"
+              fontSize="1rem"
+              letterSpacing="0.5px"
+              transition="all 0.3s ease"
+              _hover={{
+                borderColor: 'rgba(255, 215, 0, 0.6)',
+                bg: 'linear-gradient(135deg, rgba(0, 102, 204, 0.9) 0%, rgba(0, 85, 170, 0.8) 100%)',
+                color: '#ffd700',
+                transform: 'translateY(-2px)',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.1)'
+              }}
+              _disabled={{
+                opacity: 0.6,
+                cursor: 'not-allowed',
+                _hover: {}
+              }}
             >
               <FaTelegram style={{ marginRight: 8 }} /> Регистрация через Telegram
             </Button>
@@ -408,21 +504,61 @@ export default function RegisterPage() {
             <HStack gap={3} w="full">
               <Button
                 onClick={handleGoogleRegister}
-                colorScheme="red"
-                variant="outline"
                 size="md"
                 flex={1}
                 disabled={loading}
+                bg="linear-gradient(135deg, rgba(219, 68, 55, 0.8) 0%, rgba(185, 28, 28, 0.6) 100%)"
+                border="1px solid"
+                borderColor="rgba(219, 68, 55, 0.4)"
+                borderRadius="12px"
+                boxShadow="0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
+                backdropFilter="blur(10px)"
+                color="#e2e8f0"
+                fontWeight="600"
+                fontSize="0.9rem"
+                transition="all 0.3s ease"
+                _hover={{
+                  borderColor: 'rgba(255, 215, 0, 0.6)',
+                  bg: 'linear-gradient(135deg, rgba(185, 28, 28, 0.9) 0%, rgba(153, 27, 27, 0.8) 100%)',
+                  color: '#ffd700',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.1)'
+                }}
+                _disabled={{
+                  opacity: 0.6,
+                  cursor: 'not-allowed',
+                  _hover: {}
+                }}
               >
                 <FaGoogle style={{ marginRight: 8 }} /> Google
               </Button>
               <Button
                 onClick={handleVKRegister}
-                colorScheme="blue"
-                variant="outline"
                 size="md"
                 flex={1}
                 disabled={loading}
+                bg="linear-gradient(135deg, rgba(69, 102, 142, 0.8) 0%, rgba(45, 85, 122, 0.6) 100%)"
+                border="1px solid"
+                borderColor="rgba(69, 102, 142, 0.4)"
+                borderRadius="12px"
+                boxShadow="0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
+                backdropFilter="blur(10px)"
+                color="#e2e8f0"
+                fontWeight="600"
+                fontSize="0.9rem"
+                transition="all 0.3s ease"
+                _hover={{
+                  borderColor: 'rgba(255, 215, 0, 0.6)',
+                  bg: 'linear-gradient(135deg, rgba(45, 85, 122, 0.9) 0%, rgba(37, 70, 102, 0.8) 100%)',
+                  color: '#ffd700',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.1)'
+                }}
+                _disabled={{
+                  opacity: 0.6,
+                  cursor: 'not-allowed',
+                  _hover: {}
+                }}
               >
                 <VKIcon />
                 <span style={{ marginLeft: 8 }}>VK</span>
@@ -431,10 +567,20 @@ export default function RegisterPage() {
           </VStack>
 
           {/* Login Link */}
-          <Text textAlign="center" color="gray.600">
+          <Text textAlign="center" color="#94a3b8" fontSize="0.9rem">
             Уже есть аккаунт?{' '}
             <Link href="/auth/login">
-              <Text as="span" color="blue.500" fontWeight="medium" _hover={{ textDecoration: 'underline' }}>
+              <Text 
+                as="span" 
+                color="#22c55e" 
+                fontWeight="600" 
+                transition="all 0.3s ease"
+                _hover={{ 
+                  color: '#ffd700',
+                  textDecoration: 'underline',
+                  textShadow: '0 0 10px rgba(255, 215, 0, 0.5)'
+                }}
+              >
                 Войти
               </Text>
             </Link>
