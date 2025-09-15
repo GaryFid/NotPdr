@@ -96,8 +96,17 @@ export default function RegisterPage() {
       const data = await response.json();
 
       if (data.success) {
+        console.log('✅ Успешная регистрация:', data.user);
+        
+        // Сохраняем данные пользователя
         localStorage.setItem('auth_token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('current_user', JSON.stringify(data.user));
+        
+        // Диспатчим событие обновления монет
+        window.dispatchEvent(new CustomEvent('coinsUpdated', { 
+          detail: { coins: data.user.coins } 
+        }));
 
         showToast('Регистрация успешна!', `Добро пожаловать в P.I.D.R., ${data.user.username}!`, 'success');
 
@@ -107,7 +116,14 @@ export default function RegisterPage() {
           await handlePendingReferral(pendingReferral, data.token);
         }
 
-        router.push('/');
+        // Перенаправляем в игру
+        setTimeout(() => {
+          if (typeof window !== 'undefined') {
+            window.location.href = '/';
+          } else {
+            router.push('/');
+          }
+        }, 1500);
       } else {
         setError(data.message || 'Ошибка регистрации');
       }

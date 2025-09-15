@@ -25,26 +25,37 @@ function HomeWithParams() {
   // Проверка авторизации при загрузке
   useEffect(() => {
     const checkAuth = () => {
+      console.log('🔍 Проверка авторизации на главной странице');
+      
       const token = localStorage.getItem('auth_token');
       const userData = localStorage.getItem('user');
       
+      console.log('Token:', !!token);
+      console.log('UserData:', !!userData);
+      
       if (!token || !userData) {
-        router.push('/auth/login');
+        console.log('❌ Нет токена или данных пользователя, перенаправляем на логин');
+        setTimeout(() => {
+          router.push('/auth/login');
+        }, 100);
         return;
       }
 
       try {
         const parsedUser = JSON.parse(userData);
+        console.log('✅ Пользователь найден:', parsedUser.username);
         setUser(parsedUser);
+        setLoading(false);
       } catch (error) {
-        console.error('Error parsing user data:', error);
+        console.error('❌ Ошибка парсинга данных пользователя:', error);
         localStorage.removeItem('auth_token');
         localStorage.removeItem('user');
-        router.push('/auth/login');
+        localStorage.removeItem('current_user');
+        setTimeout(() => {
+          router.push('/auth/login');
+        }, 100);
         return;
       }
-
-      setLoading(false);
     };
 
     checkAuth();
