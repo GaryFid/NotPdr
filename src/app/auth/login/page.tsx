@@ -190,12 +190,23 @@ export default function LoginPage() {
   return (
     <Box 
       minH="100vh" 
-      bg="linear-gradient(135deg, #0f172a 0%, #1e293b 30%, #0f172a 60%, #064e3b 100%)"
+      minW="100vw"
+      bg="#0f172a"
+      bgGradient="linear(135deg, #0f172a 0%, #1e293b 30%, #0f172a 60%, #064e3b 100%)"
       display="flex" 
       alignItems="center" 
       justifyContent="center" 
       p={4}
       position="relative"
+      overflow="hidden"
+      style={{
+        background: '#0f172a',
+        backgroundImage: 'linear-gradient(135deg, #0f172a 0%, #1e293b 30%, #0f172a 60%, #064e3b 100%)',
+        WebkitBackgroundSize: 'cover',
+        MozBackgroundSize: 'cover',
+        OBackgroundSize: 'cover',
+        backgroundSize: 'cover'
+      }}
       _before={{
         content: '""',
         position: 'absolute',
@@ -204,13 +215,15 @@ export default function LoginPage() {
         width: '100%',
         height: '100%',
         background: 'radial-gradient(circle at 20% 20%, rgba(34, 197, 94, 0.08) 0%, transparent 50%), radial-gradient(circle at 80% 60%, rgba(255, 215, 0, 0.05) 0%, transparent 50%), radial-gradient(circle at 40% 80%, rgba(59, 130, 246, 0.06) 0%, transparent 50%)',
-        pointerEvents: 'none'
+        pointerEvents: 'none',
+        zIndex: 1
       }}
     >
       <Box 
         maxW="450px" 
         w="full" 
-        bg="linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.90) 100%)"
+        bg="rgba(15, 23, 42, 0.95)"
+        bgGradient="linear(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.90) 100%)"
         backdropFilter="blur(20px)"
         border="1px solid"
         borderColor="rgba(34, 197, 94, 0.3)"
@@ -219,6 +232,10 @@ export default function LoginPage() {
         p={8}
         position="relative"
         zIndex={2}
+        style={{
+          background: 'rgba(15, 23, 42, 0.95)',
+          backgroundImage: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.90) 100%)'
+        }}
       >
         <VStack gap={6}>
           {/* Header */}

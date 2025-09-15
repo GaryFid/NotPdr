@@ -2,164 +2,202 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '../../../../lib/supabase';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { checkRateLimit, getRateLimitId } from '../../../../lib/ratelimit';
 import { z } from 'zod';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
 const RegisterSchema = z.object({
-  username: z.string().min(3).max(32).regex(/^[a-zA-Z0-9_]+$/, 'Только буквы, цифры и подчеркивания'),
-  email: z.string().email('Неверный формат email').optional(),
+  username: z.string().min(3).max(64),
+  email: z.string().email().optional(),
   password: z.string().min(6).max(128),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
-  // Rate limiting
-  try {
-    const id = getRateLimitId(req);
-    const { success } = await checkRateLimit(`register:${id}`);
-    if (!success) {
-      return NextResponse.json({ success: false, message: 'Слишком много попыток регистрации' }, { status: 429 });
-    }
-  } catch (error) {
-    console.warn('Rate limiting unavailable:', error);
-  }
-
+  console.log('🚀 SUPABASE Registration API вызван');
+  
   if (!JWT_SECRET) {
-    return NextResponse.json({ success: false, message: 'Server misconfigured: JWT secret missing' }, { status: 500 });
+    console.error('❌ JWT_SECRET не найден');
+    return NextResponse.json({ 
+      success: false, 
+      message: 'Ошибка конфигурации сервера: JWT_SECRET отсутствует' 
+    }, { status: 500 });
   }
 
   let body: any;
   try {
     body = await req.json();
-  } catch {
-    return NextResponse.json({ success: false, message: 'Invalid JSON' }, { status: 400 });
+    console.log('📝 Данные регистрации:', JSON.stringify({ ...body, password: '[СКРЫТО]' }, null, 2));
+  } catch (error) {
+    console.error('❌ Ошибка парсинга JSON:', error);
+    return NextResponse.json({ 
+      success: false, 
+      message: 'Неверный формат JSON' 
+    }, { status: 400 });
   }
 
   const parsed = RegisterSchema.safeParse(body);
   if (!parsed.success) {
-    const errors = parsed.error.errors.map(err => err.message).join(', ');
-    return NextResponse.json({ success: false, message: errors }, { status: 400 });
+    console.error('❌ Ошибка валидации данных регистрации:', parsed.error);
+    return NextResponse.json({ 
+      success: false, 
+      message: 'Неверные данные для регистрации',
+      errors: parsed.error.errors
+    }, { status: 400 });
   }
 
   const { username, email, password, firstName, lastName } = parsed.data;
 
   try {
-    // Проверяем, существует ли уже пользователь с таким username или email
+    console.log('🔍 Проверка существования пользователя:', username);
+
+    // Проверяем не существует ли уже такой пользователь
     const { data: existingUsers, error: checkError } = await supabase
       .from('users')
       .select('id, username, email')
-      .or(`username.eq.${username},email.eq.${email}`);
+      .or(`username.eq.${username}${email ? `,email.eq.${email}` : ''}`)
+      .limit(1);
 
     if (checkError) {
-      return NextResponse.json({ success: false, message: 'Ошибка проверки пользователя' }, { status: 500 });
+      console.error('❌ Ошибка Supabase при проверке пользователя:', checkError);
+      return NextResponse.json({ 
+        success: false, 
+        message: 'Ошибка подключения к базе данных',
+        details: checkError.message 
+      }, { status: 500 });
     }
 
     if (existingUsers && existingUsers.length > 0) {
-      const existingUser = existingUsers[0];
-      if (existingUser.username === username) {
-        return NextResponse.json({ success: false, message: 'Пользователь с таким логином уже существует' }, { status: 409 });
+      const existing = existingUsers[0];
+      if (existing.username === username) {
+        console.log('❌ Пользователь с таким именем уже существует:', username);
+        return NextResponse.json({ 
+          success: false, 
+          message: 'Пользователь с таким именем уже существует' 
+        }, { status: 409 });
       }
-      if (existingUser.email === email) {
-        return NextResponse.json({ success: false, message: 'Пользователь с таким email уже существует' }, { status: 409 });
+      if (existing.email === email && email) {
+        console.log('❌ Пользователь с таким email уже существует:', email);
+        return NextResponse.json({ 
+          success: false, 
+          message: 'Пользователь с таким email уже существует' 
+        }, { status: 409 });
       }
     }
 
-    // Хешируем пароль
-    const saltRounds = 12;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    console.log('🔐 Хеширование пароля');
+    const passwordHash = await bcrypt.hash(password, 12);
 
-    // Генерируем уникальный реферальный код
-    let referralCode: string | null = null;
-    let exists = true;
-    while (exists) {
-      referralCode = generateReferralCode();
-      const { data: refUsers } = await supabase
+    // Генерация уникального referralCode
+    let referralCode = null;
+    let attempts = 0;
+    while (attempts < 5) {
+      referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const { data: existingCode } = await supabase
         .from('users')
         .select('id')
         .eq('referralCode', referralCode)
         .limit(1);
-      exists = !!(refUsers && refUsers[0]);
+      
+      if (!existingCode || existingCode.length === 0) break;
+      attempts++;
     }
 
-    // Создаем пользователя
-    const { data: newUsers, error: insertError } = await supabase
+    console.log('👤 Создание нового пользователя в Supabase');
+
+    const newUserData = {
+      username,
+      email: email || null,
+      passwordHash,
+      firstName: firstName || username,
+      lastName: lastName || '',
+      avatar: null,
+      authType: 'local',
+      coins: 1000,
+      rating: 1000,
+      gamesPlayed: 0,
+      gamesWon: 0,
+      referralCode: referralCode || 'REG' + Date.now().toString().slice(-4)
+    };
+
+    const { data: newUser, error: createError } = await supabase
       .from('users')
-      .insert([
-        {
-          username,
-          email,
-          password: hashedPassword,
-          firstName: username, // По умолчанию используем username как firstName
-          lastName: null,
-          avatar: null,
-          authType: 'local',
-          registrationDate: new Date().toISOString(),
-          rating: 1000,
-          gamesPlayed: 0,
-          gamesWon: 0,
-          coins: 0,
-          referralCode,
-        }
-      ])
-      .select('id, username, email, firstName, lastName, avatar, referralCode, rating, coins');
+      .insert([newUserData])
+      .select('id, username, email, firstName, lastName, avatar, coins, rating, gamesPlayed, gamesWon, referralCode')
+      .single();
 
-    if (insertError) {
-      console.error('Insert error:', insertError);
-      if (insertError.code === '23505') { // unique violation
-        return NextResponse.json({ success: false, message: 'Пользователь уже существует' }, { status: 409 });
-      }
-      return NextResponse.json({ success: false, message: 'Ошибка создания пользователя' }, { status: 500 });
+    if (createError) {
+      console.error('❌ Ошибка создания пользователя:', createError);
+      return NextResponse.json({ 
+        success: false, 
+        message: 'Ошибка создания пользователя',
+        details: createError.message 
+      }, { status: 500 });
     }
 
-    const user = newUsers && newUsers[0];
-    if (!user) {
-      return NextResponse.json({ success: false, message: 'Ошибка создания пользователя' }, { status: 500 });
+    console.log('✅ Пользователь создан:', newUser.username);
+
+    // Создание статуса пользователя
+    try {
+      await supabase
+        .from('user_status')
+        .insert({
+          user_id: newUser.id,
+          status: 'online',
+          last_seen: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+    } catch (statusError) {
+      console.warn('⚠️ Не удалось создать статус пользователя:', statusError);
     }
 
-    // Создаем запись в user_status
-    await supabase
-      .from('user_status')
-      .upsert({
-        user_id: user.id,
-        status: 'online',
-        last_seen: new Date().toISOString()
-      });
-
-    // Создаем JWT токен
+    // Генерация JWT токена
     const token = jwt.sign(
       { 
-        userId: user.id, 
-        username: user.username,
-        authType: 'local'
-      }, 
-      JWT_SECRET, 
+        userId: newUser.id, 
+        username: newUser.username,
+        type: 'local'
+      },
+      JWT_SECRET,
       { expiresIn: '30d' }
     );
 
-    // Никогда не возвращаем пароль
-    const { password: _omit, ...safeUser } = user;
+    console.log('✅ Успешная регистрация:', newUser.username);
 
-    return NextResponse.json({ 
-      success: true, 
-      token, 
-      user: safeUser,
-      message: 'Аккаунт успешно создан!'
+    return NextResponse.json({
+      success: true,
+      token,
+      user: {
+        id: newUser.id,
+        username: newUser.username,
+        email: newUser.email,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        avatar: newUser.avatar,
+        coins: newUser.coins,
+        rating: newUser.rating,
+        gamesPlayed: newUser.gamesPlayed,
+        gamesWon: newUser.gamesWon,
+        referralCode: newUser.referralCode
+      },
+      message: 'Регистрация успешна!'
     });
 
   } catch (error) {
-    console.error('Registration error:', error);
-    return NextResponse.json({ success: false, message: 'Внутренняя ошибка сервера' }, { status: 500 });
+    console.error('❌ Ошибка регистрации:', error);
+    return NextResponse.json({ 
+      success: false, 
+      message: 'Ошибка сервера при регистрации' 
+    }, { status: 500 });
   }
 }
 
-function generateReferralCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = '';
-  for (let i = 0; i < 8; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
+export async function GET() {
+  return NextResponse.json({
+    status: 'SUPABASE Registration API работает!',
+    timestamp: new Date().toISOString(),
+    supabase: !!process.env.SUPABASE_URL,
+    jwt: !!process.env.JWT_SECRET
+  });
 }
