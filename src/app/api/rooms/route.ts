@@ -212,19 +212,42 @@ export async function POST(req: NextRequest) {
         if (!existing) break;
       } while (true);
 
-      // Проверяем, нет ли у пользователя активной комнаты
-      const { data: existingRoom } = await supabase
+      // Проверяем, нет ли у пользователя активной комнаты как хоста
+      const { data: existingHostRoom } = await supabase
         .from('game_rooms')
-        .select('id')
+        .select('id, name')
         .eq('host_id', userId)
         .in('status', ['waiting', 'playing'])
         .single();
 
-      if (existingRoom) {
+      if (existingHostRoom) {
         return NextResponse.json({ 
           success: false, 
-          message: 'У вас уже есть активная комната. Завершите или покиньте её сначала.' 
+          message: `У вас уже есть активная комната "${existingHostRoom.name}". Закройте её или покиньте сначала.` 
         }, { status: 400 });
+      }
+
+      // Проверяем, не участвует ли пользователь в другой комнате
+      const { data: existingPlayer } = await supabase
+        .from('room_players')
+        .select(`
+          id,
+          room_id,
+          game_rooms (
+            id, name, status
+          )
+        `)
+        .eq('user_id', userId)
+        .single();
+
+      if (existingPlayer?.game_rooms) {
+        const room = existingPlayer.game_rooms as any;
+        if (room.status === 'waiting' || room.status === 'playing') {
+          return NextResponse.json({ 
+            success: false, 
+            message: `Вы уже участвуете в комнате "${room.name}". Покиньте её сначала.` 
+          }, { status: 400 });
+        }
       }
 
       // Создаем комнату
@@ -309,16 +332,43 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, message: 'Неверный пароль' }, { status: 403 });
       }
 
-      // Проверяем, не в комнате ли уже пользователь
-      const { data: existingPlayer } = await supabase
+      // Проверяем, не участвует ли пользователь в любой активной комнате
+      const { data: userInAnyRoom } = await supabase
         .from('room_players')
-        .select('id')
-        .eq('room_id', room.id)
-        .eq('user_id', userId)
-        .single();
+        .select(`
+          id,
+          room_id,
+          game_rooms (
+            id, name, status
+          )
+        `)
+        .eq('user_id', userId);
 
-      if (existingPlayer) {
-        return NextResponse.json({ success: false, message: 'Вы уже в этой комнате' }, { status: 400 });
+      // Удаляем пользователя из всех неактивных комнат
+      if (userInAnyRoom && userInAnyRoom.length > 0) {
+        for (const playerRecord of userInAnyRoom) {
+          const roomData = playerRecord.game_rooms as any;
+          
+          if (roomData.status === 'waiting' || roomData.status === 'playing') {
+            if (roomData.id === room.id) {
+              return NextResponse.json({ 
+                success: false, 
+                message: 'Вы уже в этой комнате' 
+              }, { status: 400 });
+            } else {
+              return NextResponse.json({ 
+                success: false, 
+                message: `Вы уже участвуете в другой комнате "${roomData.name}". Покиньте её сначала.` 
+              }, { status: 400 });
+            }
+          } else {
+            // Удаляем из завершенных/отмененных комнат
+            await supabase
+              .from('room_players')
+              .delete()
+              .eq('id', playerRecord.id);
+          }
+        }
       }
 
       // Находим свободную позицию
@@ -408,7 +458,22 @@ export async function DELETE(req: NextRequest) {
     if (action === 'delete' && room.host_id === userId) {
       // Удаление комнаты (только хост)
       
-      // Сначала удаляем всех игроков
+      // Получаем список всех игроков в комнате
+      const { data: allPlayers } = await supabase
+        .from('room_players')
+        .select('user_id')
+        .eq('room_id', roomId);
+
+      // Обновляем статус комнаты на cancelled перед удалением
+      await supabase
+        .from('game_rooms')
+        .update({ 
+          status: 'cancelled',
+          finished_at: new Date().toISOString()
+        })
+        .eq('id', roomId);
+
+      // Удаляем всех игроков из комнаты
       await supabase
         .from('room_players')
         .delete()
@@ -422,8 +487,13 @@ export async function DELETE(req: NextRequest) {
 
       if (deleteError) throw deleteError;
 
-      // Обновляем статус всех игроков
-      await updateUserStatus(userId, 'online', null);
+      // Обновляем статус всех игроков на online
+      if (allPlayers && allPlayers.length > 0) {
+        const playerIds = allPlayers.map(p => p.user_id);
+        for (const playerId of playerIds) {
+          await updateUserStatus(playerId, 'online', null);
+        }
+      }
 
       return NextResponse.json({ success: true, message: 'Комната удалена' });
     }
@@ -437,40 +507,53 @@ export async function DELETE(req: NextRequest) {
 
     if (leaveError) throw leaveError;
 
-    // Обновляем количество игроков
+    // Обновляем количество игроков в комнате
+    const newPlayerCount = Math.max(0, room.current_players - 1);
     const { error: updateError } = await supabase
       .from('game_rooms')
-      .update({ current_players: room.current_players - 1 })
+      .update({ current_players: newPlayerCount })
       .eq('id', roomId);
 
     if (updateError) throw updateError;
 
-    // Если хост покинул комнату, передаем права другому игроку
-    if (room.host_id === userId) {
-      const { data: newHost } = await supabase
-        .from('room_players')
-        .select('user_id')
-        .eq('room_id', roomId)
-        .order('joined_at', { ascending: true })
-        .limit(1)
-        .single();
-
-      if (newHost) {
-        await supabase
-          .from('game_rooms')
-          .update({ host_id: newHost.user_id })
-          .eq('id', roomId);
-      } else {
-        // Если никого не осталось, удаляем комнату
-        await supabase
-          .from('game_rooms')
-          .delete()
-          .eq('id', roomId);
-      }
-    }
-
     // Обновляем статус пользователя
     await updateUserStatus(userId, 'online', null);
+
+    // Если хост покинул комнату, передаем права другому игроку или удаляем комнату
+    if (room.host_id === userId) {
+      const { data: remainingPlayers } = await supabase
+        .from('room_players')
+        .select('user_id, joined_at')
+        .eq('room_id', roomId)
+        .order('joined_at', { ascending: true });
+
+      if (remainingPlayers && remainingPlayers.length > 0) {
+        // Передаем права хоста самому старшему игроку
+        const newHostId = remainingPlayers[0].user_id;
+        await supabase
+          .from('game_rooms')
+          .update({ host_id: newHostId })
+          .eq('id', roomId);
+      } else {
+        // Если никого не осталось, помечаем комнату как завершенную и удаляем её
+        await supabase
+          .from('game_rooms')
+          .update({ 
+            status: 'cancelled',
+            finished_at: new Date().toISOString()
+          })
+          .eq('id', roomId);
+          
+        // Можем оставить в базе для истории, либо удалить через некоторое время
+        // Для демо удалим сразу
+        setTimeout(async () => {
+          await supabase
+            .from('game_rooms')
+            .delete()
+            .eq('id', roomId);
+        }, 5000); // Удаляем через 5 секунд
+      }
+    }
 
     return NextResponse.json({ success: true, message: 'Вы покинули комнату' });
 

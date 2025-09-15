@@ -80,7 +80,7 @@ export default function RulesPage() {
                 </div>
                 <div className="rule-content">
                   <p className="rule-description">
-                    <strong>P.I.D.R.</strong> - это увлекательная карточная игра на основе классического "Дурака" с уникальными механиками и стадиями.
+                    <strong>P.I.D.R.</strong> - это увлекательная карточная игра на основе классического &quot;Дурака&quot; с уникальными механиками и стадиями.
                   </p>
                   <div className="rule-points">
                     <div className="rule-point">
@@ -142,7 +142,7 @@ export default function RulesPage() {
                     })}
                   </div>
                   <p className="rule-description">
-                    В первой стадии масти не важны. Во второй стадии действует правило: <strong>"Пики только Пикями!"</strong>
+                    В первой стадии масти не важны. Во второй стадии действует правило: <strong>&quot;Пики только Пикями!&quot;</strong>
                   </p>
                 </div>
               </div>
@@ -192,7 +192,7 @@ export default function RulesPage() {
                   <h3 className="rule-title">ВТОРАЯ СТАДИЯ</h3>
                 </div>
                 <div className="rule-content">
-                  <h4 className="stage-subtitle">Правила "Дурака"</h4>
+                  <h4 className="stage-subtitle">Правила &quot;Дурака&quot;</h4>
                   <div className="rule-points">
                     <div className="rule-point">
                       <span><strong>Ходы:</strong> Любой картой из руки</span>
@@ -208,7 +208,7 @@ export default function RulesPage() {
                     </div>
                     <div className="rule-point" style={{ color: '#ff4444', fontWeight: 'bold' }}>
                       <AlertTriangle className="point-icon" style={{ color: '#ff4444' }} />
-                      <span><strong>⚠️ "ОДНА КАРТА!":</strong> ОБЯЗАТЕЛЬНО объявлять за 5 сек!</span>
+                      <span><strong>⚠️ &quot;ОДНА КАРТА!&quot;:</strong> ОБЯЗАТЕЛЬНО объявлять за 5 сек!</span>
                     </div>
                   </div>
                   <div className="algorithm-box">
@@ -244,7 +244,7 @@ export default function RulesPage() {
                     </div>
                     <div className="rule-point" style={{ color: '#ff4444', fontWeight: 'bold' }}>
                       <AlertTriangle className="point-icon" style={{ color: '#ff4444' }} />
-                      <span><strong>⚠️ "ОДНА КАРТА!":</strong> ОБЯЗАТЕЛЬНО объявлять при 1 пеньке!</span>
+                      <span><strong>⚠️ &quot;ОДНА КАРТА!&quot;:</strong> ОБЯЗАТЕЛЬНО объявлять при 1 пеньке!</span>
                     </div>
                     <div className="rule-point">
                       <span><strong>Победа:</strong> Побеждает тот, кто первый остался без карт</span>
@@ -264,7 +264,7 @@ export default function RulesPage() {
               <div className="rule-card" style={{ border: '2px solid #ff4444', background: 'linear-gradient(135deg, rgba(255, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%)' }}>
                 <div className="rule-header">
                   <AlertTriangle className="rule-icon" style={{ color: '#ff4444' }} />
-                  <h3 className="rule-title" style={{ color: '#ff4444' }}>СИСТЕМА "ОДНА КАРТА!" И ШТРАФОВ</h3>
+                  <h3 className="rule-title" style={{ color: '#ff4444' }}>СИСТЕМА &quot;ОДНА КАРТА!&quot; И ШТРАФОВ</h3>
                 </div>
                 <div className="rule-content">
                   <p className="rule-description" style={{ color: '#ff6666', fontSize: '16px', fontWeight: 'bold' }}>
@@ -307,7 +307,7 @@ export default function RulesPage() {
                       <span><strong>Таймер:</strong> 5 секунд на объявление с момента обнаружения</span>
                     </div>
                     <div className="rule-point">
-                      <span><strong>Кнопка:</strong> Красная пульсирующая "⚠️ ОДНА КАРТА! (ОБЯЗАТЕЛЬНО)"</span>
+                      <span><strong>Кнопка:</strong> Красная пульсирующая &quot;⚠️ ОДНА КАРТА! (ОБЯЗАТЕЛЬНО)&quot;</span>
                     </div>
                   </div>
                 </div>
@@ -324,9 +324,9 @@ export default function RulesPage() {
                     <h5 className="algorithm-title">Как поймать забывчивого:</h5>
                     <ol className="algorithm-steps">
                       <li><strong>Увидел:</strong> У соперника 1 карта, но он не объявил</li>
-                      <li><strong>Действие:</strong> Нажать кнопку "🎯 Сколько карт?"</li>
+                      <li><strong>Действие:</strong> Нажать кнопку &quot;🎯 Сколько карт?&quot;</li>
                       <li><strong>Проверка:</strong> Система проверяет - объявил ли он вовремя</li>
-                      <li><strong>Штраф:</strong> Если не объявил - ВСЕ скидывают ему плохие карты</li>
+                      <li><strong>Штраф:</strong> Если не объявил - ВСЕ игроки скидывают ему по 1 плохой карте</li>
                     </ol>
                   </div>
                   <div className="rule-points">
@@ -352,13 +352,13 @@ export default function RulesPage() {
                 <div className="rule-content">
                   <div className="rule-points">
                     <div className="rule-point" style={{ background: 'rgba(255, 68, 68, 0.1)', padding: '8px', borderRadius: '8px' }}>
-                      <span><strong style={{ color: '#ff4444' }}>🚨 КРАСНАЯ КНОПКА:</strong> "⚠️ ОДНА КАРТА! (ОБЯЗАТЕЛЬНО)" - пульсирует</span>
+                      <span><strong style={{ color: '#ff4444' }}>🚨 КРАСНАЯ КНОПКА:</strong> &quot;⚠️ ОДНА КАРТА! (ОБЯЗАТЕЛЬНО)&quot; - пульсирует</span>
                     </div>
                     <div className="rule-point" style={{ background: 'rgba(99, 102, 241, 0.1)', padding: '8px', borderRadius: '8px' }}>
-                      <span><strong style={{ color: '#6366f1' }}>🎯 СИНЯЯ КНОПКА:</strong> "Сколько карт?" - поймать забывчивого</span>
+                      <span><strong style={{ color: '#6366f1' }}>🎯 СИНЯЯ КНОПКА:</strong> &quot;Сколько карт?&quot; - поймать забывчивого</span>
                     </div>
                     <div className="rule-point" style={{ background: 'rgba(245, 158, 11, 0.1)', padding: '8px', borderRadius: '8px' }}>
-                      <span><strong style={{ color: '#f59e0b' }}>☝️ ЖЕЛТАЯ КНОПКА:</strong> "Одна карта!" - добровольное объявление</span>
+                      <span><strong style={{ color: '#f59e0b' }}>☝️ ЖЕЛТАЯ КНОПКА:</strong> &quot;Одна карта!&quot; - ОБЯЗАТЕЛЬНОЕ объявление</span>
                     </div>
                   </div>
                 </div>

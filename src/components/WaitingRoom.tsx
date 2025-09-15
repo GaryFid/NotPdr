@@ -17,6 +17,7 @@ interface WaitingRoomProps {
   onAddBot: () => void;
   onKickPlayer?: (playerId: string) => void;
   onLeaveRoom: () => void;
+  onCloseRoom?: () => void; // Добавили функцию для закрытия комнаты
 }
 
 interface Player {
@@ -37,7 +38,8 @@ export default function WaitingRoom({
   onStartGame, 
   onAddBot, 
   onKickPlayer,
-  onLeaveRoom 
+  onLeaveRoom,
+  onCloseRoom 
 }: WaitingRoomProps) {
   const [copied, setCopied] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -109,12 +111,23 @@ export default function WaitingRoom({
           </div>
         </div>
 
-        <button 
-          onClick={onLeaveRoom}
-          className="text-red-400 hover:text-red-300 transition-colors text-sm"
-        >
-          Выйти
-        </button>
+        <div className="flex items-center gap-2">
+          {roomSettings.isHost && onCloseRoom && (
+            <button 
+              onClick={onCloseRoom}
+              className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-sm transition-colors"
+              title="Закрыть комнату (только для создателя)"
+            >
+              Закрыть комнату
+            </button>
+          )}
+          <button 
+            onClick={onLeaveRoom}
+            className="text-red-400 hover:text-red-300 transition-colors text-sm"
+          >
+            Выйти
+          </button>
+        </div>
       </div>
 
       {/* Room Info */}

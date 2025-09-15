@@ -1,20 +1,62 @@
 "use client";
-import { useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { Box, Flex, Text } from '@chakra-ui/react';
-// import { FaGamepad, FaUsers, FaUser, FaWallet, FaBook, FaPlay, FaUserPlus, FaStore } from 'react-icons/fa';
+import { useEffect, useState, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { Spinner, Text, Flex } from '@chakra-ui/react';
 import { MainMenu } from '../components/main_menu_component'
 
+interface User {
+  id: string;
+  username: string;
+  firstName?: string;
+  lastName?: string;
+  avatar?: string;
+  rating: number;
+  coins: number;
+  gamesPlayed: number;
+  gamesWon: number;
+}
+
 function HomeWithParams() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Проверка авторизации при загрузке
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem('auth_token');
+      const userData = localStorage.getItem('user');
+      
+      if (!token || !userData) {
+        router.push('/auth/login');
+        return;
+      }
+
+      try {
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user');
+        router.push('/auth/login');
+        return;
+      }
+
+      setLoading(false);
+    };
+
+    checkAuth();
+  }, [router]);
 
   // Обработка реферального кода из URL
   useEffect(() => {
     const referralCode = searchParams.get('ref');
-    if (referralCode) {
+    if (referralCode && user) {
       handleReferralCode(referralCode);
     }
-  }, [searchParams]);
+  }, [searchParams, user]);
 
   const handleReferralCode = async (referralCode: string) => {
     try {
@@ -79,6 +121,27 @@ function HomeWithParams() {
     }
   };
   
+  if (loading) {
+    return (
+      <Flex 
+        minH="100vh" 
+        alignItems="center" 
+        justifyContent="center" 
+        bg="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+        flexDirection="column"
+      >
+        <Spinner size="xl" color="white" />
+        <Text mt={4} color="white" fontSize="lg">
+          Загрузка P.I.D.R...
+        </Text>
+      </Flex>
+    );
+  }
+
+  if (!user) {
+    return null; // Будет перенаправлен middleware'ом
+  }
+
   return <MainMenu onNavigate={handleNavigate} />;
 }
 

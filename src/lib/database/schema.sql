@@ -4,28 +4,34 @@
 -- 0. Основная таблица пользователей
 CREATE TABLE users (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  telegram_id BIGINT UNIQUE, -- ID в Telegram
+  telegramId VARCHAR(50) UNIQUE, -- ID в Telegram (строка для совместимости с кодом)
+  googleId VARCHAR(50) UNIQUE, -- Google ID для OAuth
+  vkId VARCHAR(50) UNIQUE, -- VK ID для OAuth
   username VARCHAR(50) UNIQUE NOT NULL, -- Никнеймы для игры
-  display_name VARCHAR(100), -- Имя для отображения
-  avatar_emoji VARCHAR(10) DEFAULT '👤', -- Эмодзи аватарка
+  email VARCHAR(255) UNIQUE, -- Email для локальной регистрации
+  password VARCHAR(255), -- Хешированный пароль для локальной регистрации
+  firstName VARCHAR(100), -- Имя
+  lastName VARCHAR(100), -- Фамилия
+  avatar VARCHAR(500), -- URL аватарки
+  authType VARCHAR(20) DEFAULT 'local' CHECK (authType IN ('local', 'telegram', 'google', 'vk')), -- Тип авторизации
   
   -- Игровая статистика
-  games_played INTEGER DEFAULT 0,
-  games_won INTEGER DEFAULT 0,
-  total_score INTEGER DEFAULT 0,
-  best_score INTEGER DEFAULT 0,
+  gamesPlayed INTEGER DEFAULT 0,
+  gamesWon INTEGER DEFAULT 0,
+  rating INTEGER DEFAULT 1000, -- Рейтинг игрока
   
-  -- Игровая валюта (ОБНУЛЯЕМ - будут зарабатывать в игре)
-  coins INTEGER DEFAULT 0, -- Было 500, теперь 0
+  -- Игровая валюта
+  coins INTEGER DEFAULT 0,
   
   -- Реферальная система  
-  referral_code VARCHAR(10) UNIQUE, -- Персональный код для приглашений
-  invited_by VARCHAR(10) NULL, -- Кем был приглашен (код)
+  referralCode VARCHAR(10) UNIQUE, -- Персональный код для приглашений
+  invitedBy VARCHAR(10) NULL, -- Кем был приглашен (код)
   
   -- Метаданные
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  last_active TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  registrationDate TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  createdAt TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updatedAt TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  lastActive TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- 1. Система друзей
@@ -125,10 +131,14 @@ CREATE TABLE game_invitations (
 );
 
 -- Индексы для оптимизации
-CREATE INDEX idx_users_telegram_id ON users(telegram_id);
+CREATE INDEX idx_users_telegram_id ON users(telegramId);
+CREATE INDEX idx_users_google_id ON users(googleId);
+CREATE INDEX idx_users_vk_id ON users(vkId);
 CREATE INDEX idx_users_username ON users(username);
-CREATE INDEX idx_users_referral_code ON users(referral_code);
-CREATE INDEX idx_users_invited_by ON users(invited_by);
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_referral_code ON users(referralCode);
+CREATE INDEX idx_users_invited_by ON users(invitedBy);
+CREATE INDEX idx_users_auth_type ON users(authType);
 CREATE INDEX idx_friends_user_id ON friends(user_id);
 CREATE INDEX idx_friends_friend_id ON friends(friend_id);
 CREATE INDEX idx_friends_status ON friends(status);
@@ -222,7 +232,7 @@ BEGIN
         END LOOP;
         
         -- Проверяем уникальность
-        SELECT COUNT(*) INTO exists_count FROM users WHERE referral_code = result;
+        SELECT COUNT(*) INTO exists_count FROM users WHERE referralCode = result;
         IF exists_count = 0 THEN
             EXIT;
         END IF;
@@ -236,8 +246,8 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION auto_generate_referral_code()
 RETURNS TRIGGER AS $$
 BEGIN
-    IF NEW.referral_code IS NULL THEN
-        NEW.referral_code := generate_referral_code();
+    IF NEW.referralCode IS NULL THEN
+        NEW.referralCode := generate_referral_code();
     END IF;
     RETURN NEW;
 END;

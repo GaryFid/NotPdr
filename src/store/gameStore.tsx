@@ -991,7 +991,7 @@ export const useGameStore = create<GameState>()(
 
         
         // Определяем стартового игрока (последний взявший карту)
-        let startingPlayerId = lastPlayerToDrawCard || players[0].id;
+        const startingPlayerId = lastPlayerToDrawCard || players[0].id;
 
         
         // Обновляем текущего игрока и переводим всех во 2-ю стадию

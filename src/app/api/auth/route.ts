@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
 
     const idStr = id.toString();
 
-    let { data: users, error } = await supabase
+          const { data: users, error } = await supabase
       .from('users')
       .select('id, username, firstName, lastName, avatar, telegramId, referralCode')
       .eq('telegramId', idStr)
