@@ -3,19 +3,8 @@ import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// Пути, которые требуют авторизации
-const protectedPaths = [
-  '/profile',
-  '/game',
-  '/game-setup', 
-  '/multiplayer',
-  '/new-room',
-  '/tables-list',
-  '/friends',
-  '/shop',
-  '/wallet',
-  '/rating'
-];
+// ВРЕМЕННО УБРАНО: Все страницы доступны без авторизации
+const protectedPaths: string[] = [];
 
 // Пути авторизации, куда не должны попадать авторизованные пользователи
 const authPaths = [
