@@ -35,6 +35,18 @@ export async function POST(req: NextRequest) {
     }, { status: 500 });
   }
 
+  // Проверяем Supabase подключение
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_ANON_KEY;
+  
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('❌ Supabase переменные не настроены');
+    return NextResponse.json({ 
+      success: false, 
+      message: 'Ошибка конфигурации базы данных' 
+    }, { status: 500 });
+  }
+
   let body: any;
   try {
     body = await req.json();
