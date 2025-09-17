@@ -62,16 +62,16 @@ export async function GET(req: NextRequest) {
         status, 
         is_private, 
         created_at,
-        users!game_rooms_host_id_fkey (
+        _pidr_users!_pidr_rooms_host_id_fkey (
           username, 
           first_name,
           photo_url
         ),
-        room_players (
+        _pidr_room_players (
           user_id,
           position,
           is_ready,
-          users (
+          _pidr_users (
             username,
             first_name
           )
@@ -108,9 +108,9 @@ export async function GET(req: NextRequest) {
     console.log(`✅ Загружено ${rooms?.length || 0} комнат`);
 
     // Преобразуем данные для фронтенда с реальным подсчетом игроков
-    const formattedRooms = (rooms || []).map(room => {
-      // Реальное количество игроков из таблицы room_players
-      const actualPlayerCount = room.room_players?.length || 0;
+    const formattedRooms = (rooms || []).map((room: any) => {
+      // Реальное количество игроков из таблицы _pidr_room_players
+      const actualPlayerCount = room._pidr_room_players?.length || 0;
       
       console.log(`🎮 Комната ${room.room_code}: ${actualPlayerCount} игроков (было ${room.current_players})`);
 
@@ -123,15 +123,15 @@ export async function GET(req: NextRequest) {
         status: room.status,
         is_private: room.is_private,
         created_at: room.created_at,
-        users: room.users ? {
-          username: room.users.username || room.users.first_name || 'Игрок',
-          avatar: room.users.photo_url || null
+        users: room._pidr_users ? {
+          username: room._pidr_users.username || room._pidr_users.first_name || 'Игрок',
+          avatar: room._pidr_users.photo_url || null
         } : null,
-        players: room.room_players?.map((player: any) => ({
+        players: room._pidr_room_players?.map((player: any) => ({
           userId: player.user_id,
           position: player.position,
           isReady: player.is_ready,
-          username: player.users?.username || player.users?.first_name || 'Игрок'
+          username: player._pidr_users?.username || player._pidr_users?.first_name || 'Игрок'
         })) || []
       };
     });
@@ -167,10 +167,10 @@ async function getAuthenticatedRooms(req: NextRequest) {
         .from('_pidr_rooms')
         .select(`
           id, room_code, name, max_players, current_players, status, is_private, created_at,
-          users!game_rooms_host_id_fkey (username, avatar),
-          room_players (
+          _pidr_users!_pidr_rooms_host_id_fkey (username, avatar),
+          _pidr_room_players (
             user_id, position, is_ready,
-            users (username, avatar)
+            _pidr_users (username, avatar)
           )
         `)
         .or(`host_id.eq.${userId},id.in.(${await getUserRoomIds(userId)})`)
@@ -187,7 +187,7 @@ async function getAuthenticatedRooms(req: NextRequest) {
         .from('_pidr_rooms')
         .select(`
           id, room_code, name, max_players, current_players, status, is_private, created_at,
-          users!game_rooms_host_id_fkey (username, avatar)
+          _pidr_users!_pidr_rooms_host_id_fkey (username, avatar)
         `)
         .eq('status', 'waiting')
         .eq('is_private', false)
@@ -206,7 +206,7 @@ async function getAuthenticatedRooms(req: NextRequest) {
       .from('_pidr_rooms')
       .select(`
         id, room_code, name, max_players, current_players, status, created_at,
-        users!game_rooms_host_id_fkey (username, avatar)
+        _pidr_users!_pidr_rooms_host_id_fkey (username, avatar)
       `)
       .eq('is_private', false)
       .in('status', ['waiting', 'playing'])
@@ -281,15 +281,15 @@ export async function POST(req: NextRequest) {
         .select(`
           id,
           room_id,
-          game_rooms (
+          _pidr_rooms (
             id, name, status
           )
         `)
         .eq('user_id', userId)
         .single();
 
-      if (existingPlayer?.game_rooms) {
-        const room = existingPlayer.game_rooms as any;
+      if (existingPlayer?._pidr_rooms) {
+        const room = existingPlayer._pidr_rooms as any;
         if (room.status === 'waiting' || room.status === 'playing') {
           return NextResponse.json({ 
             success: false, 
@@ -462,7 +462,7 @@ export async function POST(req: NextRequest) {
         .select(`
           id,
           room_id,
-          game_rooms (
+          _pidr_rooms (
             id, name, status
           )
         `)
@@ -471,7 +471,7 @@ export async function POST(req: NextRequest) {
       // Удаляем пользователя из всех неактивных комнат
       if (userInAnyRoom && userInAnyRoom.length > 0) {
         for (const playerRecord of userInAnyRoom) {
-          const roomData = playerRecord.game_rooms as any;
+          const roomData = playerRecord._pidr_rooms as any;
           
           if (roomData.status === 'waiting' || roomData.status === 'playing') {
             if (roomData.id === room.id) {
@@ -613,7 +613,7 @@ export async function DELETE(req: NextRequest) {
 
       // Обновляем статус всех игроков на online
       if (allPlayers && allPlayers.length > 0) {
-        const playerIds = allPlayers.map(p => p.user_id);
+        const playerIds = allPlayers.map((p: any) => p.user_id);
         for (const playerId of playerIds) {
           await updateUserStatus(playerId, 'online', null);
         }

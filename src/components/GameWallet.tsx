@@ -70,11 +70,41 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
     if (!user?.id) return;
 
     try {
-      const addresses = await hdWalletService.getAllUserAddresses(user.id);
-      setHdAddresses(addresses);
-      console.log('✅ HD адреса загружены:', addresses);
+      // Используем новый API endpoint
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        console.warn('⚠️ Нет токена авторизации');
+        return;
+      }
+
+      const response = await fetch('/api/wallet/hd-addresses', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+      if (result.success && result.addresses) {
+        setHdAddresses(result.addresses);
+        console.log('✅ HD адреса загружены из нового API:', result.addresses);
+      } else {
+        console.warn('⚠️ Не удалось загрузить HD адреса:', result.message);
+      }
     } catch (error) {
       console.error('❌ Ошибка загрузки HD адресов:', error);
+      // Fallback к старому методу если новый API не работает
+      try {
+        const addresses = await hdWalletService.getAllUserAddresses(user.id);
+        setHdAddresses(addresses);
+        console.log('✅ HD адреса загружены через fallback:', addresses);
+      } catch (fallbackError) {
+        console.error('❌ Fallback также не сработал:', fallbackError);
+      }
     }
   };
 
@@ -427,20 +457,51 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
         return existingAddress.address;
       }
 
-      // Генерируем новый HD адрес
+      // Генерируем новый HD адрес через API
       console.log(`🔄 Генерируем новый HD адрес для ${crypto}...`);
-      const walletAddress = await hdWalletService.getUserAddress(userId, crypto);
       
-      if (walletAddress) {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        throw new Error('Нет токена авторизации');
+      }
+
+      const response = await fetch('/api/wallet/hd-addresses', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ coin: crypto.toUpperCase() })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+      if (result.success && result.address) {
         // Обновляем локальный список адресов
-        setHdAddresses(prev => [...prev, walletAddress]);
-        console.log(`✅ Новый HD адрес создан для ${crypto}:`, walletAddress.address);
-        return walletAddress.address;
+        setHdAddresses(prev => [...prev, result.address]);
+        console.log(`✅ Новый HD адрес создан для ${crypto}:`, result.address.address);
+        return result.address.address;
       } else {
-        throw new Error('Не удалось создать HD адрес');
+        throw new Error(result.message || 'Не удалось создать адрес');
       }
     } catch (error) {
       console.error(`❌ Ошибка генерации HD адреса для ${crypto}:`, error);
+      
+      // Fallback к старому методу
+      try {
+        const walletAddress = await hdWalletService.getUserAddress(userId, crypto);
+        if (walletAddress) {
+          setHdAddresses(prev => [...prev, walletAddress]);
+          console.log(`✅ HD адрес создан через fallback для ${crypto}:`, walletAddress.address);
+          return walletAddress.address;
+        }
+      } catch (fallbackError) {
+        console.error(`❌ Fallback не сработал для ${crypto}:`, fallbackError);
+      }
+      
       return `Ошибка: ${error}`;
     } finally {
       setIsGeneratingAddress(false);

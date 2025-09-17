@@ -540,6 +540,40 @@ export async function POST(req: NextRequest) {
         } catch (statusError) {
           console.warn('⚠️ Не удалось создать статус пользователя:', statusError);
         }
+
+        // 🔥 АВТОМАТИЧЕСКАЯ ГЕНЕРАЦИЯ HD КОШЕЛЬКА для нового пользователя
+        console.log('💳 Генерируем HD кошелек для нового пользователя...');
+        try {
+          const { HDWalletService } = await import('../../../lib/wallets/hd-wallet-service');
+          const walletService = new HDWalletService();
+          
+          const supportedCoins = ['TON', 'BTC', 'ETH', 'USDT_TRC20', 'SOL'];
+          
+          for (const coin of supportedCoins) {
+            try {
+              const hdAddress = await walletService.generateUserAddress(user.id, coin);
+              if (hdAddress) {
+                console.log(`✅ Создан ${coin} адрес для пользователя ${user.username}`);
+                
+                // Сохраняем адрес в базу данных
+                await supabase
+                  .from('_pidr_hd_addresses')
+                  .insert({
+                    user_id: user.id,
+                    coin: hdAddress.coin,
+                    address: hdAddress.address,
+                    derivation_path: hdAddress.derivationPath,
+                    address_index: hdAddress.index,
+                    created_at: new Date().toISOString()
+                  });
+              }
+            } catch (coinError) {
+              console.warn(`⚠️ Не удалось создать ${coin} адрес:`, coinError);
+            }
+          }
+        } catch (walletError) {
+          console.warn('⚠️ Не удалось создать HD кошелек:', walletError);
+        }
       } else {
         console.log('✅ Найден существующий Telegram пользователь:', user.username);
         
@@ -570,6 +604,52 @@ export async function POST(req: NextRequest) {
             });
         } catch (statusError) {
           console.warn('⚠️ Не удалось обновить статус пользователя:', statusError);
+        }
+
+        // 🔥 ПРОВЕРКА И ГЕНЕРАЦИЯ HD КОШЕЛЬКА для существующего пользователя
+        console.log('💳 Проверяем HD кошелек для существующего пользователя...');
+        try {
+          const { data: existingAddresses } = await supabase
+            .from('_pidr_hd_addresses')
+            .select('coin')
+            .eq('user_id', user.id);
+
+          const supportedCoins = ['TON', 'BTC', 'ETH', 'USDT_TRC20', 'SOL'];
+          const existingCoins = existingAddresses?.map((addr: any) => addr.coin) || [];
+          const missingCoins = supportedCoins.filter(coin => !existingCoins.includes(coin));
+
+          if (missingCoins.length > 0) {
+            console.log(`💳 Генерируем недостающие адреса для ${user.username}: ${missingCoins.join(', ')}`);
+            
+            const { HDWalletService } = await import('../../../lib/wallets/hd-wallet-service');
+            const walletService = new HDWalletService();
+            
+            for (const coin of missingCoins) {
+              try {
+                const hdAddress = await walletService.generateUserAddress(user.id, coin);
+                if (hdAddress) {
+                  console.log(`✅ Создан недостающий ${coin} адрес для пользователя ${user.username}`);
+                  
+                  await supabase
+                    .from('_pidr_hd_addresses')
+                    .insert({
+                      user_id: user.id,
+                      coin: hdAddress.coin,
+                      address: hdAddress.address,
+                      derivation_path: hdAddress.derivationPath,
+                      address_index: hdAddress.index,
+                      created_at: new Date().toISOString()
+                    });
+                }
+              } catch (coinError) {
+                console.warn(`⚠️ Не удалось создать ${coin} адрес:`, coinError);
+              }
+            }
+          } else {
+            console.log('✅ HD кошелек уже существует для всех поддерживаемых монет');
+          }
+        } catch (walletError) {
+          console.warn('⚠️ Ошибка проверки HD кошелька:', walletError);
         }
       }
 
