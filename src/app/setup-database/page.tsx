@@ -182,6 +182,21 @@ export default function DatabaseSetupPage() {
               </p>
             </div>
           )}
+
+          {!status?.ready && status?.summary && (
+            <div className="mt-4 p-4 bg-orange-500/20 border border-orange-500/30 rounded-lg">
+              <p className="text-orange-400 font-medium mb-2">
+                ⚠️ Автоматическое создание не работает! Нужно создать таблицы вручную.
+              </p>
+              <div className="text-sm text-orange-300 space-y-1">
+                <p>📋 <strong>Как исправить:</strong></p>
+                <p>1. Откройте <a href="https://supabase.com/dashboard" target="_blank" className="text-blue-400 underline">Supabase Dashboard</a></p>
+                <p>2. Перейдите в <strong>SQL Editor</strong></p>
+                <p>3. Скопируйте SQL код из файла <code>СОЗДАТЬ-ТАБЛИЦЫ-ВРУЧНУЮ.md</code></p>
+                <p>4. Выполните код в SQL Editor</p>
+              </div>
+            </div>
+          )}
         </motion.div>
 
         {/* Logs */}

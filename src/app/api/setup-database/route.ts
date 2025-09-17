@@ -1,6 +1,7 @@
 // API для автоматической настройки базы данных P.I.D.R.
 import { NextRequest, NextResponse } from 'next/server';
 import { createPidrTables, checkDatabaseStatus } from '../../../lib/database/create-tables';
+import { createTablesDirectly, generateCreateTablesSQL } from '../../../lib/database/create-tables-direct';
 
 export async function GET(req: NextRequest) {
   try {
@@ -45,8 +46,16 @@ export async function POST(req: NextRequest) {
     
     console.log(`📊 Текущий статус: ${existingCount}/${Object.keys(currentStatus).length} таблиц существует`);
     
-    // Создаем недостающие таблицы
-    const result = await createPidrTables();
+    // Пробуем создать таблицы напрямую (без RPC)
+    console.log('🔄 Попытка прямого создания таблиц...');
+    const directResult = await createTablesDirectly();
+    
+    // Если прямое создание не сработало, пробуем через RPC
+    let result = directResult;
+    if (!directResult.success) {
+      console.log('🔄 Попытка создания через RPC...');
+      result = await createPidrTables();
+    }
     
     // Проверяем финальный статус
     const finalStatus = await checkDatabaseStatus();

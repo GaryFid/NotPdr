@@ -484,7 +484,6 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
           className={`${styles['tab-button']} ${activeTab === 'main' ? styles['active'] : ''}`}
         >
           <FaWallet />
-          <span>Основное</span>
         </button>
         
         <button
