@@ -2448,10 +2448,59 @@ export const useGameStore = create<GameState>()(
     }),
     {
       name: 'pidr-game-storage',
-      // Сохраняем только важные данные
+      // ИСПРАВЛЕНО: Сохраняем ВСЁ ИГРОВОЕ СОСТОЯНИЕ для восстановления после refresh
       partialize: (state) => ({
+        // Основное игровое состояние
+        isGameActive: state.isGameActive,
+        gameMode: state.gameMode,
+        currentRound: state.currentRound,
+        maxRounds: state.maxRounds,
+        players: state.players,
+        currentPlayerId: state.currentPlayerId,
+        deck: state.deck,
+        playedCards: state.playedCards,
+        lastPlayedCard: state.lastPlayedCard,
+        
+        // Состояние стадий P.I.D.R
+        gameStage: state.gameStage,
+        availableTargets: state.availableTargets,
+        mustDrawFromDeck: state.mustDrawFromDeck,
+        canPlaceOnSelf: state.canPlaceOnSelf,
+        
+        // Состояния хода
+        turnPhase: state.turnPhase,
+        revealedDeckCard: state.revealedDeckCard,
+        canPlaceOnSelfByRules: state.canPlaceOnSelfByRules,
+        skipHandAnalysis: state.skipHandAnalysis,
+        
+        // Вторая стадия
+        lastDrawnCard: state.lastDrawnCard,
+        lastPlayerToDrawCard: state.lastPlayerToDrawCard,
+        trumpSuit: state.trumpSuit,
+        drawnHistory: state.drawnHistory,
+        
+        // Система "Одна карта!" и штрафов
+        oneCardDeclarations: state.oneCardDeclarations,
+        oneCardTimers: state.oneCardTimers,
+        playersWithOneCard: state.playersWithOneCard,
+        pendingPenalty: state.pendingPenalty,
+        
+        // Состояние 2-й стадии (дурак)
+        tableStack: state.tableStack,
+        selectedHandCard: state.selectedHandCard,
+        stage2TurnPhase: state.stage2TurnPhase,
+        roundInProgress: state.roundInProgress,
+        currentRoundInitiator: state.currentRoundInitiator,
+        roundFinisher: state.roundFinisher,
+        initiatorTookCard: state.initiatorTookCard,
+        
+        // Мультиплеер (опционально)
+        multiplayerData: state.multiplayerData,
+        
+        // Статистика и настройки
         stats: state.stats,
-        settings: state.settings
+        settings: state.settings,
+        gameCoins: state.gameCoins
       })
     }
   )

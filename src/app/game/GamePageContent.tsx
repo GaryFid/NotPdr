@@ -304,7 +304,10 @@ function GamePageContentComponent({
   useEffect(() => {
     const { isGameActive, currentPlayerId, players, gameStage, stage2TurnPhase, deck, availableTargets, revealedDeckCard, trumpSuit } = useGameStore.getState();
     
-    if (!isGameActive || !currentPlayerId) return;
+    if (!isGameActive || !currentPlayerId) {
+      console.log(`🤖 [AI useEffect] Игра неактивна или нет текущего игрока: isGameActive=${isGameActive}, currentPlayerId=${currentPlayerId}`);
+      return;
+    }
     
     const currentTurnPlayer = players.find(p => p.id === currentPlayerId);
     if (!currentTurnPlayer || !currentTurnPlayer.isBot) return;
@@ -482,18 +485,30 @@ function GamePageContentComponent({
   useEffect(() => {
     if (!gameInitialized) {
       if (isGameActive && players.length > 0) {
-        // Игра уже запущена через gameStore - просто инициализируем интерфейс
-        console.log(`🎮 Игра P.I.D.R. запущена: ${players.length} игроков`);
+        // ИГРА УЖЕ ЗАПУЩЕНА - ВОССТАНАВЛИВАЕМ СОСТОЯНИЕ ПОСЛЕ REFRESH!
+        console.log(`🎮 [ВОССТАНОВЛЕНИЕ] Игра P.I.D.R. восстановлена: ${players.length} игроков`);
+        console.log(`🎮 [ВОССТАНОВЛЕНИЕ] Стадия: ${gameStage}, текущий игрок: ${currentPlayerId}`);
+        console.log(`🎮 [ВОССТАНОВЛЕНИЕ] Фаза хода: ${turnPhase}, stage2TurnPhase: ${stage2TurnPhase}`);
+        
         setPlayerCount(players.length);
         setGameInitialized(true);
-        setDealt(false);
+        setDealt(true); // ВАЖНО: карты уже розданы при восстановлении!
+        
+        // Уведомляем о восстановлении
+        showNotification(`🔄 Игра восстановлена! Продолжаем с ${gameStage}-й стадии`, 'success', 3000);
+        
+        // Если сейчас ход бота - он автоматически продолжит через useEffect для AI
+        const currentTurnPlayer = players.find(p => p.id === currentPlayerId);
+        if (currentTurnPlayer?.isBot) {
+          console.log(`🤖 [ВОССТАНОВЛЕНИЕ] Бот ${currentTurnPlayer.name} должен продолжить ход`);
+        }
       } else {
         // Игра не активна - просто инициализируем интерфейс
         console.log('🎮 Ожидание запуска игры...');
         setGameInitialized(true);
       }
     }
-  }, [gameInitialized, isGameActive, players.length]);
+  }, [gameInitialized, isGameActive, players.length, gameStage, currentPlayerId, turnPhase, stage2TurnPhase, showNotification]);
 
   // Эффект для автоматической раздачи карт при старте игры
   useEffect(() => {
