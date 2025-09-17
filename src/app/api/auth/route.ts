@@ -121,6 +121,70 @@ export async function GET(req: NextRequest) {
   }
 }
 
+export async function PUT(req: NextRequest) {
+  console.log('🔄 UPDATE Auth API - обновление статистики игрока');
+  
+  try {
+    const body = await req.json();
+    
+    if (body.type !== 'telegram' || !body.id) {
+      return NextResponse.json({ 
+        success: false, 
+        message: 'Требуется Telegram тип и ID для обновления' 
+      }, { status: 400 });
+    }
+    
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_ANON_KEY;
+    const useSupabase = !!(supabaseUrl && supabaseKey);
+    
+    if (useSupabase) {
+      // Обновляем в Supabase
+      const { data: updatedUser, error } = await supabase
+        .from('users')
+        .update({
+          coins: body.coins,
+          rating: body.rating,
+          games_played: body.games_played,
+          games_won: body.games_won,
+          photo_url: body.photo_url,
+          updated_at: new Date().toISOString()
+        })
+        .eq('telegram_id', body.id)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('❌ Ошибка обновления в Supabase:', error);
+        return NextResponse.json({ 
+          success: false, 
+          message: 'Не удалось обновить статистику в базе данных' 
+        }, { status: 500 });
+      }
+      
+      console.log('✅ Статистика игрока обновлена в Supabase:', updatedUser);
+      return NextResponse.json({
+        success: true,
+        user: updatedUser,
+        message: 'Статистика игрока успешно обновлена'
+      });
+    } else {
+      console.log('⚠️ База данных недоступна, статистика не сохранена');
+      return NextResponse.json({
+        success: true,
+        message: 'Статистика обновлена локально (база недоступна)'
+      });
+    }
+    
+  } catch (error) {
+    console.error('❌ Ошибка UPDATE API:', error);
+    return NextResponse.json({ 
+      success: false, 
+      message: 'Внутренняя ошибка сервера при обновлении' 
+    }, { status: 500 });
+  }
+}
+
 export async function POST(req: NextRequest) {
   console.log('🚀 SUPABASE Auth API вызван');
   

@@ -14,6 +14,8 @@ interface User {
   coins: number;
   gamesPlayed: number;
   gamesWon: number;
+  telegramId?: string | null; // ДОБАВЛЕНО
+  photoUrl?: string | null;   // ДОБАВЛЕНО
 }
 
 function HomeWithParams() {
@@ -23,40 +25,221 @@ function HomeWithParams() {
   const router = useRouter();
 
 
-  // Простая инициализация пользователя без авторизации
+  // ПРАВИЛЬНАЯ инициализация пользователя с проверкой существования
   useEffect(() => {
-    console.log('🎮 ИНИЦИАЛИЗАЦИЯ ИГРЫ БЕЗ АВТОРИЗАЦИИ');
+    console.log('🎮 ИНИЦИАЛИЗАЦИЯ ИГРЫ - ПРОВЕРКА ИГРОКА');
     
-    // Создаем игрока по умолчанию
-    const defaultUser = {
-      id: 'player_' + Date.now(),
-      username: window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name || 'Игрок',
-      firstName: window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name || 'Игрок',
-      lastName: window.Telegram?.WebApp?.initDataUnsafe?.user?.last_name || '',
-      telegramId: window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || null,
-      coins: 1000,
-      rating: 0,
-      gamesPlayed: 0,
-      gamesWon: 0,
-      photoUrl: window.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url || null
+    const initializePlayer = async () => {
+      const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+      const telegramId = telegramUser?.id?.toString();
+      
+      if (!telegramId) {
+        console.log('⚠️ Нет Telegram ID, создаем локального игрока');
+        createLocalPlayer();
+        return;
+      }
+      
+      try {
+        // Проверяем localStorage на существующего игрока
+        const savedUser = localStorage.getItem('user');
+        if (savedUser) {
+          const parsedUser = JSON.parse(savedUser);
+          if (parsedUser.telegramId === telegramId) {
+            console.log('✅ Найден сохраненный игрок:', parsedUser);
+            setUser(parsedUser);
+            setLoading(false);
+            
+            // Диспатчим событие обновления монет
+            window.dispatchEvent(new CustomEvent('coinsUpdated', { 
+              detail: { coins: parsedUser.coins } 
+            }));
+            
+            console.log('🚀 ИГРА ГОТОВА К ЗАПУСКУ (существующий игрок)!');
+            return;
+          }
+        }
+        
+        // Пытаемся загрузить из API/базы данных
+        console.log('🔍 Ищем игрока в базе данных...');
+        const response = await fetch('/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'telegram',
+            id: telegramId,
+            username: telegramUser?.username || undefined,
+            first_name: telegramUser?.first_name || undefined,
+            last_name: telegramUser?.last_name || undefined,
+            photo_url: telegramUser?.photo_url || undefined
+          })
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.user) {
+            console.log('✅ Игрок найден в базе:', data.user);
+            
+            const existingUser: User = {
+              id: data.user.id || `player_${telegramId}`,
+              username: data.user.username || telegramUser?.first_name || 'Игрок',
+              firstName: data.user.first_name || telegramUser?.first_name || 'Игрок',
+              lastName: data.user.last_name || telegramUser?.last_name || '',
+              telegramId: telegramId,
+              coins: data.user.coins || 1000,
+              rating: data.user.rating || 0,
+              gamesPlayed: data.user.games_played || 0,
+              gamesWon: data.user.games_won || 0,
+              photoUrl: data.user.photo_url || telegramUser?.photo_url
+            };
+            
+            // Сохраняем в localStorage для быстрого доступа
+            localStorage.setItem('user', JSON.stringify(existingUser));
+            localStorage.setItem('current_user', JSON.stringify(existingUser));
+            
+            setUser(existingUser);
+            setLoading(false);
+            
+            // Диспатчим событие обновления монет
+            window.dispatchEvent(new CustomEvent('coinsUpdated', { 
+              detail: { coins: existingUser.coins } 
+            }));
+            
+            console.log('🚀 ИГРА ГОТОВА К ЗАПУСКУ (игрок из базы)!');
+            return;
+          }
+        }
+        
+        // Если игрок не найден - создаем нового
+        console.log('👤 Игрок не найден, создаем нового...');
+        createNewPlayer(telegramUser, telegramId);
+        
+      } catch (error) {
+        console.error('❌ Ошибка при загрузке игрока:', error);
+        console.log('🔄 Создаем локального игрока как fallback');
+        createLocalPlayer();
+      }
     };
+    
+    const createNewPlayer = (telegramUser: any | undefined, telegramId: string) => {
+      const newUser: User = {
+        id: `player_${telegramId}`, // ФИКСИРОВАННЫЙ ID на основе Telegram ID!
+        username: telegramUser?.first_name || 'Игрок',
+        firstName: telegramUser?.first_name || 'Игрок', 
+        lastName: telegramUser?.last_name || '',
+        telegramId: telegramId,
+        coins: 1000,
+        rating: 0,
+        gamesPlayed: 0,
+        gamesWon: 0,
+        photoUrl: telegramUser?.photo_url || null
+      };
 
-    console.log('✅ Создан игрок:', defaultUser);
+      console.log('✅ Создан НОВЫЙ игрок:', newUser);
+      
+      // Сохраняем данные игрока
+      localStorage.setItem('user', JSON.stringify(newUser));
+      localStorage.setItem('current_user', JSON.stringify(newUser));
+      
+      // Диспатчим событие обновления монет
+      window.dispatchEvent(new CustomEvent('coinsUpdated', { 
+        detail: { coins: newUser.coins } 
+      }));
+      
+      setUser(newUser);
+      setLoading(false);
+      
+      console.log('🚀 ИГРА ГОТОВА К ЗАПУСКУ (новый игрок)!');
+    };
     
-    // Сохраняем данные игрока
-    localStorage.setItem('user', JSON.stringify(defaultUser));
-    localStorage.setItem('current_user', JSON.stringify(defaultUser));
+    const createLocalPlayer = () => {
+      const localUser: User = {
+        id: 'local_player_' + Date.now(),
+        username: 'Локальный игрок',
+        firstName: 'Локальный игрок',
+        lastName: '',
+        telegramId: null,
+        coins: 1000,
+        rating: 0,
+        gamesPlayed: 0,
+        gamesWon: 0,
+        photoUrl: null
+      };
+      
+      console.log('✅ Создан локальный игрок:', localUser);
+      
+      localStorage.setItem('user', JSON.stringify(localUser));
+      localStorage.setItem('current_user', JSON.stringify(localUser));
+      
+      window.dispatchEvent(new CustomEvent('coinsUpdated', { 
+        detail: { coins: localUser.coins } 
+      }));
+      
+      setUser(localUser);
+      setLoading(false);
+      
+      console.log('🚀 ИГРА ГОТОВА К ЗАПУСКУ (локальный игрок)!');
+    };
     
-    // Диспатчим событие обновления монет
-    window.dispatchEvent(new CustomEvent('coinsUpdated', { 
-      detail: { coins: defaultUser.coins } 
-    }));
-    
-    setUser(defaultUser);
-    setLoading(false);
-    
-    console.log('🚀 ИГРА ГОТОВА К ЗАПУСКУ!');
+    initializePlayer();
   }, []);
+  
+  // Функция для сохранения обновлений игрока в базу данных
+  const savePlayerToDatabase = async (playerData: User) => {
+    if (!playerData.telegramId) {
+      console.log('⚠️ Нет Telegram ID, пропускаем сохранение в базу');
+      return;
+    }
+    
+    try {
+      const response = await fetch('/api/auth', {
+        method: 'PUT', // PUT для обновления
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'telegram',
+          id: playerData.telegramId,
+          username: playerData.username,
+          first_name: playerData.firstName,
+          last_name: playerData.lastName,
+          coins: playerData.coins,
+          rating: playerData.rating,
+          games_played: playerData.gamesPlayed,
+          games_won: playerData.gamesWon,
+          photo_url: playerData.photoUrl
+        })
+      });
+      
+      if (response.ok) {
+        console.log('✅ Статистика игрока сохранена в базу');
+      } else {
+        console.warn('⚠️ Не удалось сохранить статистику игрока в базу');
+      }
+    } catch (error) {
+      console.error('❌ Ошибка сохранения в базу:', error);
+    }
+  };
+  
+  // Слушаем обновления статистики игрока
+  useEffect(() => {
+    const handleStatsUpdate = (event: CustomEvent) => {
+      if (user) {
+        const updatedUser = { ...user, ...event.detail };
+        setUser(updatedUser);
+        
+        // Сохраняем в localStorage
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        localStorage.setItem('current_user', JSON.stringify(updatedUser));
+        
+        // Сохраняем в базу данных
+        savePlayerToDatabase(updatedUser);
+      }
+    };
+    
+    window.addEventListener('playerStatsUpdated', handleStatsUpdate as EventListener);
+    
+    return () => {
+      window.removeEventListener('playerStatsUpdated', handleStatsUpdate as EventListener);
+    };
+  }, [user]);
 
   // Обработка реферального кода из URL
   useEffect(() => {
