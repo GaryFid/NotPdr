@@ -2045,9 +2045,13 @@ export const useGameStore = create<GameState>()(
            
            players.forEach(player => {
              const openCards = player.cards.filter(c => c.open);
+             const totalCards = player.cards.length; // ИСПРАВЛЕНО: Общее количество карт
              
-             // Проверяем есть ли у игрока ровно 1 открытая карта
-             if (openCards.length === 1) {
+             console.log(`🔍 [checkOneCardStatus] ${player.name}: открытых=${openCards.length}, всего=${totalCards}`);
+             
+             // ИСПРАВЛЕНО: Проверяем есть ли у игрока ровно 1 ОБЩАЯ карта (не только открытые!)
+             // Игрок должен объявлять "одна карта" когда у него остается всего 1 карта, независимо от того открытая она или нет
+             if (totalCards === 1) {
                newPlayersWithOneCard.push(player.id);
                
                // Если игрок еще не объявил "одна карта" и у него нет таймера
@@ -2055,11 +2059,11 @@ export const useGameStore = create<GameState>()(
                  // Запускаем таймер на 5 секунд для объявления
                  newOneCardTimers[player.id] = currentTime + 5000; // 5 секунд на объявление
                  
-                 console.log(`⏰ [checkOneCardStatus] У игрока ${player.name} 1 карта! Запущен таймер на объявление (до ${new Date(newOneCardTimers[player.id]).toLocaleTimeString()})`);
+                 console.log(`⏰ [checkOneCardStatus] У игрока ${player.name} всего 1 карта! Запущен таймер на объявление (до ${new Date(newOneCardTimers[player.id]).toLocaleTimeString()})`);
                  
                  // Уведомляем игрока (если это человек)
                  if (!player.isBot) {
-                   get().showNotification(`⚠️ У вас 1 карта! ОБЯЗАТЕЛЬНО нажмите "Одна карта!" в течение 5 секунд!`, 'warning', 5000);
+                   get().showNotification(`⚠️ У вас осталась 1 карта! ОБЯЗАТЕЛЬНО нажмите "Одна карта!" в течение 5 секунд!`, 'warning', 5000);
                  }
                  
                  // ===== НОВАЯ МЕХАНИКА: БОТЫ АВТОМАТИЧЕСКИ СПРАШИВАЮТ "СКОЛЬКО КАРТ?" =====
@@ -2087,9 +2091,9 @@ export const useGameStore = create<GameState>()(
                  }
                }
              } else {
-               // У игрока больше или меньше 1 карты - ПОЛНОСТЬЮ сбрасываем объявление и таймер
+               // ИСПРАВЛЕНО: У игрока больше или меньше 1 ОБЩЕЙ карты - сбрасываем объявление и таймер
                if (oneCardDeclarations[player.id] || oneCardTimers[player.id]) {
-                 console.log(`🔄 [checkOneCardStatus] У игрока ${player.name} теперь ${openCards.length} карт - СБРАСЫВАЕМ объявление и таймер`);
+                 console.log(`🔄 [checkOneCardStatus] У игрока ${player.name} теперь ${totalCards} карт - СБРАСЫВАЕМ объявление и таймер`);
                  delete newOneCardDeclarations[player.id];
                  delete newOneCardTimers[player.id];
                }
@@ -2154,8 +2158,11 @@ export const useGameStore = create<GameState>()(
           // Показываем только ОТКРЫТЫЕ карты
           get().showNotification(`📊 ${target.name} имеет ${targetOpenCards.length} открытых карт`, 'info', 4000);
            
-          // ШТРАФНАЯ ПРОВЕРКА: Если у цели 1 открытая карта (важна именно открытая для правил)
-          if (targetOpenCards.length === 1) {
+          // ИСПРАВЛЕНО: ШТРАФНАЯ ПРОВЕРКА по ОБЩЕМУ количеству карт, не только открытых
+          const targetTotalCards = target.cards.length;
+          console.log(`🎯 [askHowManyCards] ${target.name}: открытых=${targetOpenCards.length}, всего=${targetTotalCards}`);
+          
+          if (targetTotalCards === 1) {
              const hasActiveTimer = oneCardTimers[targetPlayerId] && oneCardTimers[targetPlayerId] > currentTime;
              const hasExpiredTimer = oneCardTimers[targetPlayerId] && oneCardTimers[targetPlayerId] <= currentTime;
              const hasDeclared = oneCardDeclarations[targetPlayerId];

@@ -367,50 +367,72 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, message: 'Комната недоступна для присоединения' }, { status: 400 });
       }
 
-      // Особая проверка для хоста - хост всегда может войти в свою комнату
+      // ИСПРАВЛЕНО: Особая проверка для хоста - хост всегда может войти в свою комнату
       if (room.host_id === userId) {
         console.log('👑 Хост заходит в свою комнату:', roomCode);
         
         // Проверяем, не находится ли хост уже в комнате
         const { data: existingPlayer } = await supabase
           .from('room_players')
-          .select('id')
+          .select('id, position, is_ready')
           .eq('room_id', room.id)
           .eq('user_id', userId)
           .single();
 
         if (existingPlayer) {
+          console.log('👑 Хост уже в комнате, просто восстанавливаем статус ready');
+          
+          // Хост уже есть - просто обновляем статус на ready
+          await supabase
+            .from('room_players')
+            .update({ is_ready: true })
+            .eq('id', existingPlayer.id);
+            
           return NextResponse.json({ 
             success: true, 
             room: {
               id: room.id,
               roomCode,
               name: room.name,
-              position: 0 // Хост всегда на позиции 0
+              position: existingPlayer.position
             },
-            message: 'Добро пожаловать обратно в вашу комнату!'
+            message: 'С возвращением, хост! 👑'
           });
         }
 
-        // Если хоста нет в списке игроков, добавляем его
+        // ИСПРАВЛЕНО: Хоста НЕТ в списке игроков - добавляем его правильно
+        console.log('👑 Добавляем хоста в комнату впервые');
+        
         const { error: hostJoinError } = await supabase
           .from('room_players')
           .insert({
             room_id: room.id,
             user_id: userId,
-            position: 0,
+            position: 0, // Хост всегда на позиции 0
             is_ready: true
           });
 
         if (hostJoinError) {
           console.error('❌ Ошибка добавления хоста в комнату:', hostJoinError);
-        } else {
-          // Обновляем количество игроков
-          await supabase
-            .from('game_rooms')
-            .update({ current_players: room.current_players + 1 })
-            .eq('id', room.id);
+          return NextResponse.json({ 
+            success: false, 
+            message: 'Ошибка добавления в комнату' 
+          }, { status: 500 });
         }
+
+        // ИСПРАВЛЕНО: Получаем актуальный счет игроков из базы
+        const { data: allPlayers } = await supabase
+          .from('room_players')
+          .select('id')
+          .eq('room_id', room.id);
+
+        const actualPlayerCount = allPlayers?.length || 1;
+        console.log(`📊 Хост добавлен, обновляем счетчик на ${actualPlayerCount}`);
+        
+        await supabase
+          .from('game_rooms')
+          .update({ current_players: actualPlayerCount })
+          .eq('id', room.id);
 
         return NextResponse.json({ 
           success: true, 
@@ -420,7 +442,7 @@ export async function POST(req: NextRequest) {
             name: room.name,
             position: 0
           },
-          message: 'Добро пожаловать в вашу комнату!'
+          message: 'Добро пожаловать в вашу комнату, хост! 👑'
         });
       }
 
@@ -600,23 +622,61 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ success: true, message: 'Комната удалена' });
     }
 
-    // Покинуть комнату
-    const { error: leaveError } = await supabase
+    // ИСПРАВЛЕНО: Особая обработка выхода хоста
+    if (room.host_id === userId) {
+      console.log('👑 Хост покидает свою комнату, НЕ удаляем его из базы - помечаем как absent');
+      
+      // Для хоста: НЕ удаляем из room_players, а помечаем как "absent" 
+      // Это предотвратит дублирование при возвращении
+      const { error: hostAbsentError } = await supabase
+        .from('room_players')
+        .update({ 
+          is_ready: false,
+          // Добавляем поле для отметки отсутствия хоста (если его нет в схеме, можно использовать другие способы)
+        })
+        .eq('room_id', roomId)
+        .eq('user_id', userId);
+
+      if (hostAbsentError) {
+        console.error('❌ Ошибка обновления статуса хоста:', hostAbsentError);
+        // Если обновление не удалось, удаляем как обычного игрока
+        await supabase
+          .from('room_players')
+          .delete()
+          .eq('room_id', roomId)
+          .eq('user_id', userId);
+      }
+
+      console.log('👑 Хост отмечен как absent, но запись сохранена для возвращения');
+      
+    } else {
+      // Обычный игрок - удаляем как раньше
+      const { error: leaveError } = await supabase
+        .from('room_players')
+        .delete()
+        .eq('room_id', roomId)
+        .eq('user_id', userId);
+
+      if (leaveError) throw leaveError;
+    }
+
+    // Получаем актуальный счет игроков из базы (не полагаемся на old current_players)
+    const { data: actualPlayers, error: countError } = await supabase
       .from('room_players')
-      .delete()
-      .eq('room_id', roomId)
-      .eq('user_id', userId);
+      .select('id')
+      .eq('room_id', roomId);
 
-    if (leaveError) throw leaveError;
+    if (!countError && actualPlayers) {
+      const actualPlayerCount = actualPlayers.length;
+      console.log(`📊 Обновляем счетчик: было ${room.current_players}, стало ${actualPlayerCount}`);
+      
+      const { error: updateError } = await supabase
+        .from('game_rooms')
+        .update({ current_players: actualPlayerCount })
+        .eq('id', roomId);
 
-    // Обновляем количество игроков в комнате
-    const newPlayerCount = Math.max(0, room.current_players - 1);
-    const { error: updateError } = await supabase
-      .from('game_rooms')
-      .update({ current_players: newPlayerCount })
-      .eq('id', roomId);
-
-    if (updateError) throw updateError;
+      if (updateError) throw updateError;
+    }
 
     // Обновляем статус пользователя
     await updateUserStatus(userId, 'online', null);
