@@ -14,8 +14,11 @@ import {
   FaGift,
   FaTrophy,
   FaArrowUp,
-  FaArrowDown
+  FaArrowDown,
+  FaKey,
+  FaDatabase
 } from 'react-icons/fa';
+import { hdWalletService } from '@/lib/wallets/hd-wallet-service';
 
 interface User {
   id: string;
@@ -51,12 +54,28 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   const [withdrawAddress, setWithdrawAddress] = useState('');
   const [selectedCrypto, setSelectedCrypto] = useState('TON');
+  const [hdAddresses, setHdAddresses] = useState<any[]>([]);
+  const [isGeneratingAddress, setIsGeneratingAddress] = useState(false);
 
   // Загружаем данные пользователя и транзакции
   useEffect(() => {
     loadUserData();
     loadTransactions();
-  }, []);
+    loadHDAddresses();
+  }, [user]);
+
+  // Загрузка HD адресов пользователя
+  const loadHDAddresses = async () => {
+    if (!user?.id) return;
+
+    try {
+      const addresses = await hdWalletService.getAllUserAddresses(user.id);
+      setHdAddresses(addresses);
+      console.log('✅ HD адреса загружены:', addresses);
+    } catch (error) {
+      console.error('❌ Ошибка загрузки HD адресов:', error);
+    }
+  };
 
   const loadUserData = async () => {
     try {
@@ -392,19 +411,38 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
     return lastBonus !== today;
   };
 
-  // Генерация адреса для пополнения
-  const generateDepositAddress = (crypto: string, userId: string): string => {
-    const userHash = userId.slice(-8) || Math.random().toString(36).slice(-8);
-    
-    switch (crypto) {
-      case 'TON':
-        return `UQD${userHash}bKIRD6L73zENFzmSIMZ07pyejnn8HUWvjdprqnC${userHash.slice(-4)}`;
-      case 'USDT':
-        return `USDT${userHash.toUpperCase()}9907946`;
-      case 'BTC':
-        return `bc1q${userHash}a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z`;
-      default:
-        return `${crypto}${userHash}${Date.now().toString().slice(-6)}`;
+  // Генерация HD адреса для пополнения
+  const generateDepositAddress = async (crypto: string, userId: string): Promise<string> => {
+    if (!userId) return 'Ошибка: нет ID пользователя';
+
+    try {
+      setIsGeneratingAddress(true);
+      
+      // Сначала проверяем, есть ли уже адрес для этой монеты
+      let existingAddress = hdAddresses.find(addr => addr.coin === crypto.toUpperCase());
+      
+      if (existingAddress) {
+        console.log(`✅ Используем существующий HD адрес для ${crypto}:`, existingAddress.address);
+        return existingAddress.address;
+      }
+
+      // Генерируем новый HD адрес
+      console.log(`🔄 Генерируем новый HD адрес для ${crypto}...`);
+      const walletAddress = await hdWalletService.getUserAddress(userId, crypto);
+      
+      if (walletAddress) {
+        // Обновляем локальный список адресов
+        setHdAddresses(prev => [...prev, walletAddress]);
+        console.log(`✅ Новый HD адрес создан для ${crypto}:`, walletAddress.address);
+        return walletAddress.address;
+      } else {
+        throw new Error('Не удалось создать HD адрес');
+      }
+    } catch (error) {
+      console.error(`❌ Ошибка генерации HD адреса для ${crypto}:`, error);
+      return `Ошибка: ${error}`;
+    } finally {
+      setIsGeneratingAddress(false);
     }
   };
 
@@ -679,16 +717,16 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
                   </div>
 
                   <div className="address-section">
-                    <label>Ваш персональный адрес {selectedCrypto} для заполнения</label>
-                    <div className="address-container">
-                      <input 
-                        type="text" 
-                        value={generateDepositAddress(selectedCrypto, user?.id || '')}
-                        readOnly 
-                      />
-                      <button className="copy-btn" onClick={() => navigator.clipboard?.writeText(generateDepositAddress(selectedCrypto, user?.id || ''))}>
-                        📋
-                      </button>
+                    <label>🔐 Ваш персональный HD адрес {selectedCrypto} для пополнения</label>
+                    <HDAddressDisplay 
+                      crypto={selectedCrypto} 
+                      userId={user?.id || ''} 
+                      generateAddress={generateDepositAddress}
+                      isGenerating={isGeneratingAddress}
+                    />
+                    <div className="hd-info">
+                      <FaKey className="hd-icon" />
+                      <span>HD Wallet: уникальный адрес из вашего мастер-кошелька</span>
                     </div>
                     <div className="warning">⚠️ Пожалуйста, внимательно проверьте адрес депозита кошелька!</div>
                   </div>
@@ -790,6 +828,7 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
         )}
       </AnimatePresence>
 
+
       <style jsx>{`
         .game-wallet-container {
           width: 100%;
@@ -802,12 +841,15 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
         .balance-card {
           background: linear-gradient(135deg, #1e3a8a 0%, #1e293b 50%, #0f172a 100%);
           border: 2px solid #ffd700;
-          border-radius: 20px;
-          padding: 24px;
-          margin-bottom: 20px;
-          box-shadow: 0 8px 32px rgba(255, 215, 0, 0.2), 0 0 40px rgba(30, 58, 138, 0.3);
+          border-radius: 12px;
+          padding: 12px 16px;
+          margin-bottom: 16px;
+          box-shadow: 0 4px 16px rgba(255, 215, 0, 0.2), 0 0 20px rgba(30, 58, 138, 0.3);
           position: relative;
           overflow: hidden;
+          max-width: 280px;
+          margin-left: auto;
+          margin-right: auto;
         }
 
         .balance-card::before {
@@ -824,17 +866,17 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
         .balance-header {
           display: flex;
           align-items: center;
-          gap: 12px;
-          margin-bottom: 16px;
+          gap: 8px;
+          margin-bottom: 8px;
         }
 
         .balance-icon {
-          font-size: 24px;
+          font-size: 16px;
           color: #3b82f6;
         }
 
         .balance-title {
-          font-size: 16px;
+          font-size: 14px;
           font-weight: 600;
           color: #e2e8f0;
         }
@@ -842,31 +884,31 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
         .balance-amount {
           display: flex;
           align-items: center;
-          gap: 12px;
-          margin-bottom: 12px;
+          gap: 8px;
+          margin-bottom: 8px;
         }
 
         .coin-icon {
-          font-size: 24px;
+          font-size: 18px;
           color: #3b82f6;
-          filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.5));
+          filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.5));
         }
 
         .amount-text {
-          font-size: 28px;
+          font-size: 20px;
           font-weight: 700;
           color: #3b82f6;
-          text-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+          text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
         }
 
         .currency {
-          font-size: 18px;
+          font-size: 14px;
           color: #94a3b8;
           margin-left: auto;
         }
 
         .wallet-id {
-          font-size: 14px;
+          font-size: 12px;
           color: #64748b;
           text-align: center;
         }
@@ -875,10 +917,13 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
           display: flex;
           background: linear-gradient(135deg, rgba(30, 58, 138, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
           border: 1px solid rgba(255, 215, 0, 0.2);
-          border-radius: 16px;
+          border-radius: 12px;
           padding: 4px;
-          margin-bottom: 20px;
+          margin-bottom: 16px;
           backdrop-filter: blur(10px);
+          max-width: 320px;
+          margin-left: auto;
+          margin-right: auto;
         }
 
         .tab-button {
@@ -916,32 +961,37 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
 
         .action-buttons {
           display: flex;
-          gap: 12px;
+          gap: 16px;
           margin-bottom: 32px;
-          justify-content: space-between;
+          justify-content: center;
+          flex-wrap: wrap;
         }
 
         .action-button {
           flex: 1;
+          min-width: 140px;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 8px;
-          padding: 16px 12px;
-          border-radius: 12px;
-          border: 2px solid #ffd700;
+          gap: 12px;
+          padding: 20px 16px;
+          border-radius: 16px;
+          border: 3px solid #ffd700;
           cursor: pointer;
-          font-weight: 700;
-          font-size: 13px;
+          font-weight: 800;
+          font-size: 14px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           position: relative;
           overflow: hidden;
-          background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1d4ed8 100%);
+          background: linear-gradient(135deg, #0f4c75 0%, #1e3a8a 30%, #065f46 70%, #064e3b 100%);
           color: white;
           box-shadow: 
-            0 3px 15px rgba(255, 215, 0, 0.2),
-            0 6px 25px rgba(30, 58, 138, 0.3),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            0 8px 25px rgba(255, 215, 0, 0.3),
+            0 15px 35px rgba(30, 58, 138, 0.4),
+            inset 0 2px 0 rgba(255, 255, 255, 0.2),
+            inset 0 -2px 0 rgba(0, 0, 0, 0.3);
         }
 
         .action-button::before {
@@ -951,25 +1001,51 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
           left: -100%;
           width: 100%;
           height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.2), transparent);
-          transition: left 0.5s;
+          background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.3), rgba(255, 255, 255, 0.2), transparent);
+          transition: left 0.6s;
         }
 
         .action-button:hover::before {
           left: 100%;
         }
 
+        .action-button::after {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 0;
+          height: 0;
+          background: radial-gradient(circle, rgba(255, 215, 0, 0.4), transparent 70%);
+          border-radius: 50%;
+          transform: translate(-50%, -50%);
+          transition: width 0.3s, height 0.3s;
+        }
+
+        .action-button:hover::after {
+          width: 120px;
+          height: 120px;
+        }
+
         .button-glow {
           position: absolute;
-          top: -2px;
-          left: -2px;
-          right: -2px;
-          bottom: -2px;
-          background: linear-gradient(45deg, #ffd700, #ffed4a, #ffd700);
-          border-radius: 18px;
+          top: -4px;
+          left: -4px;
+          right: -4px;
+          bottom: -4px;
+          background: linear-gradient(45deg, #ffd700, #ffed4a, #10b981, #065f46, #ffd700);
+          background-size: 300% 300%;
+          border-radius: 20px;
           z-index: -1;
           opacity: 0;
-          transition: opacity 0.3s ease;
+          transition: opacity 0.4s ease;
+          animation: gradientShift 3s ease infinite;
+        }
+
+        @keyframes gradientShift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
         }
 
         .action-button:hover .button-glow {
@@ -977,15 +1053,16 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
         }
 
         .action-button:hover {
-          transform: translateY(-3px);
+          transform: translateY(-5px) scale(1.02);
           box-shadow: 
-            0 6px 25px rgba(255, 215, 0, 0.4),
-            0 12px 40px rgba(30, 58, 138, 0.5),
-            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            0 12px 35px rgba(255, 215, 0, 0.5),
+            0 20px 60px rgba(30, 58, 138, 0.6),
+            inset 0 3px 0 rgba(255, 255, 255, 0.3),
+            inset 0 -3px 0 rgba(0, 0, 0, 0.4);
         }
 
         .action-button:active {
-          transform: translateY(-1px);
+          transform: translateY(-2px) scale(0.98);
         }
 
         .action-button:disabled {
@@ -995,7 +1072,17 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
         }
 
         .action-icon {
-          font-size: 18px;
+          font-size: 24px;
+          filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+          z-index: 2;
+          position: relative;
+        }
+
+        .action-button span {
+          z-index: 2;
+          position: relative;
+          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+          font-weight: 900;
         }
 
         .quick-actions {
@@ -1475,7 +1562,111 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
           align-items: flex-start;
           gap: 8px;
         }
+
+        .hd-info {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-top: 12px;
+          padding: 8px 12px;
+          background: rgba(59, 130, 246, 0.1);
+          border: 1px solid rgba(59, 130, 246, 0.3);
+          border-radius: 8px;
+          font-size: 12px;
+          color: #3b82f6;
+        }
+
+        .hd-icon {
+          font-size: 14px;
+          color: #ffd700;
+        }
+
+        .hd-address-container {
+          position: relative;
+        }
+
+        .hd-generating {
+          opacity: 0.6;
+          pointer-events: none;
+        }
+
+        .hd-spinner {
+          position: absolute;
+          right: 50px;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 16px;
+          height: 16px;
+          border: 2px solid rgba(59, 130, 246, 0.3);
+          border-top: 2px solid #3b82f6;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          0% { transform: translateY(-50%) rotate(0deg); }
+          100% { transform: translateY(-50%) rotate(360deg); }
+        }
       `}</style>
+    </div>
+  );
+}
+
+// HD Address Display Component
+interface HDAddressDisplayProps {
+  crypto?: string;
+  userId?: string;
+  generateAddress?: (crypto: string, userId: string) => Promise<string>;
+  isGenerating?: boolean;
+}
+
+function HDAddressDisplay({ crypto = 'TON', userId = '', generateAddress, isGenerating = false }: HDAddressDisplayProps) {
+  const [address, setAddress] = useState('Генерируется HD адрес...');
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (generateAddress && userId && crypto) {
+      loadAddress();
+    }
+  }, [crypto, userId, generateAddress]);
+
+  const loadAddress = async () => {
+    if (!generateAddress || !userId) return;
+    
+    setIsLoading(true);
+    try {
+      const addr = await generateAddress(crypto, userId);
+      setAddress(addr);
+    } catch (error) {
+      console.error('Ошибка загрузки HD адреса:', error);
+      setAddress('Ошибка генерации адреса');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const copyToClipboard = () => {
+    if (address && address !== 'Генерируется HD адрес...' && !address.startsWith('Ошибка')) {
+      navigator.clipboard?.writeText(address);
+    }
+  };
+
+  return (
+    <div className={`address-container hd-address-container ${isLoading || isGenerating ? 'hd-generating' : ''}`}>
+      <input 
+        type="text" 
+        value={address}
+        readOnly 
+        placeholder="Генерируется уникальный HD адрес..."
+      />
+      {(isLoading || isGenerating) && <div className="hd-spinner"></div>}
+      <button 
+        className="copy-btn" 
+        onClick={copyToClipboard}
+        disabled={isLoading || isGenerating || address.startsWith('Ошибка')}
+      >
+        {isLoading || isGenerating ? <FaDatabase /> : '📋'}
+      </button>
     </div>
   );
 }
