@@ -41,7 +41,8 @@ export async function POST(req: NextRequest) {
       roomId: Math.random().toString(36).substring(2, 10),
       roomCode: roomCode,
       name: roomName || `Комната ${roomCode}`,
-      host: hostName || 'Хост',
+      host: hostName || `Игрок ${hostUserId}`, // ИСПРАВЛЕНО: используем реальное имя или ID
+      hostUserId: hostUserId, // ИСПРАВЛЕНО: добавляем ID хоста
       maxPlayers: maxPlayers || 6,
       gameMode: gameMode || 'casual',
       hasPassword: hasPassword || false,

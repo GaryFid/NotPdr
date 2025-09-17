@@ -12,14 +12,15 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    // Mock room join logic
+    // ИСПРАВЛЕНО: Mock room join logic с реальными данными
     const room = {
       roomId: Math.random().toString(36).substring(2, 10),
       roomCode: roomCode.toUpperCase(),
       name: `Комната ${roomCode}`,
-      host: 'Хост комнаты',
+      host: userName || `Игрок ${userId}`, // ИСПРАВЛЕНО: используем реальное имя
+      hostUserId: userId, // ИСПРАВЛЕНО: добавляем ID хоста
       maxPlayers: 6,
-      currentPlayers: 3,
+      currentPlayers: 2, // ИСПРАВЛЕНО: корректное количество
       gameMode: 'casual',
       hasPassword: false,
       isPrivate: false,

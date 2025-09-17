@@ -151,18 +151,24 @@ export default function ProfessionalMultiplayer({ onBack }: ProfessionalMultipla
     setError(null);
     
     try {
-      const response = await fetch('/api/rooms/create', {
+      // ИСПРАВЛЕНО: Используем основную базу данных вместо fallback API
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        throw new Error('Не найден токен авторизации');
+      }
+
+      const response = await fetch('/api/rooms', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` // ИСПРАВЛЕНО: добавили токен
+        },
         body: JSON.stringify({
-          hostUserId: user?.id?.toString() || 'anonymous',
-          hostName: user?.first_name || user?.username || createData.name || 'Хост',
-          maxPlayers: createData.maxPlayers,
-          gameMode: createData.gameMode,
+          action: 'create', // ИСПРАВЛЕНО: добавили action
           roomName: createData.name,
-          hasPassword: createData.hasPassword,
-          password: createData.hasPassword ? createData.password : undefined,
-          isPrivate: createData.isPrivate
+          maxPlayers: createData.maxPlayers,
+          isPrivate: createData.isPrivate,
+          password: createData.hasPassword ? createData.password : undefined
         }),
       });
 
@@ -187,13 +193,21 @@ export default function ProfessionalMultiplayer({ onBack }: ProfessionalMultipla
     setError(null);
     
     try {
-      const response = await fetch('/api/rooms/join', {
+      // ИСПРАВЛЕНО: Используем основную базу данных
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        throw new Error('Не найден токен авторизации');
+      }
+
+      const response = await fetch('/api/rooms', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
+          action: 'join',
           roomCode: roomCode.toUpperCase(),
-          userId: user?.id?.toString() || 'anonymous',
-          userName: user?.first_name || user?.username || 'Игрок',
           password: password
         }),
       });

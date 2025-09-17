@@ -198,18 +198,24 @@ export default function ProperMultiplayer({ onBack }: ProperMultiplayerProps) {
     setError(null);
     
     try {
-      const response = await fetch('/api/rooms/create', {
+      // ИСПРАВЛЕНО: Используем основную базу данных вместо fallback API
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        throw new Error('Не найден токен авторизации');
+      }
+
+      const response = await fetch('/api/rooms', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` // ИСПРАВЛЕНО: добавили токен
+        },
         body: JSON.stringify({
-          hostUserId: user?.id?.toString() || 'anonymous',
-          hostName: user?.first_name || user?.username || createData.name || 'Хост',
-          maxPlayers: createData.maxPlayers,
-          gameMode: createData.gameMode,
+          action: 'create', // ИСПРАВЛЕНО: добавили action
           roomName: createData.name,
-          hasPassword: createData.hasPassword,
-          password: createData.hasPassword ? createData.password : undefined,
-          isPrivate: createData.isPrivate
+          maxPlayers: createData.maxPlayers,
+          isPrivate: createData.isPrivate,
+          password: createData.hasPassword ? createData.password : undefined
         }),
       });
 
@@ -311,12 +317,80 @@ export default function ProperMultiplayer({ onBack }: ProperMultiplayerProps) {
     setError(null);
     
     try {
-      // Сначала пробуем найти комнату в общем хранилище
-      const sharedRoom = roomStorage.findRoom(roomCode);
+      // ИСПРАВЛЕНО: Присоединение через основную базу данных
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        throw new Error('Не найден токен авторизации');
+      }
+
+      const response = await fetch('/api/rooms', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          action: 'join',
+          roomCode: roomCode.toUpperCase(),
+          password: password
+        }),
+      });
+
+      const result = await response.json();
       
-      if (sharedRoom) {
+      if (result.success) {
+        console.log('✅ Successfully joined room:', result.room);
+        
+        // Создаем данные для комнаты ожидания (из базы данных)
+        const roomData = {
+          id: result.room.id,
+          code: result.room.roomCode,
+          name: result.room.name,
+          host: 'Хост', // Будет получен из базы
+          hostId: 'host_id', // Будет получен из базы
+          maxPlayers: result.room.maxPlayers || 6,
+          gameMode: 'classic',
+          hasPassword: false,
+          isPrivate: false,
+          status: 'waiting' as const,
+          players: [
+            {
+              id: user?.id?.toString() || 'anonymous',
+              name: user?.first_name || user?.username || 'Игрок',
+              isHost: false, // Мы присоединяемся, не хост
+              isReady: false,
+              isBot: false,
+              joinedAt: new Date()
+            }
+          ],
+          settings: {
+            autoStart: false,
+            allowBots: true,
+            minPlayers: 2
+          }
+        };
+
+        console.log('✅ Joined database room:', result.room);
+        setCurrentRoom(roomData);
+        setView('waiting-room');
+        return;
+      } else {
+        throw new Error(result.message || 'Не удалось присоединиться к комнате');
+      }
+      
+    } catch (mainError: any) {
+      console.log('⚠️ Основная база недоступна, пробуем localStorage:', mainError.message);
+      
+      // Fallback: пробуем найти комнату в localStorage
+      try {
+        const sharedRoom = roomStorage.findRoom(roomCode);
+        
+        if (!sharedRoom) {
+          throw new Error('Комната не найдена');
+        }
+        
         // Проверяем пароль для общей комнаты
-        if (sharedRoom.hasPassword && password !== 'demo') { // Простая проверка для демо
+        if (sharedRoom.hasPassword && password !== 'demo') {
           throw new Error('Неверный пароль');
         }
         
@@ -325,7 +399,7 @@ export default function ProperMultiplayer({ onBack }: ProperMultiplayerProps) {
         if (!joinSuccess) {
           throw new Error('Комната заполнена');
         }
-        
+      
         // Создаем данные для комнаты ожидания (общая комната)
         const roomData = {
           id: sharedRoom.id,
@@ -363,78 +437,18 @@ export default function ProperMultiplayer({ onBack }: ProperMultiplayerProps) {
           }
         };
 
-        console.log('✅ Joined shared room:', sharedRoom.code);
+        console.log('✅ Joined shared room (fallback):', sharedRoom.code);
         setCurrentRoom(roomData);
-        setView('waiting');
-        return;
+        setView('waiting-room');
+        
+      } catch (fallbackError: any) {
+        setError(fallbackError.message || 'Не удалось присоединиться к комнате');
       }
-      
-      // Если не найдена локально, пробуем серверную комнату
-      const response = await fetch('/api/rooms/join', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          roomCode: roomCode.toUpperCase(),
-          userId: user?.id?.toString() || 'anonymous',
-          userName: user?.first_name || user?.username || 'Игрок',
-          password: password
-        }),
-      });
-
-      const result = await response.json();
-      
-      if (result.success) {
-        // Создаем данные для комнаты ожидания (серверная комната)
-        const roomData = {
-          id: result.room.roomId,
-          code: result.room.roomCode,
-          name: result.room.name,
-          host: result.room.host,
-          hostId: result.room.hostId || 'host_id',
-          maxPlayers: result.room.maxPlayers,
-          gameMode: result.room.gameMode,
-          hasPassword: result.room.hasPassword,
-          isPrivate: result.room.isPrivate || false,
-          status: 'waiting' as const,
-          players: [
-            {
-              id: result.room.hostId || 'host_id',
-              name: result.room.host,
-              isHost: true,
-              isReady: true,
-              isBot: false,
-              joinedAt: new Date()
-            },
-            {
-              id: user?.id?.toString() || 'anonymous',
-              name: user?.first_name || user?.username || 'Игрок',
-              isHost: false,
-              isReady: false,
-              isBot: false,
-              joinedAt: new Date()
-            }
-          ],
-          settings: {
-            autoStart: false,
-            allowBots: true,
-            minPlayers: 2
-          }
-        };
-
-        console.log('✅ Joined server room:', result.room);
-        setCurrentRoom(roomData);
-        setView('waiting');
-      } else {
-        throw new Error(result.error || 'Комната не найдена');
-      }
-      
-    } catch (err: any) {
-      console.error('❌ Error joining room:', err);
-      setError(err.message || 'Ошибка входа в комнату');
     } finally {
       setLoading(false);
     }
   };
+
 
   // Обработчики для комнаты ожидания
   const handleLeaveRoom = () => {
