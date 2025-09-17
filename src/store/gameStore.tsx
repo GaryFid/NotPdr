@@ -167,6 +167,9 @@ interface GameState {
   contributePenaltyCard: (contributorId: string, cardId: string) => void // Отдать карту за штраф
   cancelPenalty: () => void // Отменить штраф
   findWorstCardInHand: (cards: Card[], trumpSuit: string | null) => Card | null // Найти плохую карту
+  // Новые методы для ботов
+  calculateAdaptiveDelay: () => number // Вычисляет адаптивную задержку в зависимости от FPS
+  scheduleBotAskHowManyCards: (targetPlayerId: string) => void // Планирует вопрос бота "сколько карт?"
   
   // Управление картами
   selectCard: (card: Card | null) => void
@@ -2059,18 +2062,28 @@ export const useGameStore = create<GameState>()(
                    get().showNotification(`⚠️ У вас 1 карта! ОБЯЗАТЕЛЬНО нажмите "Одна карта!" в течение 5 секунд!`, 'warning', 5000);
                  }
                  
-                 // Для бота - автоматически объявляем через 1-2 секунды С СООБЩЕНИЕМ
+                 // ===== НОВАЯ МЕХАНИКА: БОТЫ АВТОМАТИЧЕСКИ СПРАШИВАЮТ "СКОЛЬКО КАРТ?" =====
+                 // Планируем вопрос ботов через адаптивную задержку (2.545с + лаг)
+                 get().scheduleBotAskHowManyCards(player.id);
+                 
+                 // ИСПРАВЛЕНО: Бот автоматически объявляет "ОДНА КАРТА!" через ТОЧНО 3.245 секунды
                  if (player.isBot) {
                    setTimeout(() => {
-                     // Сначала показываем сообщение от бота
-                     get().showNotification(`🤖 ${player.name}: "ОДНА КАРТА!"`, 'info', 3000);
-                     console.log(`🤖 [checkOneCardStatus] Бот ${player.name} объявляет: "ОДНА КАРТА!"`);
-                     
-                     // Затем делаем официальное объявление
-                     setTimeout(() => {
-                       get().declareOneCard(player.id);
-                     }, 800); // Небольшая задержка после сообщения
-                   }, 1000 + Math.random() * 1000);
+                     // Проверяем что бот всё ещё должен объявить (не был пойман)
+                     const { oneCardDeclarations } = get();
+                     if (!oneCardDeclarations[player.id]) {
+                       // Сначала показываем сообщение от бота
+                       get().showNotification(`🤖 ${player.name}: "ОДНА КАРТА!"`, 'info', 3000);
+                       console.log(`🤖 [checkOneCardStatus] Бот ${player.name} объявляет через 3.245с: "ОДНА КАРТА!"`);
+                       
+                       // Затем делаем официальное объявление
+                       setTimeout(() => {
+                         get().declareOneCard(player.id);
+                       }, 800); // Небольшая задержка после сообщения
+                     } else {
+                       console.log(`🤖 [checkOneCardStatus] Бот ${player.name} уже был пойман, не объявляем`);
+                     }
+                   }, 3245); // ТОЧНО 3.245 секунды для ботов
                  }
                }
              } else {
@@ -2444,6 +2457,79 @@ export const useGameStore = create<GameState>()(
            } catch (error) {
              console.error(`🌐 [Multiplayer] Ошибка применения удаленного хода:`, error);
            }
+         },
+         
+         // ===== НОВЫЕ МЕТОДЫ ДЛЯ БОТОВ =====
+         
+         // Вычисляет адаптивную задержку в зависимости от производительности
+         // ДЛЯ ИГРОКОВ: базовая задержка 2.545с для кнопки "Сколько карт?"
+         calculateAdaptiveDelay: () => {
+           const now = performance.now();
+           const frameTime = now - (window as any).lastFrameTime || 16.67; // Время последнего кадра
+           (window as any).lastFrameTime = now;
+           
+           // Базовая задержка: 2.545 секунды (ИГРОКИ)
+           let delay = 2545;
+           
+           console.log(`🎯 [calculateAdaptiveDelay] Время кадра: ${frameTime.toFixed(2)}ms`);
+           
+           // Если FPS хуже 60 (frame time > 16.67ms), добавляем задержку
+           if (frameTime > 16.67) {
+             const lagMs = frameTime - 16.67;
+             const lagIncrements = Math.floor(lagMs / 100); // За каждые 100ms лага
+             const additionalDelay = lagIncrements * 1055; // Добавляем 1.055с
+             delay += additionalDelay;
+             
+             console.log(`⏳ [calculateAdaptiveDelay] Лаг ${lagMs.toFixed(2)}ms, добавляем ${additionalDelay}ms задержки`);
+           }
+           
+           console.log(`⌛ [calculateAdaptiveDelay] Итоговая задержка для ИГРОКОВ: ${delay}ms`);
+           return delay;
+         },
+         
+         // Планирует вопрос бота "сколько карт?" через адаптивную задержку
+         scheduleBotAskHowManyCards: (targetPlayerId: string) => {
+           const { players, oneCardDeclarations } = get();
+           
+           // Проверяем что цель действительно имеет 1 карту и не объявил
+           const target = players.find(p => p.id === targetPlayerId);
+           if (!target) return;
+           
+           const openCards = target.cards.filter(c => c.open);
+           if (openCards.length !== 1) return; // Не 1 карта
+           
+           if (oneCardDeclarations[targetPlayerId]) {
+             console.log(`🤖 [scheduleBotAskHowManyCards] ${target.name} уже объявил "одну карту", ботам спрашивать не нужно`);
+             return; // Уже объявил
+           }
+           
+           const delay = get().calculateAdaptiveDelay();
+           
+           console.log(`🤖 [scheduleBotAskHowManyCards] Планируем вопрос ботов к ${target.name} через ${delay}ms`);
+           
+           setTimeout(() => {
+             // Проверяем что цель всё ещё не объявила "одну карту"
+             const { players: currentPlayers, oneCardDeclarations: currentDeclarations } = get();
+             
+             if (currentDeclarations[targetPlayerId]) {
+               console.log(`🤖 [scheduleBotAskHowManyCards] ${target.name} уже объявил, отменяем вопрос ботов`);
+               return;
+             }
+             
+             // Найдем случайного бота, который спросит
+             const botPlayers = currentPlayers.filter(p => p.isBot && p.id !== targetPlayerId);
+             
+             if (botPlayers.length > 0) {
+               const randomBot = botPlayers[Math.floor(Math.random() * botPlayers.length)];
+               
+               console.log(`🤖 [scheduleBotAskHowManyCards] Бот ${randomBot.name} спрашивает у ${target.name}: "Сколько карт?"`);
+               
+               get().askHowManyCards(randomBot.id, targetPlayerId);
+               
+               // Показываем уведомление от имени бота
+               get().showNotification(`🤖 ${randomBot.name}: "Сколько карт у ${target.name}?"`, 'info', 3000);
+             }
+           }, delay);
          }
     }),
     {

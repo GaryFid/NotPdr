@@ -302,7 +302,7 @@ function GamePageContentComponent({
   
   // Обработка ходов ИИ
   useEffect(() => {
-    const { isGameActive, currentPlayerId, players, gameStage, stage2TurnPhase, deck, availableTargets, revealedDeckCard, trumpSuit } = useGameStore.getState();
+    const { isGameActive, currentPlayerId, players, gameStage, stage2TurnPhase, deck, availableTargets, revealedDeckCard, trumpSuit, tableStack } = useGameStore.getState();
     
     if (!isGameActive || !currentPlayerId) {
       console.log(`🤖 [AI useEffect] Игра неактивна или нет текущего игрока: isGameActive=${isGameActive}, currentPlayerId=${currentPlayerId}`);
@@ -310,7 +310,14 @@ function GamePageContentComponent({
     }
     
     const currentTurnPlayer = players.find(p => p.id === currentPlayerId);
-    if (!currentTurnPlayer || !currentTurnPlayer.isBot) return;
+    if (!currentTurnPlayer || !currentTurnPlayer.isBot) {
+      console.log(`🤖 [AI useEffect] Не бот или игрок не найден: currentTurnPlayer=${currentTurnPlayer?.name}, isBot=${currentTurnPlayer?.isBot}`);
+      return;
+    }
+
+    console.log(`🤖 [AI useEffect] ЗАПУСК AI для бота ${currentTurnPlayer.name}`);
+    console.log(`🤖 [AI useEffect] Состояние: gameStage=${gameStage}, stage2TurnPhase=${stage2TurnPhase}`);
+    console.log(`🤖 [AI useEffect] Карты в руке: ${currentTurnPlayer.cards?.length || 0}, на столе: ${tableStack?.length || 0}`);
     
     // Защита от повторных вызовов AI (race condition protection)
     if (aiProcessingRef.current === currentPlayerId) {
@@ -479,7 +486,7 @@ function GamePageContentComponent({
       // Сбрасываем флаг при очистке useEffect
       aiProcessingRef.current = null;
     };
-  }, []);
+  }, [isGameActive, currentPlayerId, gameStage, stage2TurnPhase, turnPhase]);
   
   // Инициализация игры из gameStore
   useEffect(() => {
