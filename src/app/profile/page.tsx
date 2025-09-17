@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Trophy, Medal, Users, User, Star, Award, Target, Camera, Upload, Wallet } from 'lucide-react';
 import BottomNav from '../../components/BottomNav';
-import WalletManager from '../../components/WalletManager';
+import GameWallet from '../../components/GameWallet';
 
 export default function ProfilePage() {
   const [stats, setStats] = useState({
@@ -19,6 +19,8 @@ export default function ProfilePage() {
       { id: 4, name: 'Легенда', description: 'Достигните рейтинга 2000', unlocked: false, icon: Star }
     ]
   });
+
+  const [user, setUser] = useState<any>(null);
 
   const [avatarUrl, setAvatarUrl] = useState('😎');
   const [activeSection, setActiveSection] = useState('stats'); // 'stats', 'achievements', 'wallet'
@@ -50,13 +52,48 @@ export default function ProfilePage() {
     }
   };
 
-  // Загружаем сохраненный аватар при инициализации
+  // Загружаем сохраненный аватар и данные пользователя при инициализации
   useEffect(() => {
     const savedAvatar = localStorage.getItem('userAvatar');
     if (savedAvatar) {
       setAvatarUrl(savedAvatar);
     }
+    
+    // Загружаем данные пользователя
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
+        setStats(prev => ({
+          ...prev,
+          rating: parsedUser.rating || 0,
+          gamesPlayed: parsedUser.gamesPlayed || 0,
+          wins: parsedUser.gamesWon || 0,
+          losses: Math.max(0, (parsedUser.gamesPlayed || 0) - (parsedUser.gamesWon || 0)),
+          winRate: parsedUser.gamesPlayed > 0 
+            ? Math.round(((parsedUser.gamesWon || 0) / parsedUser.gamesPlayed) * 100) 
+            : 0
+        }));
+      } catch (error) {
+        console.error('Ошибка загрузки данных пользователя:', error);
+      }
+    }
   }, []);
+  
+  const handleBalanceUpdate = (newBalance: number) => {
+    // Обновляем баланс в localStorage и в состоянии пользователя
+    if (user) {
+      const updatedUser = { ...user, coins: newBalance };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      // Диспатчим событие для обновления в других компонентах
+      window.dispatchEvent(new CustomEvent('coinsUpdated', { 
+        detail: { coins: newBalance } 
+      }));
+    }
+  };
 
   return (
     <div className="main-menu-container">
@@ -294,7 +331,7 @@ export default function ProfilePage() {
             transition={{ duration: 0.3 }}
             style={{ padding: '0 20px', marginBottom: '100px' }}
           >
-            <WalletManager showExchange={true} />
+            <GameWallet user={user} onBalanceUpdate={handleBalanceUpdate} />
           </motion.div>
         )}
 

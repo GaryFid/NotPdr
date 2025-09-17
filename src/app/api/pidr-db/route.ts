@@ -102,7 +102,25 @@ export async function POST(req: NextRequest) {
   console.log('🏗️ P.I.D.R. Database API - создание таблиц');
   
   try {
-    const { action } = await req.json();
+    const body = await req.json();
+    const { action, userId, amount, transactionType, description } = body;
+    
+    // Новые действия для кошелька
+    if (action === 'get_user_balance') {
+      return await getUserBalance(userId);
+    }
+    
+    if (action === 'get_user_transactions') {
+      return await getUserTransactions(userId);
+    }
+    
+    if (action === 'create_transaction') {
+      return await createTransaction(userId, amount, transactionType, description);
+    }
+    
+    if (action === 'update_user_balance') {
+      return await updateUserBalance(userId, amount);
+    }
     
     if (action === 'create-tables') {
       // Читаем SQL схему
@@ -117,13 +135,13 @@ export async function POST(req: NextRequest) {
         }, { status: 404 });
       }
 
-      const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+      const schemaSql: string = fs.readFileSync(schemaPath, 'utf8');
       
       // Разбиваем на отдельные команды
-      const commands = schemaSql
+      const commands: string[] = schemaSql
         .split(';')
-        .map(cmd => cmd.trim())
-        .filter(cmd => cmd.length > 0 && !cmd.startsWith('--'));
+        .map((cmd: string) => cmd.trim())
+        .filter((cmd: string) => cmd.length > 0 && !cmd.startsWith('--'));
 
       console.log(`📝 Выполняем ${commands.length} SQL команд...`);
 
@@ -254,5 +272,171 @@ export async function POST(req: NextRequest) {
       success: false,
       message: error.message
     }, { status: 500 });
+  }
+}
+
+// Функции для работы с кошельком
+async function getUserBalance(userId: string) {
+  try {
+    console.log('📊 Получение баланса пользователя:', userId);
+    
+    const { data: user, error } = await supabase
+      .from('_pidr_users')
+      .select('id, coins, rating, games_played, games_won, username, first_name')
+      .eq('telegram_id', userId)
+      .single();
+
+    if (error) {
+      console.error('❌ Ошибка получения баланса:', error);
+      return NextResponse.json({ success: false, error: error.message });
+    }
+
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Пользователь не найден' });
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      balance: user.coins || 0,
+      user: user 
+    });
+  } catch (error: any) {
+    console.error('❌ Ошибка getUserBalance:', error);
+    return NextResponse.json({ success: false, error: error.message });
+  }
+}
+
+async function getUserTransactions(userId: string) {
+  try {
+    console.log('📋 Получение транзакций пользователя:', userId);
+    
+    // Сначала получаем пользователя по telegram_id
+    const { data: user, error: userError } = await supabase
+      .from('_pidr_users')
+      .select('id')
+      .eq('telegram_id', userId)
+      .single();
+
+    if (userError || !user) {
+      console.error('❌ Пользователь не найден:', userError);
+      return NextResponse.json({ success: false, error: 'Пользователь не найден' });
+    }
+
+    const { data: transactions, error } = await supabase
+      .from('_pidr_coin_transactions')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(20);
+
+    if (error) {
+      console.error('❌ Ошибка получения транзакций:', error);
+      return NextResponse.json({ success: false, error: error.message });
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      transactions: transactions || [] 
+    });
+  } catch (error: any) {
+    console.error('❌ Ошибка getUserTransactions:', error);
+    return NextResponse.json({ success: false, error: error.message });
+  }
+}
+
+async function createTransaction(userId: string, amount: number, transactionType: string, description: string) {
+  try {
+    console.log('💰 Создание транзакции:', { userId, amount, transactionType, description });
+    
+    // Получаем пользователя
+    const { data: user, error: userError } = await supabase
+      .from('_pidr_users')
+      .select('id, coins')
+      .eq('telegram_id', userId)
+      .single();
+
+    if (userError || !user) {
+      console.error('❌ Пользователь не найден:', userError);
+      return NextResponse.json({ success: false, error: 'Пользователь не найден' });
+    }
+
+    const oldBalance = user.coins || 0;
+    const newBalance = Math.max(0, oldBalance + amount);
+
+    // Создаем транзакцию
+    const { data: transaction, error: transactionError } = await supabase
+      .from('_pidr_coin_transactions')
+      .insert([{
+        user_id: user.id,
+        amount: amount,
+        transaction_type: transactionType,
+        description: description,
+        balance_before: oldBalance,
+        balance_after: newBalance
+      }])
+      .select()
+      .single();
+
+    if (transactionError) {
+      console.error('❌ Ошибка создания транзакции:', transactionError);
+      return NextResponse.json({ success: false, error: transactionError.message });
+    }
+
+    // Обновляем баланс пользователя
+    const { error: updateError } = await supabase
+      .from('_pidr_users')
+      .update({ coins: newBalance })
+      .eq('id', user.id);
+
+    if (updateError) {
+      console.error('❌ Ошибка обновления баланса:', updateError);
+      return NextResponse.json({ success: false, error: updateError.message });
+    }
+
+    console.log('✅ Транзакция создана успешно');
+
+    return NextResponse.json({ 
+      success: true, 
+      transaction: transaction,
+      newBalance: newBalance,
+      oldBalance: oldBalance 
+    });
+  } catch (error: any) {
+    console.error('❌ Ошибка createTransaction:', error);
+    return NextResponse.json({ success: false, error: error.message });
+  }
+}
+
+async function updateUserBalance(userId: string, newBalance: number) {
+  try {
+    console.log('🔄 Обновление баланса пользователя:', { userId, newBalance });
+    
+    const { data: user, error: userError } = await supabase
+      .from('_pidr_users')
+      .select('id')
+      .eq('telegram_id', userId)
+      .single();
+
+    if (userError || !user) {
+      console.error('❌ Пользователь не найден:', userError);
+      return NextResponse.json({ success: false, error: 'Пользователь не найден' });
+    }
+
+    const { error } = await supabase
+      .from('_pidr_users')
+      .update({ coins: Math.max(0, newBalance) })
+      .eq('id', user.id);
+
+    if (error) {
+      console.error('❌ Ошибка обновления баланса:', error);
+      return NextResponse.json({ success: false, error: error.message });
+    }
+
+    console.log('✅ Баланс обновлен успешно');
+
+    return NextResponse.json({ success: true, balance: Math.max(0, newBalance) });
+  } catch (error: any) {
+    console.error('❌ Ошибка updateUserBalance:', error);
+    return NextResponse.json({ success: false, error: error.message });
   }
 }
