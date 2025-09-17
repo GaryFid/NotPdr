@@ -36,7 +36,7 @@ export default function TelegramInvitations({ onJoinRoom }: TelegramInvitationsP
   const loadInvitations = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem('auth_token');
       if (!token) return;
 
       const response = await fetch('/api/telegram-multiplayer?type=pending', {
@@ -59,7 +59,7 @@ export default function TelegramInvitations({ onJoinRoom }: TelegramInvitationsP
   // Принять приглашение
   const acceptInvitation = async (invitation: TelegramInvitation) => {
     try {
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem('auth_token');
       if (!token) return;
 
       const response = await fetch('/api/telegram-multiplayer', {
@@ -94,7 +94,7 @@ export default function TelegramInvitations({ onJoinRoom }: TelegramInvitationsP
   // Создать комнату для Telegram
   const createTelegramRoom = async () => {
     try {
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem('auth_token');
       if (!token) return;
 
       // Генерируем код комнаты

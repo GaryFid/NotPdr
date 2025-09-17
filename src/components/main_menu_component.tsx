@@ -116,7 +116,7 @@ export function MainMenu({ onNavigate }: MainMenuProps) {
 
         {/* Компактные кошельки под основными кнопками */}
         <div className="wallet-connect-section-compact">
-          <div className="wallet-connect-title-compact">КОШЕЛЬКИ</div>
+          <div className="wallet-connect-title-compact">КОШЕЛЕК</div>
           <div className="wallet-connect-grid-compact">
             <button 
               onClick={() => handleWalletAction('ton')} 

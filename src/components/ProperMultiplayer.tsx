@@ -199,7 +199,7 @@ export default function ProperMultiplayer({ onBack }: ProperMultiplayerProps) {
     
     try {
       // ИСПРАВЛЕНО: Используем основную базу данных вместо fallback API
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem('auth_token');
       if (!token) {
         throw new Error('Не найден токен авторизации');
       }
@@ -318,7 +318,7 @@ export default function ProperMultiplayer({ onBack }: ProperMultiplayerProps) {
     
     try {
       // ИСПРАВЛЕНО: Присоединение через основную базу данных
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem('auth_token');
       if (!token) {
         throw new Error('Не найден токен авторизации');
       }
@@ -372,7 +372,7 @@ export default function ProperMultiplayer({ onBack }: ProperMultiplayerProps) {
 
         console.log('✅ Joined database room:', result.room);
         setCurrentRoom(roomData);
-        setView('waiting-room');
+        setView('waiting');
         return;
       } else {
         throw new Error(result.message || 'Не удалось присоединиться к комнате');
@@ -439,7 +439,7 @@ export default function ProperMultiplayer({ onBack }: ProperMultiplayerProps) {
 
         console.log('✅ Joined shared room (fallback):', sharedRoom.code);
         setCurrentRoom(roomData);
-        setView('waiting-room');
+        setView('waiting');
         
       } catch (fallbackError: any) {
         setError(fallbackError.message || 'Не удалось присоединиться к комнате');

@@ -152,7 +152,7 @@ export default function ProfessionalMultiplayer({ onBack }: ProfessionalMultipla
     
     try {
       // ИСПРАВЛЕНО: Используем основную базу данных вместо fallback API
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem('auth_token');
       if (!token) {
         throw new Error('Не найден токен авторизации');
       }
@@ -194,7 +194,7 @@ export default function ProfessionalMultiplayer({ onBack }: ProfessionalMultipla
     
     try {
       // ИСПРАВЛЕНО: Используем основную базу данных
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem('auth_token');
       if (!token) {
         throw new Error('Не найден токен авторизации');
       }

@@ -119,7 +119,7 @@ export default function WalletManager({ showExchange = true, onCoinsAdded }: Wal
           }}
         >
           <FaWallet style={{ marginRight: 8 }} />
-          Кошельки
+          Кошелек
         </Button>
         
         <Button

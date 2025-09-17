@@ -209,7 +209,7 @@ export default function ProfilePage() {
             }}
           >
             <Wallet size={16} />
-            Кошельки
+            Кошелек
           </button>
         </motion.div>
 

@@ -79,7 +79,7 @@ export default function WalletPage() {
         </Flex>
         {/* Подключенные кошельки */}
         <Box bg="#232b3e" borderRadius="xl" boxShadow="lg" p={6} w="100%" mb={4}>
-          <Text color="#ffd700" fontWeight={600} fontSize="md" mb={4}>Криптокошельки</Text>
+          <Text color="#ffd700" fontWeight={600} fontSize="md" mb={4}>Криптокошелек</Text>
           <VStack align="stretch" gap={3}>
             {/* TON Wallet */}
             <Flex align="center" justify="space-between" bg="#181f2a" borderRadius="lg" p={4}>

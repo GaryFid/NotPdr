@@ -30,7 +30,14 @@ function HomeWithParams() {
     console.log('🎮 ИНИЦИАЛИЗАЦИЯ ИГРЫ - ПРОВЕРКА ИГРОКА');
     
     const initializePlayer = async () => {
-      const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+      // Проверяем что мы в браузере и Telegram WebApp загружен
+      if (typeof window === 'undefined' || !window.Telegram?.WebApp) {
+        console.log('⚠️ Telegram WebApp не загружен, создаем локального игрока');
+        createLocalPlayer();
+        return;
+      }
+      
+      const telegramUser = window.Telegram.WebApp.initDataUnsafe?.user;
       const telegramId = telegramUser?.id?.toString();
       
       if (!telegramId) {
