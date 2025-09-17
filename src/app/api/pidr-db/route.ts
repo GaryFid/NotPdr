@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '../../../lib/supabase';
+import { createPidrTables, checkDatabaseStatus } from '../../../lib/database/create-tables';
 
 export async function GET(req: NextRequest) {
   console.log('🔍 P.I.D.R. Database API - проверка таблиц');
@@ -134,6 +135,16 @@ export async function POST(req: NextRequest) {
 
     if (action === 'get_all_user_hd_addresses') {
       return await getAllUserHDAddresses(userId);
+    }
+
+    // Автоматическое создание таблиц
+    if (action === 'create_all_tables') {
+      return await handleCreateTables();
+    }
+
+    // Проверка статуса БД
+    if (action === 'check_database') {
+      return await handleCheckDatabase();
     }
     
     if (action === 'create-tables') {
@@ -569,5 +580,59 @@ async function getAllUserHDAddresses(userId: string) {
   } catch (error: any) {
     console.error('❌ Ошибка getAllUserHDAddresses:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
+// Обработчик автоматического создания таблиц
+async function handleCreateTables() {
+  try {
+    console.log('🚀 Запуск автоматического создания таблиц P.I.D.R...');
+    
+    const result = await createPidrTables();
+    
+    return NextResponse.json({
+      success: result.success,
+      message: result.message,
+      errors: result.errors,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error: any) {
+    console.error('❌ Ошибка handleCreateTables:', error);
+    return NextResponse.json({ 
+      success: false, 
+      message: 'Ошибка создания таблиц',
+      error: error.message 
+    }, { status: 500 });
+  }
+}
+
+// Обработчик проверки БД
+async function handleCheckDatabase() {
+  try {
+    console.log('🔍 Проверка статуса базы данных...');
+    
+    const status = await checkDatabaseStatus();
+    const totalTables = Object.keys(status).length;
+    const existingTables = Object.values(status).filter(Boolean).length;
+    
+    return NextResponse.json({
+      success: true,
+      status,
+      summary: {
+        total: totalTables,
+        existing: existingTables,
+        missing: totalTables - existingTables,
+        ready: existingTables === totalTables
+      },
+      message: existingTables === totalTables 
+        ? '✅ Все таблицы готовы к работе!'
+        : `⚠️ Готово ${existingTables}/${totalTables} таблиц. Нужно создать недостающие.`
+    });
+  } catch (error: any) {
+    console.error('❌ Ошибка handleCheckDatabase:', error);
+    return NextResponse.json({ 
+      success: false, 
+      error: error.message 
+    }, { status: 500 });
   }
 }
