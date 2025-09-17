@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
 
     // Загружаем реальные комнаты из базы данных с подсчетом игроков
     let query = supabase
-      .from('game_rooms')
+      .from('_pidr_rooms')
       .select(`
         id, 
         room_code, 
@@ -164,7 +164,7 @@ async function getAuthenticatedRooms(req: NextRequest) {
     if (type === 'my') {
       // Получаем комнаты пользователя (где он хост или участник)
       const { data: rooms, error } = await supabase
-        .from('game_rooms')
+        .from('_pidr_rooms')
         .select(`
           id, room_code, name, max_players, current_players, status, is_private, created_at,
           users!game_rooms_host_id_fkey (username, avatar),
@@ -184,7 +184,7 @@ async function getAuthenticatedRooms(req: NextRequest) {
     if (type === 'joinable') {
       // Получаем комнаты к которым можно присоединиться
       const { data: rooms, error } = await supabase
-        .from('game_rooms')
+        .from('_pidr_rooms')
         .select(`
           id, room_code, name, max_players, current_players, status, is_private, created_at,
           users!game_rooms_host_id_fkey (username, avatar)
@@ -203,7 +203,7 @@ async function getAuthenticatedRooms(req: NextRequest) {
 
     // Получаем публичные комнаты (type === 'public')
     const { data: rooms, error } = await supabase
-      .from('game_rooms')
+      .from('_pidr_rooms')
       .select(`
         id, room_code, name, max_players, current_players, status, created_at,
         users!game_rooms_host_id_fkey (username, avatar)
@@ -252,7 +252,7 @@ export async function POST(req: NextRequest) {
         if (attempts > 10) throw new Error('Failed to generate unique room code');
         
         const { data: existing } = await supabase
-          .from('game_rooms')
+          .from('_pidr_rooms')
           .select('id')
           .eq('room_code', uniqueCode)
           .single();
@@ -262,7 +262,7 @@ export async function POST(req: NextRequest) {
 
       // Проверяем, нет ли у пользователя активной комнаты как хоста
       const { data: existingHostRoom } = await supabase
-        .from('game_rooms')
+        .from('_pidr_rooms')
         .select('id, name')
         .eq('host_id', userId)
         .in('status', ['waiting', 'playing'])
@@ -277,7 +277,7 @@ export async function POST(req: NextRequest) {
 
       // Проверяем, не участвует ли пользователь в другой комнате
       const { data: existingPlayer } = await supabase
-        .from('room_players')
+        .from('_pidr_room_players')
         .select(`
           id,
           room_id,
@@ -300,7 +300,7 @@ export async function POST(req: NextRequest) {
 
       // Создаем комнату
       const { data: room, error: roomError } = await supabase
-        .from('game_rooms')
+        .from('_pidr_rooms')
         .insert({
           room_code: uniqueCode,
           name: roomName || 'P.I.D.R. Игра',
@@ -322,7 +322,7 @@ export async function POST(req: NextRequest) {
 
       // Добавляем хоста как первого игрока
       const { error: playerError } = await supabase
-        .from('room_players')
+        .from('_pidr_room_players')
         .insert({
           room_id: room.id,
           user_id: userId,
@@ -354,7 +354,7 @@ export async function POST(req: NextRequest) {
 
       // Находим комнату
       const { data: room, error: roomError } = await supabase
-        .from('game_rooms')
+        .from('_pidr_rooms')
         .select('id, name, max_players, current_players, status, is_private, password, host_id')
         .eq('room_code', roomCode.toUpperCase())
         .single();
@@ -373,7 +373,7 @@ export async function POST(req: NextRequest) {
         
         // Проверяем, не находится ли хост уже в комнате
         const { data: existingPlayer } = await supabase
-          .from('room_players')
+          .from('_pidr_room_players')
           .select('id, position, is_ready')
           .eq('room_id', room.id)
           .eq('user_id', userId)
@@ -384,7 +384,7 @@ export async function POST(req: NextRequest) {
           
           // Хост уже есть - просто обновляем статус на ready
           await supabase
-            .from('room_players')
+            .from('_pidr_room_players')
             .update({ is_ready: true })
             .eq('id', existingPlayer.id);
             
@@ -404,7 +404,7 @@ export async function POST(req: NextRequest) {
         console.log('👑 Добавляем хоста в комнату впервые');
         
         const { error: hostJoinError } = await supabase
-          .from('room_players')
+          .from('_pidr_room_players')
           .insert({
             room_id: room.id,
             user_id: userId,
@@ -422,7 +422,7 @@ export async function POST(req: NextRequest) {
 
         // ИСПРАВЛЕНО: Получаем актуальный счет игроков из базы
         const { data: allPlayers } = await supabase
-          .from('room_players')
+          .from('_pidr_room_players')
           .select('id')
           .eq('room_id', room.id);
 
@@ -430,7 +430,7 @@ export async function POST(req: NextRequest) {
         console.log(`📊 Хост добавлен, обновляем счетчик на ${actualPlayerCount}`);
         
         await supabase
-          .from('game_rooms')
+          .from('_pidr_rooms')
           .update({ current_players: actualPlayerCount })
           .eq('id', room.id);
 
@@ -458,7 +458,7 @@ export async function POST(req: NextRequest) {
 
       // Проверяем, не участвует ли пользователь в любой активной комнате
       const { data: userInAnyRoom } = await supabase
-        .from('room_players')
+        .from('_pidr_room_players')
         .select(`
           id,
           room_id,
@@ -488,7 +488,7 @@ export async function POST(req: NextRequest) {
           } else {
             // Удаляем из завершенных/отмененных комнат
             await supabase
-              .from('room_players')
+              .from('_pidr_room_players')
               .delete()
               .eq('id', playerRecord.id);
           }
@@ -497,7 +497,7 @@ export async function POST(req: NextRequest) {
 
       // Находим свободную позицию
       const { data: occupiedPositions } = await supabase
-        .from('room_players')
+        .from('_pidr_room_players')
         .select('position')
         .eq('room_id', room.id);
 
@@ -512,7 +512,7 @@ export async function POST(req: NextRequest) {
 
       // Добавляем игрока в комнату
       const { error: playerError } = await supabase
-        .from('room_players')
+        .from('_pidr_room_players')
         .insert({
           room_id: room.id,
           user_id: userId,
@@ -524,7 +524,7 @@ export async function POST(req: NextRequest) {
 
       // Обновляем количество игроков в комнате
       const { error: updateError } = await supabase
-        .from('game_rooms')
+        .from('_pidr_rooms')
         .update({ current_players: room.current_players + 1 })
         .eq('id', room.id);
 
@@ -570,7 +570,7 @@ export async function DELETE(req: NextRequest) {
 
     // Получаем информацию о комнате
     const { data: room, error: roomError } = await supabase
-      .from('game_rooms')
+      .from('_pidr_rooms')
       .select('id, host_id, current_players, status')
       .eq('id', roomId)
       .single();
@@ -584,13 +584,13 @@ export async function DELETE(req: NextRequest) {
       
       // Получаем список всех игроков в комнате
       const { data: allPlayers } = await supabase
-        .from('room_players')
+        .from('_pidr_room_players')
         .select('user_id')
         .eq('room_id', roomId);
 
       // Обновляем статус комнаты на cancelled перед удалением
       await supabase
-        .from('game_rooms')
+        .from('_pidr_rooms')
         .update({ 
           status: 'cancelled',
           finished_at: new Date().toISOString()
@@ -599,13 +599,13 @@ export async function DELETE(req: NextRequest) {
 
       // Удаляем всех игроков из комнаты
       await supabase
-        .from('room_players')
+        .from('_pidr_room_players')
         .delete()
         .eq('room_id', roomId);
 
       // Затем удаляем комнату
       const { error: deleteError } = await supabase
-        .from('game_rooms')
+        .from('_pidr_rooms')
         .delete()
         .eq('id', roomId);
 
@@ -629,7 +629,7 @@ export async function DELETE(req: NextRequest) {
       // Для хоста: НЕ удаляем из room_players, а помечаем как "absent" 
       // Это предотвратит дублирование при возвращении
       const { error: hostAbsentError } = await supabase
-        .from('room_players')
+        .from('_pidr_room_players')
         .update({ 
           is_ready: false,
           // Добавляем поле для отметки отсутствия хоста (если его нет в схеме, можно использовать другие способы)
@@ -641,7 +641,7 @@ export async function DELETE(req: NextRequest) {
         console.error('❌ Ошибка обновления статуса хоста:', hostAbsentError);
         // Если обновление не удалось, удаляем как обычного игрока
         await supabase
-          .from('room_players')
+          .from('_pidr_room_players')
           .delete()
           .eq('room_id', roomId)
           .eq('user_id', userId);
@@ -652,7 +652,7 @@ export async function DELETE(req: NextRequest) {
     } else {
       // Обычный игрок - удаляем как раньше
       const { error: leaveError } = await supabase
-        .from('room_players')
+        .from('_pidr_room_players')
         .delete()
         .eq('room_id', roomId)
         .eq('user_id', userId);
@@ -662,7 +662,7 @@ export async function DELETE(req: NextRequest) {
 
     // Получаем актуальный счет игроков из базы (не полагаемся на old current_players)
     const { data: actualPlayers, error: countError } = await supabase
-      .from('room_players')
+      .from('_pidr_room_players')
       .select('id')
       .eq('room_id', roomId);
 
@@ -671,7 +671,7 @@ export async function DELETE(req: NextRequest) {
       console.log(`📊 Обновляем счетчик: было ${room.current_players}, стало ${actualPlayerCount}`);
       
       const { error: updateError } = await supabase
-        .from('game_rooms')
+        .from('_pidr_rooms')
         .update({ current_players: actualPlayerCount })
         .eq('id', roomId);
 
@@ -684,7 +684,7 @@ export async function DELETE(req: NextRequest) {
     // Если хост покинул комнату, передаем права другому игроку или удаляем комнату
     if (room.host_id === userId) {
       const { data: remainingPlayers } = await supabase
-        .from('room_players')
+        .from('_pidr_room_players')
         .select('user_id, joined_at')
         .eq('room_id', roomId)
         .order('joined_at', { ascending: true });
@@ -693,13 +693,13 @@ export async function DELETE(req: NextRequest) {
         // Передаем права хоста самому старшему игроку
         const newHostId = remainingPlayers[0].user_id;
         await supabase
-          .from('game_rooms')
+          .from('_pidr_rooms')
           .update({ host_id: newHostId })
           .eq('id', roomId);
       } else {
         // Если никого не осталось, помечаем комнату как завершенную и удаляем её
         await supabase
-          .from('game_rooms')
+          .from('_pidr_rooms')
           .update({ 
             status: 'cancelled',
             finished_at: new Date().toISOString()
@@ -710,7 +710,7 @@ export async function DELETE(req: NextRequest) {
         // Для демо удалим сразу
         setTimeout(async () => {
           await supabase
-            .from('game_rooms')
+            .from('_pidr_rooms')
             .delete()
             .eq('id', roomId);
         }, 5000); // Удаляем через 5 секунд
@@ -728,7 +728,7 @@ export async function DELETE(req: NextRequest) {
 // Вспомогательные функции
 async function getUserRoomIds(userId: string): Promise<string> {
   const { data } = await supabase
-    .from('room_players')
+    .from('_pidr_room_players')
     .select('room_id')
     .eq('user_id', userId);
   
@@ -737,7 +737,7 @@ async function getUserRoomIds(userId: string): Promise<string> {
 
 async function updateUserStatus(userId: string, status: string, roomId: string | null) {
   await supabase
-    .from('user_status')
+    .from('_pidr_user_status')
     .upsert({
       user_id: userId,
       status,

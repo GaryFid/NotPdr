@@ -19,6 +19,7 @@ import {
   FaDatabase
 } from 'react-icons/fa';
 import { hdWalletService } from '@/lib/wallets/hd-wallet-service';
+import styles from './GameWallet.module.css';
 
 interface User {
   id: string;
@@ -447,10 +448,10 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
   };
 
   return (
-    <div className="game-wallet-container">
+    <div className={styles['game-wallet-container']}>
       {/* Баланс - главная карточка */}
       <motion.div 
-        className="balance-card"
+        className={styles['balance-card']}
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -473,14 +474,14 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
 
       {/* Навигационные вкладки */}
       <motion.div 
-        className="wallet-tabs"
+        className={styles['wallet-tabs']}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
       >
         <button
           onClick={() => setActiveTab('main')}
-          className={`tab-button ${activeTab === 'main' ? 'active' : ''}`}
+          className={`${styles['tab-button']} ${activeTab === 'main' ? styles['active'] : ''}`}
         >
           <FaWallet />
           <span>Основное</span>
@@ -488,7 +489,7 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
         
         <button
           onClick={() => setActiveTab('history')}
-          className={`tab-button ${activeTab === 'history' ? 'active' : ''}`}
+          className={`${styles['tab-button']} ${activeTab === 'history' ? styles['active'] : ''}`}
         >
           <FaHistory />
           <span>История</span>
@@ -496,7 +497,7 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
         
         <button
           onClick={() => setActiveTab('exchange')}
-          className={`tab-button ${activeTab === 'exchange' ? 'active' : ''}`}
+          className={`${styles['tab-button']} ${activeTab === 'exchange' ? styles['active'] : ''}`}
         >
           <FaExchangeAlt />
           <span>Обмен</span>
@@ -515,9 +516,9 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
             transition={{ duration: 0.3 }}
           >
             {/* Кнопки действий */}
-            <div className="action-buttons">
+            <div className={styles['action-buttons']}>
               <motion.button
-                className="action-button deposit"
+                className={`${styles['action-button']} ${styles['deposit']}`}
                 whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveModal('deposit')}
@@ -829,7 +830,7 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
       </AnimatePresence>
 
 
-      <style jsx>{`
+      <style jsx global>{`
         .game-wallet-container {
           width: 100%;
           max-width: 420px;

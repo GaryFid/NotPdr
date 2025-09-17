@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
     if (useSupabase) {
       // Загружаем из Supabase
       const { data: user, error } = await supabase
-        .from('users')
+        .from('_pidr_users')
         .select('id, username, email, telegramId, firstName, lastName, photoUrl, coins, rating, gamesPlayed, gamesWon, createdAt')
         .or(`id.eq.${userId},telegramId.eq.${userId}`)
         .single();
@@ -141,7 +141,7 @@ export async function PUT(req: NextRequest) {
     if (useSupabase) {
       // Обновляем в Supabase
       const { data: updatedUser, error } = await supabase
-        .from('users')
+        .from('_pidr_users')
         .update({
           coins: body.coins,
           rating: body.rating,
@@ -285,7 +285,7 @@ export async function POST(req: NextRequest) {
       console.log('🔍 Поиск пользователя в Supabase:', username);
 
       const { data: users, error } = await supabase
-        .from('users')
+        .from('_pidr_users')
         .select('id, username, firstName, lastName, avatar, passwordHash, coins, rating, gamesPlayed, gamesWon, referralCode')
         .eq('username', username)
         .limit(1);
@@ -325,7 +325,7 @@ export async function POST(req: NextRequest) {
       // Обновление статуса пользователя
       try {
         await supabase
-          .from('user_status')
+          .from('_pidr_user_status')
           .upsert({
             user_id: user.id,
             status: 'online',
@@ -460,7 +460,7 @@ export async function POST(req: NextRequest) {
       console.log('🔍 Поиск Telegram пользователя в Supabase:', idStr);
 
       const { data: users, error } = await supabase
-        .from('users')
+        .from('_pidr_users')
         .select('id, username, firstName, lastName, avatar, telegramId, referralCode, coins, rating, gamesPlayed, gamesWon')
         .eq('telegramId', idStr)
         .limit(1);
@@ -486,7 +486,7 @@ export async function POST(req: NextRequest) {
         while (attempts < 5) {
           referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
           const { data: existingCode } = await supabase
-            .from('users')
+            .from('_pidr_users')
             .select('id')
             .eq('referralCode', referralCode)
             .limit(1);
@@ -510,7 +510,7 @@ export async function POST(req: NextRequest) {
         };
 
         const { data: newUser, error: createError } = await supabase
-          .from('users')
+          .from('_pidr_users')
           .insert([newUserData])
           .select()
           .single();
@@ -530,7 +530,7 @@ export async function POST(req: NextRequest) {
         // Создание статуса пользователя
         try {
           await supabase
-            .from('user_status')
+            .from('_pidr_user_status')
             .insert({
               user_id: user.id,
               status: 'online',
@@ -551,7 +551,7 @@ export async function POST(req: NextRequest) {
 
         if (Object.keys(updateData).length > 0) {
           await supabase
-            .from('users')
+            .from('_pidr_users')
             .update(updateData)
             .eq('id', user.id);
           
@@ -561,7 +561,7 @@ export async function POST(req: NextRequest) {
         // Обновление статуса
         try {
           await supabase
-            .from('user_status')
+            .from('_pidr_user_status')
             .upsert({
               user_id: user.id,
               status: 'online',

@@ -7,11 +7,23 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     
+    // Получаем токен авторизации из заголовков
+    const authorization = req.headers.get('authorization') || req.headers.get('Authorization');
+    
     // Пробуем подключиться к реальному серверу
     try {
+      const headers: Record<string, string> = { 
+        'Content-Type': 'application/json' 
+      };
+      
+      // Добавляем токен если есть
+      if (authorization) {
+        headers['Authorization'] = authorization;
+      }
+      
       const response = await fetch(`${BACKEND_URL}/api/rooms/create`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(body),
       });
 

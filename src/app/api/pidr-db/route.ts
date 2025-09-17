@@ -31,7 +31,8 @@ export async function GET(req: NextRequest) {
       '_pidr_friends',
       '_pidr_achievements',
       '_pidr_user_achievements',
-      '_pidr_user_settings'
+      '_pidr_user_settings',
+      '_pidr_hd_wallets'
     ];
 
     const tableStatus: Record<string, any> = {};

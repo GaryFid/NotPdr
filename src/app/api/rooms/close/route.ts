@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
 
     // Проверяем, что комната существует и пользователь является её создателем
     const { data: room, error: roomError } = await supabase
-      .from('game_rooms')
+      .from('_pidr_rooms')
       .select('id, name, host_id, status')
       .eq('id', roomId)
       .single();
@@ -66,13 +66,13 @@ export async function POST(req: NextRequest) {
 
     // Получаем список всех игроков в комнате
     const { data: players } = await supabase
-      .from('room_players')
+      .from('_pidr_room_players')
       .select('user_id')
       .eq('room_id', roomId);
 
     // Обновляем статус комнаты на "cancelled"
     const { error: updateError } = await supabase
-      .from('game_rooms')
+      .from('_pidr_rooms')
       .update({ 
         status: 'cancelled',
         finished_at: new Date().toISOString()
@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
 
     // Удаляем всех игроков из комнаты
     const { error: deletePlayersError } = await supabase
-      .from('room_players')
+      .from('_pidr_room_players')
       .delete()
       .eq('room_id', roomId);
 
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
       const playerIds = players.map(p => p.user_id);
       
       await supabase
-        .from('user_status')
+        .from('_pidr_user_status')
         .update({ 
           status: 'online',
           current_room_id: null,
