@@ -1084,20 +1084,23 @@ export const useGameStore = create<GameState>()(
             
             if (currentPlayer.isBot) {
               console.log(`🤖 [processPlayerTurn] Бот автоматически делает ход из руки`);
-              // Для бота - автоматически выбираем первую доступную цель и делаем ход
-              setTimeout(() => {
-                if (targets.length > 0) {
-                  const targetIndex = targets[0];
-                  const targetPlayer = players[targetIndex];
-                  console.log(`🤖 [processPlayerTurn] Бот ходит на ${targetPlayer?.name} (индекс ${targetIndex})`);
-                  get().makeMove('initiate_move'); // Сначала инициируем ход
-                  setTimeout(() => {
-                    get().makeMove(targetPlayer?.id || ''); // Затем делаем ход на цель
-                  }, 500);
-                } else {
-                  console.log(`🤖 [processPlayerTurn] У бота нет целей для хода`);
-                }
-              }, 1000);
+              // ИСПРАВЛЕНО: Убрали двойные setTimeout - источник race conditions
+              if (targets.length > 0) {
+                const targetIndex = targets[0];
+                const targetPlayer = players[targetIndex];
+                console.log(`🤖 [processPlayerTurn] Бот ходит на ${targetPlayer?.name} (индекс ${targetIndex})`);
+                // Один безопасный setTimeout
+                setTimeout(() => {
+                  try {
+                    get().makeMove(targetPlayer?.id || ''); // Прямой ход на цель
+                  } catch (error) {
+                    console.error(`🚨 [processPlayerTurn] Ошибка хода бота:`, error);
+                  }
+                }, 800);
+              } else {
+                console.log(`🤖 [processPlayerTurn] У бота нет целей для хода - переход к колоде`);
+                setTimeout(() => get().nextTurn(), 1000);
+              }
             } else if (!currentPlayer.isBot) {
               get().showNotification(`${currentPlayer.name}: выберите карту для хода`, 'info');
             }
@@ -1631,41 +1634,46 @@ export const useGameStore = create<GameState>()(
              isAfterFinisher = (currentIndex <= nextAfterFinisher && currentIndex !== finisherIndex);
            }
            
-           const shouldEndRound = !wasEmptyTable && (
-             // Стандартное условие: достаточно карт И финишер побил
-             (newTableStack.length >= (players.length - 1) && currentPlayerId === roundFinisher) ||
-             // НОВОЕ условие: финишер взял карту И любой следующий игрок побил
-             (initiatorTookCard && isAfterFinisher)
-           );
+          // ПРАВИЛЬНАЯ ЛОГИКА ЗАВЕРШЕНИЯ КРУГА
+          const shouldEndRound = !wasEmptyTable && (
+            // Правило 1: Если инициатор начал, игрок до него (финишер) может закрыть круг
+            (currentPlayerId === roundFinisher && !initiatorTookCard) ||
+            // Правило 2: Если инициатор взял карты, следующий игрок после него побив верхнюю карту закрывает круг  
+            (initiatorTookCard && isAfterFinisher && newTableStack.length > 0)
+          );
            
-           if (shouldEndRound) {
-             console.log(`🎯 [playSelectedCard] 🏁 КРУГ ЗАВЕРШЕН после ${newTableStack.length} карт!`);
-             console.log(`🎯 [playSelectedCard] Причина: полный цикл игроков, финишер ${currentPlayer.name} завершил`);
-             console.log(`🎯 [playSelectedCard] 🗑️ Все карты со стола уходят в биту: ${newTableStack.map(c => c.image).join(', ')}`);
-             
-             // ВСЕ КАРТЫ СО СТОЛА УХОДЯТ В БИТУ ТОЛЬКО СЕЙЧАС
-             set({
-               tableStack: [],
-               roundInProgress: false,
-               currentRoundInitiator: null,
-               roundFinisher: null,
-               initiatorTookCard: false,
-               stage2TurnPhase: 'selecting_card'
-             });
-             
-             get().showNotification(`🏁 ${currentPlayer.name} завершил круг! ${newTableStack.length} карт в биту`, 'success', 3000);
-             
-             // Проверяем переход в 3-ю стадию
-             get().checkStage3Transition(currentPlayerId);
-             // Проверяем условия победы
-             get().checkVictoryCondition();
-             // Проверяем статус "одна карта"
-             get().checkOneCardStatus();
-             
-             // Игрок который завершил круг начинает новый раунд (УСКОРЕНО)
-             setTimeout(() => get().nextTurn(), 330);
-             return;
-           }
+          if (shouldEndRound) {
+            const reasonText = initiatorTookCard 
+              ? `Инициатор взял карты, ${currentPlayer.name} побил и закрыл круг`
+              : `${currentPlayer.name} (финишер) закрыл круг после инициатора`;
+              
+            console.log(`🎯 [playSelectedCard] 🏁 КРУГ ЗАВЕРШЕН! ${reasonText}`);
+            console.log(`🎯 [playSelectedCard] 📊 Карт в биту: ${newTableStack.length}`);
+            console.log(`🎯 [playSelectedCard] 🗑️ Карты: ${newTableStack.map(c => c.image).join(', ')}`);
+            
+            // ВСЕ КАРТЫ СО СТОЛА УХОДЯТ В БИТУ
+            set({
+              tableStack: [],
+              roundInProgress: false,
+              currentRoundInitiator: null,
+              roundFinisher: null,
+              initiatorTookCard: false,
+              stage2TurnPhase: 'selecting_card'
+            });
+            
+            get().showNotification(`🏁 ${reasonText}! ${newTableStack.length} карт в биту`, 'success', 3000);
+            
+            // Проверяем переход в 3-ю стадию
+            get().checkStage3Transition(currentPlayerId);
+            // Проверяем условия победы
+            get().checkVictoryCondition();
+            // Проверяем статус "одна карта"
+            get().checkOneCardStatus();
+            
+            // Игрок который завершил круг начинает новый раунд
+            setTimeout(() => get().nextTurn(), 330);
+            return;
+          }
            
            // ОБЫЧНОЕ ПРОДОЛЖЕНИЕ КРУГА
            // Проверяем переход в 3-ю стадию
@@ -2113,27 +2121,28 @@ export const useGameStore = create<GameState>()(
            get().showNotification(`✅ ${player.name}: "ОДНА КАРТА!" объявлено вовремя`, 'success', 3000);
          },
          
-         // Спросить "сколько карт?" у другого игрока
-         askHowManyCards: (askerPlayerId: string, targetPlayerId: string) => {
-           const { players, oneCardDeclarations, oneCardTimers } = get();
-           const asker = players.find(p => p.id === askerPlayerId);
-           const target = players.find(p => p.id === targetPlayerId);
+        // Спросить "сколько карт?" у другого игрока
+        askHowManyCards: (askerPlayerId: string, targetPlayerId: string) => {
+          const { players, oneCardDeclarations, oneCardTimers } = get();
+          const asker = players.find(p => p.id === askerPlayerId);
+          const target = players.find(p => p.id === targetPlayerId);
+          
+          if (!asker || !target) return;
+          
+          // ПРАВИЛЬНО: Считаем только ОТКРЫТЫЕ карты (пеньки не в игре!)
+          const targetOpenCards = target.cards.filter(c => c.open);
+          const currentTime = Date.now();
+          
+          console.log(`❓ [askHowManyCards] ${asker.name} спрашивает у ${target.name} сколько карт`);
+          console.log(`❓ [askHowManyCards] У ${target.name}: ${targetOpenCards.length} открытых карт (пеньки не считаются)`);
+          console.log(`❓ [askHowManyCards] Таймер: ${oneCardTimers[targetPlayerId]}, текущее время: ${currentTime}`);
+          console.log(`❓ [askHowManyCards] Объявил: ${oneCardDeclarations[targetPlayerId]}`);
+          
+          // Показываем только ОТКРЫТЫЕ карты
+          get().showNotification(`📊 ${target.name} имеет ${targetOpenCards.length} открытых карт`, 'info', 4000);
            
-           if (!asker || !target) return;
-           
-           const targetOpenCards = target.cards.filter(c => c.open);
-           const currentTime = Date.now();
-           
-           console.log(`❓ [askHowManyCards] ${asker.name} спрашивает у ${target.name} сколько карт`);
-           console.log(`❓ [askHowManyCards] У ${target.name}: ${targetOpenCards.length} открытых карт`);
-           console.log(`❓ [askHowManyCards] Таймер: ${oneCardTimers[targetPlayerId]}, текущее время: ${currentTime}`);
-           console.log(`❓ [askHowManyCards] Объявил: ${oneCardDeclarations[targetPlayerId]}`);
-           
-           // Показываем количество карт
-           get().showNotification(`📊 ${target.name} имеет ${targetOpenCards.length} открытых карт`, 'info', 4000);
-           
-           // ШТРАФНАЯ ПРОВЕРКА: Если у цели 1 карта
-           if (targetOpenCards.length === 1) {
+          // ШТРАФНАЯ ПРОВЕРКА: Если у цели 1 открытая карта (важна именно открытая для правил)
+          if (targetOpenCards.length === 1) {
              const hasActiveTimer = oneCardTimers[targetPlayerId] && oneCardTimers[targetPlayerId] > currentTime;
              const hasExpiredTimer = oneCardTimers[targetPlayerId] && oneCardTimers[targetPlayerId] <= currentTime;
              const hasDeclared = oneCardDeclarations[targetPlayerId];

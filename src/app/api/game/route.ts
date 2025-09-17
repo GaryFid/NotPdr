@@ -11,14 +11,14 @@ const APP_URL = process.env.APP_URL || '';
 const BASE_URL = process.env.BASE_URL || '';
 const SESSION_SECRET = process.env.SESSION_SECRET || '';
 
-function getUserIdFromRequest(req: NextRequest): number | null {
+function getUserIdFromRequest(req: NextRequest): string | null {
   if (!JWT_SECRET) return null;
   const auth = req.headers.get('authorization');
   if (!auth) return null;
   const token = auth.replace('Bearer ', '');
   try {
     const payload = jwt.verify(token, JWT_SECRET) as any;
-    return payload.userId;
+    return String(payload.userId); // Приводим к строке для единообразия
   } catch {
     return null;
   }

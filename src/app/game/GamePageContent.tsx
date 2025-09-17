@@ -302,8 +302,11 @@ function GamePageContentComponent({
   
   // Обработка ходов ИИ
   useEffect(() => {
+    const { isGameActive, currentPlayerId, players, gameStage, stage2TurnPhase, deck, availableTargets, revealedDeckCard, trumpSuit } = useGameStore.getState();
+    
     if (!isGameActive || !currentPlayerId) return;
     
+    const currentTurnPlayer = players.find(p => p.id === currentPlayerId);
     if (!currentTurnPlayer || !currentTurnPlayer.isBot) return;
     
     // Защита от повторных вызовов AI (race condition protection)
@@ -355,31 +358,41 @@ function GamePageContentComponent({
     
     // Задержка перед ходом ИИ для реалистичности
     const makeAIMove = async () => {
-      const gameState = {
-        players,
-        currentPlayer: currentPlayerId,
-        gameStage,
-        deck,
-        availableTargets,
-        revealedDeckCard,
-        tableStack,
-        trumpSuit, // Козырь из gameStore (определяется автоматически)
-        stage2TurnPhase // Добавляем фазу 2-й стадии для AI
-      };
+      try {
+        // ПРОВЕРКА: Убеждаемся что все нужные данные есть
+        if (!currentTurnPlayer || !currentTurnPlayer.isBot || !players.length) {
+          console.log(`🚨 [makeAIMove] Недостаточно данных для хода ИИ`);
+          aiProcessingRef.current = null;
+          return;
+        }
+        
+        const gameState = {
+          players,
+          currentPlayer: currentPlayerId,
+          gameStage,
+          deck,
+          availableTargets,
+          revealedDeckCard,
+          tableStack,
+          trumpSuit, // Козырь из gameStore (определяется автоматически)
+          stage2TurnPhase // Добавляем фазу 2-й стадии для AI
+        };
+        
+        const decision = await ai.makeDecisionWithDelay(gameState);
       
-      const decision = await ai.makeDecisionWithDelay(gameState);
-      
-      // Выполняем решение ИИ с учетом стадии игры
-      if (gameStage === 1) {
+        // Выполняем решение ИИ с учетом стадии игры
+        if (gameStage === 1) {
         // В 1-й стадии ИИ должен следовать алгоритму: анализ руки → колода → анализ карты из колоды
         switch (decision.action) {
           case 'place_on_target':
-            if (decision.targetPlayerId !== undefined && makeMove) {
-              makeMove(decision.targetPlayerId.toString());
+            if (decision.targetPlayerId !== undefined) {
+              const { makeMove } = useGameStore.getState();
+              if (makeMove) makeMove(decision.targetPlayerId.toString());
             }
             break;
           case 'draw_card':
             // В 1-й стадии ИИ кликает по колоде только если не может ходить из руки
+            const { onDeckClick } = useGameStore.getState();
             if (onDeckClick) onDeckClick();
             break;
           default:
@@ -391,9 +404,10 @@ function GamePageContentComponent({
         console.log(`🤖 [AI Stage${gameStage}] Принято решение:`, decision);
         console.log(`🤖 [AI Stage${gameStage}] - tableStack.length: ${tableStack?.length || 0}`);
         console.log(`🤖 [AI Stage${gameStage}] - trumpSuit: ${trumpSuit}`);
-        console.log(`🤖 [AI Stage${gameStage}] - доступные функции: selectHandCard=${!!selectHandCard}, playSelectedCard=${!!playSelectedCard}, takeTableCards=${!!takeTableCards}`);
+        console.log(`🤖 [AI Stage${gameStage}] - доступные функции проверяются динамически`);
         switch (decision.action) {
           case 'play_card':
+            const { selectHandCard, playSelectedCard } = useGameStore.getState();
             if (decision.cardToPlay && selectHandCard && playSelectedCard) {
               // Найдем карту в руке игрока и выберем её
               if (currentTurnPlayer) {
@@ -414,21 +428,19 @@ function GamePageContentComponent({
                   console.log(`🚨 [AI Stage${gameStage}] Карта не найдена в руке или закрыта:`, decision.cardToPlay?.image);
                   console.log(`🚨 [AI Stage${gameStage}] Доступные карты:`, currentTurnPlayer.cards.filter(c => c.open).map(c => c.image));
                   console.log(`🚨 [AI Stage${gameStage}] Все карты игрока:`, currentTurnPlayer.cards.map(c => `${c.image}(${c.open ? 'open' : 'closed'})`));
-                  // Fallback: берем карты со стола
-                  if (takeTableCards) {
-                    console.log(`🤖 [AI Stage${gameStage}] Fallback: берем карты со стола`);
-                    takeTableCards();
-                  } else {
-                    console.log(`🚨 [AI Stage${gameStage}] КРИТИЧЕСКАЯ ОШИБКА: Нет функции takeTableCards!`);
-                  }
+                  // ИСПРАВЛЕНО: Безопасный fallback
+                  console.log(`🤖 [AI Stage${gameStage}] Fallback: не можем найти карту, пропускаем ход`);
+                  // Сбрасываем флаг обработки
+                  aiProcessingRef.current = null;
                 }
               }
             } else {
-              console.log(`🚨 [AI Stage${gameStage}] Нет функций для игры карт:`, {selectHandCard: !!selectHandCard, playSelectedCard: !!playSelectedCard});
+              console.log(`🚨 [AI Stage${gameStage}] Нет функций для игры карт`);
             }
             break;
           case 'draw_card':
             // Во 2-й и 3-й стадиях это значит "взять карты со стола"
+            const { takeTableCards } = useGameStore.getState();
             if (takeTableCards) {
               console.log(`🤖 [AI Stage${gameStage}] Берем карты со стола`);
               takeTableCards();
@@ -444,8 +456,15 @@ function GamePageContentComponent({
             console.log(`🚨 [AI Stage${gameStage}] Неизвестное действие:`, decision.action);
         }
       }
+        
       // Сбрасываем флаг после завершения хода
       aiProcessingRef.current = null;
+        
+    } catch (error) {
+      console.error(`🚨 [makeAIMove] КРИТИЧЕСКАЯ ОШИБКА при ходе ИИ:`, error);
+      // Сбрасываем флаг обработки в случае ошибки
+      aiProcessingRef.current = null;
+    }
     };
     
     // Запускаем ход ИИ с небольшой задержкой (УСКОРЕНО В 2 РАЗА)
@@ -457,7 +476,7 @@ function GamePageContentComponent({
       // Сбрасываем флаг при очистке useEffect
       aiProcessingRef.current = null;
     };
-  }, [currentPlayerId, isGameActive, players, gameStage, stage2TurnPhase, aiPlayers, tableStack]);
+  }, []);
   
   // Инициализация игры из gameStore
   useEffect(() => {
@@ -533,17 +552,16 @@ function GamePageContentComponent({
       console.log(`🎯 [showOpponentsCardCount] Проверяем штраф у ${targetPlayer.name} через новую систему`);
       askHowManyCards(humanPlayer.id, targetPlayer.id);
     } else {
-      // Если нет игроков с 1 картой, показываем обычную информацию
+      // Если нет игроков с 1 картой, показываем обычную информацию  
       players
         .filter(p => p.id !== humanPlayer.id)
         .forEach((player, index) => {
-          const totalCards = player.cards.length + player.penki.length;
           const openCards = player.cards.filter(c => c.open).length;
           
           setTimeout(() => {
             showPlayerMessage(
               player.id, 
-              `${totalCards} карт (${openCards} открытых)`, 
+              `${openCards} открытых карт`, 
               'info', 
               4000
             );
@@ -977,17 +995,17 @@ function GamePageContentComponent({
                         {p.name}
                         {isCurrentPlayer && <span style={{ marginLeft: 4 }}>👑</span>}
                       </span>
-                      {/* Счетчик карт для ботов во 2-й стадии */}
-                      {gameStage === 2 && p.isBot && (
+                      {/* Счетчик ОТКРЫТЫХ карт для ВСЕХ игроков во 2-й и 3-й стадии */}
+                      {(gameStage === 2 || gameStage === 3) && (
                         <span style={{
-                          color: '#00ff88',
+                          color: p.id === humanPlayer?.id ? '#ffd700' : '#00ff88',
                           marginLeft: 4,
                           fontSize: '12px',
                           fontWeight: 'bold',
-                          background: 'rgba(0, 255, 136, 0.1)',
+                          background: p.id === humanPlayer?.id ? 'rgba(255, 215, 0, 0.1)' : 'rgba(0, 255, 136, 0.1)',
                           padding: '2px 6px',
                           borderRadius: '8px',
-                          border: '1px solid rgba(0, 255, 136, 0.3)'
+                          border: p.id === humanPlayer?.id ? '1px solid rgba(255, 215, 0, 0.3)' : '1px solid rgba(0, 255, 136, 0.3)'
                         }}>
                           🃏 {p.cards.filter(c => c.open).length}
                         </span>
