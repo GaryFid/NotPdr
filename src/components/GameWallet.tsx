@@ -392,6 +392,22 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
     return lastBonus !== today;
   };
 
+  // Генерация адреса для пополнения
+  const generateDepositAddress = (crypto: string, userId: string): string => {
+    const userHash = userId.slice(-8) || Math.random().toString(36).slice(-8);
+    
+    switch (crypto) {
+      case 'TON':
+        return `UQD${userHash}bKIRD6L73zENFzmSIMZ07pyejnn8HUWvjdprqnC${userHash.slice(-4)}`;
+      case 'USDT':
+        return `USDT${userHash.toUpperCase()}9907946`;
+      case 'BTC':
+        return `bc1q${userHash}a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z`;
+      default:
+        return `${crypto}${userHash}${Date.now().toString().slice(-6)}`;
+    }
+  };
+
   return (
     <div className="game-wallet-container">
       {/* Баланс - главная карточка */}
@@ -667,10 +683,10 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
                     <div className="address-container">
                       <input 
                         type="text" 
-                        value={`${selectedCrypto}${user?.id?.slice(-8) || Math.random().toString(36).slice(-8)}`}
+                        value={generateDepositAddress(selectedCrypto, user?.id || '')}
                         readOnly 
                       />
-                      <button className="copy-btn" onClick={() => navigator.clipboard?.writeText(`${selectedCrypto}${user?.id?.slice(-8)}`)}>
+                      <button className="copy-btn" onClick={() => navigator.clipboard?.writeText(generateDepositAddress(selectedCrypto, user?.id || ''))}>
                         📋
                       </button>
                     </div>
@@ -814,11 +830,11 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
 
         .balance-icon {
           font-size: 24px;
-          color: #ffd700;
+          color: #3b82f6;
         }
 
         .balance-title {
-          font-size: 18px;
+          font-size: 16px;
           font-weight: 600;
           color: #e2e8f0;
         }
@@ -831,16 +847,16 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
         }
 
         .coin-icon {
-          font-size: 32px;
-          color: #ffd700;
-          filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
+          font-size: 24px;
+          color: #3b82f6;
+          filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.5));
         }
 
         .amount-text {
-          font-size: 36px;
+          font-size: 28px;
           font-weight: 700;
-          color: #ffd700;
-          text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+          color: #3b82f6;
+          text-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
         }
 
         .currency {
@@ -882,15 +898,16 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
         }
 
         .tab-button.active {
-          background: linear-gradient(135deg, #ffd700 0%, #ffb900 100%);
-          color: #0f172a;
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+          color: white;
           transform: translateY(-2px);
-          box-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);
+          box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+          border: 1px solid #ffd700;
         }
 
         .tab-button:hover:not(.active) {
-          background: rgba(255, 215, 0, 0.1);
-          color: #ffd700;
+          background: rgba(59, 130, 246, 0.1);
+          color: #3b82f6;
         }
 
         .tab-content {
@@ -898,30 +915,32 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
         }
 
         .action-buttons {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 16px;
+          display: flex;
+          gap: 12px;
           margin-bottom: 32px;
+          justify-content: space-between;
         }
 
         .action-button {
+          flex: 1;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 12px;
-          padding: 20px 16px;
-          border-radius: 16px;
+          gap: 8px;
+          padding: 16px 12px;
+          border-radius: 12px;
           border: 2px solid #ffd700;
           cursor: pointer;
           font-weight: 700;
+          font-size: 13px;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           position: relative;
           overflow: hidden;
           background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1d4ed8 100%);
           color: white;
           box-shadow: 
-            0 4px 20px rgba(255, 215, 0, 0.3),
-            0 8px 32px rgba(30, 58, 138, 0.4),
+            0 3px 15px rgba(255, 215, 0, 0.2),
+            0 6px 25px rgba(30, 58, 138, 0.3),
             inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }
 
@@ -976,7 +995,7 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
         }
 
         .action-icon {
-          font-size: 24px;
+          font-size: 18px;
         }
 
         .quick-actions {
@@ -987,9 +1006,9 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
         }
 
         .section-title {
-          font-size: 18px;
+          font-size: 16px;
           font-weight: 600;
-          color: #e2e8f0;
+          color: #3b82f6;
           margin-bottom: 16px;
           display: flex;
           align-items: center;
@@ -1009,8 +1028,8 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
         }
 
         .quick-icon {
-          font-size: 24px;
-          color: #ffd700;
+          font-size: 20px;
+          color: #3b82f6;
         }
 
         .quick-text {
@@ -1032,9 +1051,9 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
 
         .quick-button {
           padding: 8px 16px;
-          background: linear-gradient(135deg, #ffd700 0%, #ffb900 100%);
-          color: #0f172a;
-          border: none;
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+          color: white;
+          border: 1px solid #ffd700;
           border-radius: 8px;
           font-weight: 600;
           cursor: pointer;
@@ -1043,7 +1062,7 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
 
         .quick-button:hover:not(.disabled) {
           transform: translateY(-2px);
-          box-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);
+          box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
         }
 
         .quick-button.disabled {
@@ -1216,7 +1235,7 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
         }
 
         .modal-header h3 {
-          color: #ffd700;
+          color: #3b82f6;
           font-size: 18px;
           font-weight: 700;
           margin: 0;
@@ -1239,8 +1258,8 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
         }
 
         .close-btn:hover {
-          background: rgba(255, 215, 0, 0.1);
-          color: #ffd700;
+          background: rgba(59, 130, 246, 0.1);
+          color: #3b82f6;
         }
 
         .crypto-select, .input-section {
@@ -1306,16 +1325,17 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
 
         .copy-btn {
           padding: 12px;
-          background: linear-gradient(135deg, #ffd700 0%, #ffb900 100%);
-          border: none;
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+          border: 1px solid #ffd700;
           border-radius: 12px;
           cursor: pointer;
           transition: all 0.3s ease;
+          color: white;
         }
 
         .copy-btn:hover {
           transform: scale(1.05);
-          box-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);
+          box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
         }
 
         .warning {
@@ -1421,7 +1441,7 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
         .amount-input .amount {
           font-size: 24px;
           font-weight: 700;
-          color: #ffd700;
+          color: #3b82f6;
         }
 
         .amount-input select {
