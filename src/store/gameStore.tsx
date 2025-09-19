@@ -2262,6 +2262,7 @@ export const useGameStore = create<GameState>()(
            }
            
            console.log(`💸 [contributePenaltyCard] ${contributor.name} отдает карту ${card.image} игроку ${targetPlayer.name}`);
+           console.log(`💸 [contributePenaltyCard] ДО: ${targetPlayer.name} имеет ${targetPlayer.cards.length} карт (${targetPlayer.cards.filter(c => c.open).length} открытых)`);
            
            // Создаем новое состояние
            const newPlayers = players.map(player => ({ ...player, cards: [...player.cards] }));
@@ -2271,9 +2272,12 @@ export const useGameStore = create<GameState>()(
            // Убираем карту у отдающего
            newPlayers[contributorIndex].cards.splice(cardIndex, 1);
            
-           // ВАЖНО: Карта передается в ЗАКРЫТОМ виде!
-           const penaltyCard = { ...card, open: false };
+           // ИСПРАВЛЕНО: Штрафные карты передаются в ОТКРЫТОМ виде (ими можно играть)!
+           const penaltyCard = { ...card, open: true };
            newPlayers[targetIndex].cards.push(penaltyCard);
+           
+           console.log(`💸 [contributePenaltyCard] ПОСЛЕ: ${newPlayers[targetIndex].name} имеет ${newPlayers[targetIndex].cards.length} карт (${newPlayers[targetIndex].cards.filter(c => c.open).length} открытых)`);
+           console.log(`💸 [contributePenaltyCard] Добавленная карта: ${penaltyCard.image} (open: ${penaltyCard.open})`);
            
            // Убираем игрока из списка ожидающих
            const newContributorsNeeded = pendingPenalty.contributorsNeeded.filter(id => id !== contributorId);
@@ -2286,14 +2290,20 @@ export const useGameStore = create<GameState>()(
              };
            }
            
-           // Обновляем состояние
+           // Обновляем состояние с принудительным обновлением
            set({ 
              players: newPlayers,
              pendingPenalty: newPendingPenalty
            });
            
-           // ВАЖНО: Обновляем статус "одна карта" сразу после изменения карт
-           get().checkOneCardStatus();
+           // КРИТИЧНО: Принудительно обновляем состояние для React
+           setTimeout(() => {
+             const currentPlayers = get().players;
+             set({ players: [...currentPlayers] });
+             
+             // ВАЖНО: Обновляем статус "одна карта" после обновления состояния
+             get().checkOneCardStatus();
+           }, 100);
            
            get().showNotification(`✅ ${contributor.name} скинул карту штрафа!`, 'success', 2000);
            
@@ -2317,6 +2327,10 @@ export const useGameStore = create<GameState>()(
              
              // Проверяем статус "одна карта" - ВАЖНО: обновляем после изменения карт
              setTimeout(() => {
+               const finalPlayers = get().players;
+               const finalTarget = finalPlayers.find(p => p.id === pendingPenalty.targetPlayerId);
+               console.log(`💸 [contributePenaltyCard] ИТОГО: ${finalTarget?.name} имеет ${finalTarget?.cards.length} карт (${finalTarget?.cards.filter(c => c.open).length} открытых)`);
+               
                get().checkOneCardStatus();
                
                // КРИТИЧНО: Принудительно обновляем состояние для синхронизации UI

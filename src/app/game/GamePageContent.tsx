@@ -1029,7 +1029,7 @@ function GamePageContentComponent({
                           borderRadius: '8px',
                           border: p.id === humanPlayer?.id ? '1px solid rgba(255, 215, 0, 0.3)' : '1px solid rgba(0, 255, 136, 0.3)'
                         }}>
-                          🃏 {p.cards.length} ({p.cards.filter(c => c.open).length} откр.)
+                          🃏 {p.cards.filter(c => c.open).length}
                         </span>
                       )}
                       {/* Подсказка цели только для человека */}
@@ -1234,7 +1234,7 @@ function GamePageContentComponent({
               <div className={styles.handTitle}>
                 {gameStage === 2 && stage2TurnPhase === 'selecting_card' && humanPlayer.id === currentPlayerId ? 
                   '🎯 ВЫБЕРИТЕ КАРТУ' : 
-                  '🎴 Ваши карты'} ({humanPlayer.cards.length}: {humanPlayer.cards.filter(c => c.open).length} откр. + {humanPlayer.cards.filter(c => !c.open).length} закр.)
+                  '🎴 Ваши карты'} ({humanPlayer.cards.filter(c => c.open).length})
                 
                 {/* Кнопки во 2-й стадии */}
                 <div style={{ marginLeft: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
