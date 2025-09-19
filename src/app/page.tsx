@@ -122,8 +122,64 @@ function HomeWithParams() {
         
       } catch (error) {
         console.error('❌ Ошибка при загрузке игрока:', error);
-        console.log('🔄 Создаем локального игрока как fallback');
-        createLocalPlayer();
+        console.log('🔄 Пытаемся создать пользователя через API');
+        
+        // Пытаемся создать пользователя через API авторизации
+        try {
+          await createUserThroughAPI(telegramUser, telegramId);
+        } catch (apiError) {
+          console.error('❌ Ошибка создания через API:', apiError);
+          console.log('🔄 Создаем локального игрока как последний fallback');
+          createLocalPlayer();
+        }
+      }
+    };
+    
+    const createUserThroughAPI = async (telegramUser: any | undefined, telegramId: string) => {
+      console.log('🌐 Создаем пользователя через API...');
+      
+      const authData = {
+        type: 'telegram',
+        id: telegramId,
+        username: telegramUser?.username || '',
+        first_name: telegramUser?.first_name || 'Игрок',
+        last_name: telegramUser?.last_name || '',
+        photo_url: telegramUser?.photo_url || null
+      };
+      
+      const response = await fetch('/api/auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(authData)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API ответил с ошибкой: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success && result.user && result.token) {
+        console.log('✅ Пользователь создан через API:', result.user);
+        
+        // Сохраняем токен и данные пользователя
+        localStorage.setItem('auth_token', result.token);
+        localStorage.setItem('user', JSON.stringify(result.user));
+        localStorage.setItem('current_user', JSON.stringify(result.user));
+        
+        // Диспатчим событие обновления монет
+        window.dispatchEvent(new CustomEvent('coinsUpdated', { 
+          detail: { coins: result.user.coins } 
+        }));
+        
+        setUser(result.user);
+        setLoading(false);
+        
+        console.log('🚀 ИГРА ГОТОВА К ЗАПУСКУ (пользователь из API)!');
+      } else {
+        throw new Error(result.message || 'Не удалось создать пользователя');
       }
     };
     
