@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
 
         // Сохраняем транзакцию
         await supabase
-          .from('_pidr_transactions')
+          .from('_pidr_coin_transactions')
           .insert({
             user_id: userId,
             type: 'deposit',

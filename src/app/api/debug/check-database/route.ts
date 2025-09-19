@@ -36,8 +36,8 @@ export async function GET(req: NextRequest) {
       '_pidr_user_status',
       '_pidr_rooms', 
       '_pidr_room_players',
-      '_pidr_hd_addresses',
-      '_pidr_transactions'
+      '_pidr_hd_wallets',
+      '_pidr_coin_transactions'
     ];
 
     for (const table of tablesToCheck) {

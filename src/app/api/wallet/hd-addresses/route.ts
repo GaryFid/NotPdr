@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     console.log(`💳 Получаем HD адреса для пользователя ${userId}`);
 
     const { data: hdAddresses, error } = await supabase
-      .from('_pidr_hd_addresses')
+      .from('_pidr_hd_wallets')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: true });
@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
               console.log(`✅ Сгенерирован ${coin} адрес для пользователя`);
               
               const { data: savedAddress, error: saveError } = await supabase
-                .from('_pidr_hd_addresses')
+                .from('_pidr_hd_wallets')
                 .insert({
                   user_id: userId,
                   coin: hdAddress.coin,
@@ -141,7 +141,7 @@ export async function POST(req: NextRequest) {
 
     // Проверяем, есть ли уже адрес для этой монеты
     const { data: existingAddress } = await supabase
-      .from('_pidr_hd_addresses')
+      .from('_pidr_hd_wallets')
       .select('id')
       .eq('user_id', userId)
       .eq('coin', coin)
@@ -168,7 +168,7 @@ export async function POST(req: NextRequest) {
 
     // Сохраняем в базу данных
     const { data: savedAddress, error: saveError } = await supabase
-      .from('_pidr_hd_addresses')
+      .from('_pidr_hd_wallets')
       .insert({
         user_id: userId,
         coin: hdAddress.coin,

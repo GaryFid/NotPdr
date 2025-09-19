@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
     console.log(`📊 Получаем транзакции для пользователя ${userId}, лимит: ${limit}, смещение: ${offset}`);
 
     let query = supabase
-      .from('_pidr_transactions')
+      .from('_pidr_coin_transactions')
       .select('*')
       .eq('user_id', userId);
 
@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
 
     // Создаем транзакцию
     const { data: transaction, error: createError } = await supabase
-      .from('_pidr_transactions')
+      .from('_pidr_coin_transactions')
       .insert({
         user_id: userId,
         type,
