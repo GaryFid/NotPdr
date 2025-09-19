@@ -175,7 +175,7 @@ export async function POST(req: NextRequest) {
         const hdAddress = await walletService.generateUserAddress(newUser.id, coin);
         if (hdAddress) {
           await supabase
-            .from('_pidr_hd_addresses')
+            .from('_pidr_hd_wallets')
             .insert({
               user_id: newUser.id,
               coin: hdAddress.coin,

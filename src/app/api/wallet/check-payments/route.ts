@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 
     // 1. Получаем все HD адреса пользователя
     const { data: hdAddresses, error: addressError } = await supabase
-      .from('_pidr_hd_addresses')
+      .from('_pidr_hd_wallets')
       .select('*')
       .eq('user_id', userId);
 
