@@ -57,13 +57,74 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
   const [selectedCrypto, setSelectedCrypto] = useState('TON');
   const [hdAddresses, setHdAddresses] = useState<any[]>([]);
   const [isGeneratingAddress, setIsGeneratingAddress] = useState(false);
+  const [isMonitoringPayments, setIsMonitoringPayments] = useState(false);
 
   // Загружаем данные пользователя и транзакции
   useEffect(() => {
     loadUserData();
     loadTransactions();
     loadHDAddresses();
+    
+    // Запрашиваем разрешение на уведомления
+    if (window.Notification && Notification.permission === 'default') {
+      Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+          console.log('✅ Разрешение на уведомления получено');
+        }
+      });
+    }
   }, [user]);
+
+  // Автоматический мониторинг платежей каждые 30 секунд
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        if (!token) return;
+
+        const response = await fetch('/api/wallet/check-payments', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.newPayments && result.newPayments.length > 0) {
+            console.log('🎉 Автоматически найдены новые платежи:', result.newPayments);
+            
+            // Обновляем данные
+            await loadUserData();
+            await loadTransactions();
+            
+            // Уведомляем пользователя
+            const totalAmount = result.newPayments.reduce((sum: number, payment: any) => sum + payment.amount, 0);
+            
+            // Показываем уведомление в интерфейсе вместо alert
+            if (window.Notification && Notification.permission === 'granted') {
+              new Notification('💰 Новое пополнение!', {
+                body: `Получено ${result.newPayments.length} платежей на сумму ${totalAmount} монет`,
+                icon: '/favicon.ico'
+              });
+            }
+
+            // Обновляем баланс в родительском компоненте
+            if (onBalanceUpdate && result.newBalance) {
+              onBalanceUpdate(result.newBalance);
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('⚠️ Ошибка автоматической проверки платежей:', error);
+      }
+    }, 30000); // Каждые 30 секунд
+
+    return () => clearInterval(interval);
+  }, [user?.id, onBalanceUpdate]);
 
   // Загрузка HD адресов пользователя
   const loadHDAddresses = async () => {
@@ -156,32 +217,71 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
   };
 
   const loadTransactions = async () => {
+    if (!user?.id) return;
+
     try {
       setLoading(true);
-      const userData = localStorage.getItem('user');
-      if (!userData) return;
       
-      const user = JSON.parse(userData);
-      
-      const response = await fetch('/api/pidr-db', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'get_user_transactions',
-          userId: user.telegramId || user.id
-        })
+      // Используем новый API для получения транзакций
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        console.warn('⚠️ Нет токена авторизации для загрузки транзакций');
+        return;
+      }
+
+      const response = await fetch('/api/wallet/transactions?limit=50', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
       if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setTransactions(data.transactions || []);
+        const result = await response.json();
+        if (result.success && result.transactions) {
+          // Преобразуем транзакции в нужный формат
+          const formattedTransactions = result.transactions.map((tx: any) => ({
+            id: tx.id,
+            amount: tx.amount,
+            type: tx.type,
+            description: tx.description,
+            created_at: tx.createdAt,
+            balance_after: tx.amount // Приблизительно
+          }));
+
+          setTransactions(formattedTransactions);
+          console.log('✅ Транзакции загружены из нового API:', formattedTransactions.length);
         } else {
-          console.error('Ошибка получения транзакций:', data.error);
+          console.error('Ошибка получения транзакций:', result.message);
+        }
+      } else {
+        console.warn(`⚠️ Ошибка API ${response.status}, используем fallback`);
+        
+        // Fallback к старому API
+        const userData = localStorage.getItem('user');
+        if (userData) {
+          const user = JSON.parse(userData);
+          
+          const fallbackResponse = await fetch('/api/pidr-db', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'get_user_transactions',
+              userId: user.telegramId || user.id
+            })
+          });
+
+          if (fallbackResponse.ok) {
+            const data = await fallbackResponse.json();
+            if (data.success) {
+              setTransactions(data.transactions || []);
+              console.log('✅ Транзакции загружены через fallback API');
+            }
+          }
         }
       }
     } catch (error) {
-      console.error('Ошибка загрузки транзакций:', error);
+      console.error('❌ Ошибка загрузки транзакций:', error);
     } finally {
       setLoading(false);
     }
@@ -508,6 +608,64 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
     }
   };
 
+  // Функция для мониторинга и обновления баланса
+  const checkPaymentsAndUpdateBalance = async () => {
+    if (!user?.id) return;
+
+    try {
+      setIsMonitoringPayments(true);
+      
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        alert('Нет токена авторизации');
+        return;
+      }
+
+      // Проверяем новые платежи
+      const response = await fetch('/api/wallet/check-payments', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        console.log('✅ Проверка платежей завершена:', result);
+        
+        // Если найдены новые платежи, обновляем баланс
+        if (result.newPayments && result.newPayments.length > 0) {
+          // Перезагружаем данные пользователя
+          await loadUserData();
+          await loadTransactions();
+          
+          // Уведомляем о новых платежах
+          const totalAmount = result.newPayments.reduce((sum: number, payment: any) => sum + payment.amount, 0);
+          alert(`🎉 Найдено новых платежей: ${result.newPayments.length}\n💰 Общая сумма: ${totalAmount} монет`);
+          
+          // Обновляем баланс в родительском компоненте
+          if (onBalanceUpdate && result.newBalance) {
+            onBalanceUpdate(result.newBalance);
+          }
+        } else {
+          alert('📊 Новых платежей не найдено');
+        }
+      } else {
+        throw new Error(result.message || 'Ошибка проверки платежей');
+      }
+    } catch (error) {
+      console.error('❌ Ошибка мониторинга платежей:', error);
+      alert(`Ошибка: ${error}`);
+    } finally {
+      setIsMonitoringPayments(false);
+    }
+  };
+
   return (
     <div className={styles['game-wallet-container']}>
       {/* Баланс - главная карточка */}
@@ -611,6 +769,22 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
                 <div className="button-glow"></div>
                 <FaShoppingCart className="action-icon" />
                 <span>Купить</span>
+              </motion.button>
+
+              <motion.button
+                className="action-button monitor"
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={checkPaymentsAndUpdateBalance}
+                disabled={isMonitoringPayments}
+                style={{ 
+                  backgroundColor: isMonitoringPayments ? '#666' : '#00d2d3',
+                  opacity: isMonitoringPayments ? 0.6 : 1
+                }}
+              >
+                <div className="button-glow"></div>
+                <FaArrowDown className="action-icon" />
+                <span>{isMonitoringPayments ? 'Проверка...' : '📊 Обновить'}</span>
               </motion.button>
             </div>
 

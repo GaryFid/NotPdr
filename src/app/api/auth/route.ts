@@ -478,7 +478,8 @@ export async function POST(req: NextRequest) {
       
       if (!user) {
         // Создание нового пользователя
-        console.log('🆕 Создание нового Telegram пользователя');
+        console.log('🆕 Создание нового Telegram пользователя для ID:', idStr);
+        console.log('📋 Данные для создания:', { username, first_name, last_name, photo_url });
 
         // Генерация уникального referralCode
         let referralCode = null;
@@ -517,6 +518,7 @@ export async function POST(req: NextRequest) {
 
         if (createError) {
           console.error('❌ Ошибка создания Telegram пользователя:', createError);
+          console.error('📋 Данные которые пытались вставить:', newUserData);
           return NextResponse.json({ 
             success: false, 
             message: 'Ошибка создания пользователя',
@@ -526,6 +528,8 @@ export async function POST(req: NextRequest) {
 
         user = newUser;
         console.log('✅ Создан новый Telegram пользователь:', user.username);
+        console.log('🆔 ID нового пользователя:', user.id);
+        console.log('📊 Полные данные пользователя:', user);
 
         // Создание статуса пользователя
         try {

@@ -188,17 +188,23 @@ export class HDWalletService {
     }
   }
 
-  // Сохранение адреса в базу данных
+  // Сохранение адреса в базу данных через новый API
   private async saveAddressToDatabase(walletAddress: HDWalletAddress): Promise<void> {
     try {
-      const response = await fetch('/api/pidr-db', {
+      // Получаем токен авторизации
+      const token = this.getAuthToken();
+      if (!token) {
+        throw new Error('Нет токена авторизации');
+      }
+
+      const response = await fetch('/api/wallet/hd-addresses', {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          action: 'save_hd_address',
-          ...walletAddress
+          coin: walletAddress.coin
         }),
       });
 
@@ -208,7 +214,7 @@ export class HDWalletService {
 
       const result = await response.json();
       if (!result.success) {
-        throw new Error(result.error || 'Ошибка сохранения адреса');
+        throw new Error(result.message || 'Ошибка сохранения адреса');
       }
 
       console.log(`💾 HD адрес сохранен в БД: ${walletAddress.coin} - ${walletAddress.address}`);
@@ -218,58 +224,97 @@ export class HDWalletService {
     }
   }
 
+  // Получение токена авторизации
+  private getAuthToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('authToken');
+  }
+
   // Получение адреса пользователя для монеты
   async getUserAddress(userId: string, coin: string): Promise<HDWalletAddress | null> {
     try {
-      const response = await fetch('/api/pidr-db', {
-        method: 'POST',
+      // Получаем токен авторизации
+      const token = this.getAuthToken();
+      if (!token) {
+        console.warn('⚠️ Нет токена авторизации, генерируем адрес локально');
+        return await this.generateUserAddress(userId, coin);
+      }
+
+      const response = await fetch('/api/wallet/hd-addresses', {
+        method: 'GET',
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: 'get_user_hd_address',
-          userId,
-          coin: coin.toUpperCase()
-        }),
+        }
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        console.warn(`⚠️ Ошибка API ${response.status}, генерируем адрес локально`);
+        return await this.generateUserAddress(userId, coin);
       }
 
       const result = await response.json();
-      if (result.success && result.address) {
-        return result.address;
+      if (result.success && result.addresses) {
+        // Ищем адрес для нужной монеты
+        const address = result.addresses.find((addr: any) => addr.coin === coin.toUpperCase());
+        if (address) {
+          return {
+            userId,
+            coin: address.coin,
+            address: address.address,
+            derivationPath: address.derivationPath,
+            index: address.index,
+            created_at: new Date(address.createdAt)
+          };
+        }
       }
 
-      // Если адреса нет - создаем новый
+      // Если адрес не найден, генерируем новый
+      console.log(`🔄 Адрес для ${coin} не найден, генерируем новый`);
       return await this.generateUserAddress(userId, coin);
     } catch (error) {
       console.error(`❌ Ошибка получения HD адреса для ${userId}/${coin}:`, error);
-      return null;
+      // Fallback к локальной генерации
+      return await this.generateUserAddress(userId, coin);
     }
   }
 
   // Получение всех адресов пользователя
   async getAllUserAddresses(userId: string): Promise<HDWalletAddress[]> {
     try {
-      const response = await fetch('/api/pidr-db', {
-        method: 'POST',
+      // Получаем токен авторизации
+      const token = this.getAuthToken();
+      if (!token) {
+        console.warn('⚠️ Нет токена авторизации для получения всех адресов');
+        return [];
+      }
+
+      const response = await fetch('/api/wallet/hd-addresses', {
+        method: 'GET',
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: 'get_all_user_hd_addresses',
-          userId
-        }),
+        }
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        console.warn(`⚠️ Ошибка API ${response.status} при получении всех адресов`);
+        return [];
       }
 
       const result = await response.json();
-      return result.success ? result.addresses : [];
+      if (result.success && result.addresses) {
+        return result.addresses.map((addr: any) => ({
+          userId,
+          coin: addr.coin,
+          address: addr.address,
+          derivationPath: addr.derivationPath,
+          index: addr.index,
+          created_at: new Date(addr.createdAt)
+        }));
+      }
+
+      return [];
     } catch (error) {
       console.error(`❌ Ошибка получения всех HD адресов для ${userId}:`, error);
       return [];

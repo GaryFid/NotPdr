@@ -98,7 +98,8 @@ interface GameState {
   roundInProgress: boolean // Идет ли текущий раунд битья
   currentRoundInitiator: string | null // Кто начал текущий раунд
   roundFinisher: string | null // Игрок который должен завершить круг (позиция -1 от инициатора)
-  initiatorTookCard: boolean // Взял ли инициатор карту (не побил) - для новой логики завершения
+  finisherPassed: boolean // Финишер уже сходил и не побил (начался овертайм)
+  lastCardTaker: string | null // Последний игрок который взял карту со стола
   
   // Статистика и настройки
   stats: GameStats
@@ -270,7 +271,8 @@ export const useGameStore = create<GameState>()(
       roundInProgress: false,
       currentRoundInitiator: null,
       roundFinisher: null,
-      initiatorTookCard: false,
+      finisherPassed: false,
+      lastCardTaker: null,
       
       // Мультиплеер состояние
       multiplayerData: null,
@@ -576,23 +578,23 @@ export const useGameStore = create<GameState>()(
         const { players, currentPlayerId, currentRound, maxRounds, gameStage } = get()
         
         const currentPlayerName = players.find(p => p.id === currentPlayerId)?.name || currentPlayerId;
-        console.log(`🔄 [nextTurn] Передача хода от ${currentPlayerName} (не может больше ходить)`);
+        console.log(`🔄 [nextTurn] Передача хода от ${currentPlayerName}`);
         
-        // Находим следующего игрока (против часовой стрелки)
+        // ИСПРАВЛЕНО: Находим следующего игрока ПО ЧАСОВОЙ СТРЕЛКЕ
         const currentIndex = players.findIndex(p => p.id === currentPlayerId)
-        const nextIndex = (currentIndex - 1 + players.length) % players.length
+        const nextIndex = (currentIndex + 1) % players.length
         const nextPlayerId = players[nextIndex].id
         const nextPlayer = players[nextIndex]
         
-        console.log(`🔄 [nextTurn] Ход переходит к ${nextPlayer.name} (индекс ${nextIndex})`);
+        console.log(`🔄 [nextTurn] Ход переходит к ${nextPlayer.name} (индекс ${nextIndex}) - ПО ЧАСОВОЙ`);
         
         // Обновляем текущего игрока
         players.forEach(p => p.isCurrentPlayer = p.id === nextPlayerId)
         
         let newRound = currentRound
         
-        // Если круг завершен (вернулись к последнему игроку при движении против часовой стрелки)
-        if (nextIndex === players.length - 1) {
+        // Если круг завершен (вернулись к первому игроку при движении по часовой стрелке)
+        if (nextIndex === 0) {
           newRound = currentRound + 1
         }
         
@@ -1489,7 +1491,6 @@ export const useGameStore = create<GameState>()(
              roundInProgress: false,
              currentRoundInitiator: null,
              roundFinisher: null,
-             initiatorTookCard: false,
              tableStack: [],
              selectedHandCard: null
            });
@@ -1546,7 +1547,7 @@ export const useGameStore = create<GameState>()(
          
          // Розыгрыш выбранной карты (ПРАВИЛА P.I.D.R.)
          playSelectedCard: () => {
-           const { selectedHandCard, currentPlayerId, players, tableStack, roundInProgress, stage2TurnPhase, trumpSuit } = get();
+           const { selectedHandCard, currentPlayerId, players, tableStack, roundInProgress, stage2TurnPhase, trumpSuit, roundFinisher, finisherPassed } = get();
            if (!selectedHandCard || !currentPlayerId) return;
            
            const currentPlayer = players.find(p => p.id === currentPlayerId);
@@ -1591,11 +1592,13 @@ export const useGameStore = create<GameState>()(
            // НОВАЯ ЛОГИКА: Определяем инициатора и финишера круга
            let newInitiator = get().currentRoundInitiator;
            let newFinisher = get().roundFinisher;
+           let newFinisherPassed = finisherPassed;
            
            if (wasEmptyTable) {
              // Начинается новый раунд - текущий игрок становится инициатором
              newInitiator = currentPlayerId;
              newFinisher = get().calculateRoundFinisher(currentPlayerId);
+             newFinisherPassed = false; // Новый раунд - сбрасываем овертайм
              console.log(`🎯 [playSelectedCard] 🆕 НОВЫЙ РАУНД НАЧАТ! Инициатор: ${currentPlayer.name}, Финишер: ${players.find(p => p.id === newFinisher)?.name}`);
            }
            
@@ -1606,7 +1609,8 @@ export const useGameStore = create<GameState>()(
              roundInProgress: true,
              currentRoundInitiator: newInitiator,
              roundFinisher: newFinisher,
-             initiatorTookCard: false, // Сбрасываем флаг для нового раунда
+             finisherPassed: newFinisherPassed,
+             lastCardTaker: null, // Сбрасываем последнего взявшего карту
              stage2TurnPhase: 'selecting_card' // Следующий игрок выбирает карту
            });
            
@@ -1618,37 +1622,22 @@ export const useGameStore = create<GameState>()(
            console.log(`🃏 [playSelectedCard] Карта добавлена в массив. На столе карт: ${newTableStack.length}`);
            console.log(`🃏 [playSelectedCard] Карты на столе: ${newTableStack.map(c => c.image).join(' -> ')}`);
            
-           // НОВАЯ ЛОГИКА ЗАВЕРШЕНИЯ КРУГА P.I.D.R.:
-           // Круг может завершиться когда игрок побил карту (не взял) И:
-           // 1. Накопилось достаточно карт (игроков - 1) И финишер побил карту
-           // 2. ИЛИ финишер взял карту раньше И любой следующий игрок побил карту
-           const { initiatorTookCard, roundFinisher } = get();
+           // НОВАЯ УПРОЩЕННАЯ ЛОГИКА ЗАВЕРШЕНИЯ КРУГА:
+           // Круг завершается когда:
+           // 1. Финишер побил карту (обычное завершение)
+           // 2. Любой игрок после финишера побил карту (овертайм)
            
-           // Находим индекс финишера и текущего игрока
-           const finisherIndex = roundFinisher ? players.findIndex(p => p.id === roundFinisher) : -1;
-           const currentIndex = players.findIndex(p => p.id === currentPlayerId);
-           
-           // Проверяем идет ли текущий игрок после финишера (по кругу против часовой стрелки)
-           let isAfterFinisher = false;
-           if (finisherIndex !== -1 && currentIndex !== -1) {
-             // Против часовой: если currentIndex < finisherIndex, то он идет после
-             // Или если currentIndex больше finisherIndex на круге
-             const nextAfterFinisher = (finisherIndex - 1 + players.length) % players.length;
-             isAfterFinisher = (currentIndex <= nextAfterFinisher && currentIndex !== finisherIndex);
-           }
-           
-          // ПРАВИЛЬНАЯ ЛОГИКА ЗАВЕРШЕНИЯ КРУГА
-          const shouldEndRound = !wasEmptyTable && (
-            // Правило 1: Если инициатор начал, игрок до него (финишер) может закрыть круг
-            (currentPlayerId === roundFinisher && !initiatorTookCard) ||
-            // Правило 2: Если инициатор взял карты, следующий игрок после него побив верхнюю карту закрывает круг  
-            (initiatorTookCard && isAfterFinisher && newTableStack.length > 0)
-          );
+           const shouldEndRound = !wasEmptyTable && (
+             // Обычное завершение: финишер побил карту
+             (currentPlayerId === roundFinisher && !finisherPassed) ||
+             // Овертайм: финишер уже пропустил, любой следующий побил
+             (finisherPassed && newTableStack.length > 0)
+           );
            
           if (shouldEndRound) {
-            const reasonText = initiatorTookCard 
-              ? `Инициатор взял карты, ${currentPlayer.name} побил и закрыл круг`
-              : `${currentPlayer.name} (финишер) закрыл круг после инициатора`;
+            const reasonText = finisherPassed
+              ? `Овертайм! ${currentPlayer.name} побил и закрыл круг`
+              : `${currentPlayer.name} (финишер) закрыл круг`;
               
             console.log(`🎯 [playSelectedCard] 🏁 КРУГ ЗАВЕРШЕН! ${reasonText}`);
             console.log(`🎯 [playSelectedCard] 📊 Карт в биту: ${newTableStack.length}`);
@@ -1660,7 +1649,8 @@ export const useGameStore = create<GameState>()(
               roundInProgress: false,
               currentRoundInitiator: null,
               roundFinisher: null,
-              initiatorTookCard: false,
+              finisherPassed: false,
+              lastCardTaker: null,
               stage2TurnPhase: 'selecting_card'
             });
             
@@ -1738,17 +1728,12 @@ export const useGameStore = create<GameState>()(
            console.log(`🃏 [takeTableCards P.I.D.R.] ${currentPlayer.name} не может побить и берет НИЖНЮЮ карту`);
            console.log(`🃏 [takeTableCards P.I.D.R.] Карты на столе:`, tableStack.map(c => c.image));
            
-           // ОБНОВЛЕННАЯ ЛОГИКА: Отслеживаем если инициатор ИЛИ финишер взял карту (не побил)
-           let initiatorTookCard = get().initiatorTookCard;
-           if (currentPlayerId === currentRoundInitiator) {
-             console.log(`🎯 [takeTableCards] ⚠️ ИНИЦИАТОР ${currentPlayer.name} взял карту - теперь любой может завершить круг`);
-             initiatorTookCard = true;
-           }
-           
-           // НОВАЯ ЛОГИКА: Если это финишер берет карту - следующие игроки могут завершить круг
-           if (currentPlayerId === roundFinisher) {
-             console.log(`🎯 [takeTableCards] ⚠️ ФИНИШЕР ${currentPlayer.name} взял карту - следующие игроки могут завершить круг`);
-             initiatorTookCard = true; // Используем тот же флаг для упрощения логики
+           // Отслеживаем если финишер взял карту (начался овертайм)
+           const { finisherPassed } = get();
+           let newFinisherPassed = finisherPassed;
+           if (currentPlayerId === roundFinisher && !finisherPassed) {
+             console.log(`🎯 [takeTableCards] ⚠️ ФИНИШЕР ${currentPlayer.name} взял карту - НАЧАЛСЯ ОВЕРТАЙМ!`);
+             newFinisherPassed = true;
            }
            
            // Берем ТОЛЬКО нижнюю карту (первую в стопке)
@@ -1763,9 +1748,9 @@ export const useGameStore = create<GameState>()(
            set({
              players: [...players],
              tableStack: newTableStack,
-             initiatorTookCard: initiatorTookCard,
+             finisherPassed: newFinisherPassed,
+             lastCardTaker: currentPlayerId, // Запоминаем последнего взявшего
              stage2TurnPhase: 'selecting_card' // Следующий игрок выбирает карту
-             // НЕ сбрасываем roundFinisher и currentRoundInitiator - круг продолжается!
            });
            
            console.log(`🃏 [takeTableCards P.I.D.R.] Взята нижняя карта: ${bottomCard.image}`);
@@ -1780,7 +1765,7 @@ export const useGameStore = create<GameState>()(
                roundInProgress: false,
                currentRoundInitiator: null,
                roundFinisher: null,
-               initiatorTookCard: false, // Сбрасываем флаг
+ // Сбрасываем флаг
                stage2TurnPhase: 'selecting_card'
              });
              get().showNotification('Стол очищен! Новый раунд', 'info', 3000);
@@ -2585,7 +2570,6 @@ export const useGameStore = create<GameState>()(
         roundInProgress: state.roundInProgress,
         currentRoundInitiator: state.currentRoundInitiator,
         roundFinisher: state.roundFinisher,
-        initiatorTookCard: state.initiatorTookCard,
         
         // Мультиплеер (опционально)
         multiplayerData: state.multiplayerData,
