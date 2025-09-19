@@ -62,6 +62,7 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
   // Загружаем данные пользователя и транзакции
   useEffect(() => {
     loadUserData();
+    ensureAuthToken(); // Убеждаемся что токен есть
     loadTransactions();
     loadHDAddresses();
     
@@ -81,7 +82,7 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
 
     const interval = setInterval(async () => {
       try {
-        const token = localStorage.getItem('authToken');
+        const token = localStorage.getItem('auth_token');
         if (!token) return;
 
         const response = await fetch('/api/wallet/check-payments', {
@@ -132,7 +133,7 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
 
     try {
       // Используем новый API endpoint
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem('auth_token');
       if (!token) {
         console.warn('⚠️ Нет токена авторизации');
         return;
@@ -216,6 +217,55 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
     }
   };
 
+  // Убеждаемся что у пользователя есть токен авторизации
+  const ensureAuthToken = async () => {
+    const existingToken = localStorage.getItem('auth_token');
+    if (existingToken) {
+      console.log('✅ Токен авторизации уже есть');
+      return;
+    }
+
+    // Если токена нет, пытаемся создать через API
+    console.log('🔑 Создаем токен авторизации...');
+    
+    if (!user?.id) {
+      console.warn('⚠️ Нет данных пользователя для создания токена');
+      return;
+    }
+
+    try {
+      // Получаем данные пользователя из localStorage
+      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      
+      const authData = {
+        type: 'telegram',
+        id: userData.telegramId || user.id.replace('player_', ''),
+        username: userData.username || user.username,
+        first_name: userData.firstName || user.firstName,
+        last_name: userData.lastName || user.lastName,
+        photo_url: userData.photoUrl || null
+      };
+
+      const response = await fetch('/api/auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(authData)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.token) {
+          localStorage.setItem('auth_token', result.token);
+          console.log('✅ Токен авторизации создан');
+        }
+      }
+    } catch (error) {
+      console.error('❌ Ошибка создания токена:', error);
+    }
+  };
+
   const loadTransactions = async () => {
     if (!user?.id) return;
 
@@ -223,7 +273,7 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
       setLoading(true);
       
       // Используем новый API для получения транзакций
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem('auth_token');
       if (!token) {
         console.warn('⚠️ Нет токена авторизации для загрузки транзакций');
         return;
@@ -560,7 +610,7 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
       // Генерируем новый HD адрес через API
       console.log(`🔄 Генерируем новый HD адрес для ${crypto}...`);
       
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem('auth_token');
       if (!token) {
         throw new Error('Нет токена авторизации');
       }
@@ -615,7 +665,7 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
     try {
       setIsMonitoringPayments(true);
       
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem('auth_token');
       if (!token) {
         alert('Нет токена авторизации');
         return;
@@ -660,7 +710,8 @@ export default function GameWallet({ user, onBalanceUpdate }: GameWalletProps) {
       }
     } catch (error) {
       console.error('❌ Ошибка мониторинга платежей:', error);
-      alert(`Ошибка: ${error}`);
+      // Показываем более дружественное сообщение
+      alert('Временная ошибка при проверке платежей. Попробуйте позже.');
     } finally {
       setIsMonitoringPayments(false);
     }

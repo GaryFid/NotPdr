@@ -284,7 +284,7 @@ export class HDWalletService {
   // Получение токена авторизации
   private getAuthToken(): string | null {
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem('authToken');
+    return localStorage.getItem('auth_token');
   }
 
   // Получение адреса пользователя для монеты
