@@ -575,28 +575,50 @@ export const useGameStore = create<GameState>()(
       },
       
       nextTurn: () => {
-        const { players, currentPlayerId, currentRound, maxRounds, gameStage } = get()
-        
-        const currentPlayerName = players.find(p => p.id === currentPlayerId)?.name || currentPlayerId;
-        console.log(`🔄 [nextTurn] Передача хода от ${currentPlayerName}`);
-        
-        // ИСПРАВЛЕНО: Находим следующего игрока ПО ЧАСОВОЙ СТРЕЛКЕ
-        const currentIndex = players.findIndex(p => p.id === currentPlayerId)
-        const nextIndex = (currentIndex + 1) % players.length
-        const nextPlayerId = players[nextIndex].id
-        const nextPlayer = players[nextIndex]
-        
-        console.log(`🔄 [nextTurn] Ход переходит к ${nextPlayer.name} (индекс ${nextIndex}) - ПО ЧАСОВОЙ`);
-        
-        // Обновляем текущего игрока
-        players.forEach(p => p.isCurrentPlayer = p.id === nextPlayerId)
-        
-        let newRound = currentRound
-        
-        // Если круг завершен (вернулись к первому игроку при движении по часовой стрелке)
-        if (nextIndex === 0) {
-          newRound = currentRound + 1
-        }
+        try {
+          const { players, currentPlayerId, currentRound, maxRounds, gameStage } = get()
+          
+          if (!players || players.length === 0) {
+            console.error(`🔄 [nextTurn] ❌ Нет игроков для передачи хода`);
+            return;
+          }
+          
+          if (!currentPlayerId) {
+            console.error(`🔄 [nextTurn] ❌ Нет текущего игрока для передачи хода`);
+            return;
+          }
+          
+          const currentPlayerName = players.find(p => p.id === currentPlayerId)?.name || currentPlayerId;
+          console.log(`🔄 [nextTurn] Передача хода от ${currentPlayerName}`);
+          
+          // ИСПРАВЛЕНО: Находим следующего игрока ПО ЧАСОВОЙ СТРЕЛКЕ
+          const currentIndex = players.findIndex(p => p.id === currentPlayerId)
+          
+          if (currentIndex === -1) {
+            console.error(`🔄 [nextTurn] ❌ Текущий игрок не найден в списке игроков`);
+            return;
+          }
+          
+          const nextIndex = (currentIndex + 1) % players.length
+          const nextPlayerId = players[nextIndex].id
+          const nextPlayer = players[nextIndex]
+          
+          if (!nextPlayer) {
+            console.error(`🔄 [nextTurn] ❌ Следующий игрок не найден`);
+            return;
+          }
+          
+          console.log(`🔄 [nextTurn] Ход переходит к ${nextPlayer.name} (индекс ${nextIndex}) - ПО ЧАСОВОЙ`);
+          
+          // Обновляем текущего игрока
+          players.forEach(p => p.isCurrentPlayer = p.id === nextPlayerId)
+          
+          let newRound = currentRound
+          
+          // Если круг завершен (вернулись к первому игроку при движении по часовой стрелке)
+          if (nextIndex === 0) {
+            newRound = currentRound + 1
+          }
         
         // Сбрасываем состояния хода только для 1-й стадии
         if (gameStage === 1) {
@@ -632,6 +654,10 @@ export const useGameStore = create<GameState>()(
         
         // УДАЛЕНО: Неправильная логика завершения игры по maxRounds
         // Игра завершается только когда игроки остаются без карт (checkVictoryCondition)
+        } catch (error) {
+          console.error(`🔄 [nextTurn] ❌ Критическая ошибка при передаче хода:`, error);
+          get().showNotification('Ошибка при передаче хода', 'error', 3000);
+        }
       },
       
       resetGame: () => {
@@ -2266,6 +2292,9 @@ export const useGameStore = create<GameState>()(
              pendingPenalty: newPendingPenalty
            });
            
+           // ВАЖНО: Обновляем статус "одна карта" сразу после изменения карт
+           get().checkOneCardStatus();
+           
            get().showNotification(`✅ ${contributor.name} скинул карту штрафа!`, 'success', 2000);
            
            // Если все отдали карты - завершаем штраф
@@ -2286,9 +2315,13 @@ export const useGameStore = create<GameState>()(
              
              get().showNotification(`💸 ${targetPlayer.name} получил штрафные карты за забывчивость!`, 'error', 4000);
              
-             // Проверяем статус "одна карта"
+             // Проверяем статус "одна карта" - ВАЖНО: обновляем после изменения карт
              setTimeout(() => {
                get().checkOneCardStatus();
+               
+               // КРИТИЧНО: Принудительно обновляем состояние для синхронизации UI
+               const updatedPlayers = get().players;
+               set({ players: [...updatedPlayers] });
              }, 1000);
            }
          },
