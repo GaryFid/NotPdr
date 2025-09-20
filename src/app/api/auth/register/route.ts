@@ -59,46 +59,14 @@ export async function POST(req: NextRequest) {
 
   const { username, email, password, firstName, lastName } = parsed.data;
 
-  // FALLBACK: Если Supabase не настроен, используем временное хранилище
+  // Проверяем обязательное подключение к Supabase
   if (!useSupabase) {
-    console.log('🔄 Используем временное хранилище (без Supabase)');
-    
-    // Создаем пользователя без базы данных
-    const tempUser = {
-      id: `temp_${Date.now()}`,
-      username,
-      email: email || null,
-      firstName: firstName || username,
-      lastName: lastName || '',
-      avatar: null,
-      coins: 1000,
-      rating: 1000,
-      gamesPlayed: 0,
-      gamesWon: 0,
-      referralCode: 'TEMP' + Date.now().toString().slice(-4),
-      createdAt: new Date().toISOString()
-    };
-
-    // Генерация JWT токена
-    const token = jwt.sign(
-      { 
-        userId: tempUser.id, 
-        username: tempUser.username,
-        type: 'local_temp'
-      },
-      JWT_SECRET,
-      { expiresIn: '30d' }
-    );
-
-    console.log('✅ Временный пользователь создан:', tempUser.username);
-
+    console.error('❌ БАЗА ДАННЫХ НЕ НАСТРОЕНА! Регистрация невозможна.');
     return NextResponse.json({
-      success: true,
-      token,
-      user: tempUser,
-      message: 'Регистрация успешна! (Временный режим)',
-      warning: 'База данных не подключена. Данные не сохранятся.'
-    });
+      success: false,
+      message: 'База данных не настроена. Регистрация невозможна.',
+      error: 'SUPABASE_NOT_CONFIGURED'
+    }, { status: 500 });
   }
 
   try {

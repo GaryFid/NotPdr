@@ -215,32 +215,13 @@ function HomeWithParams() {
     };
     
     const createLocalPlayer = () => {
-      const localUser: User = {
-        id: 'local_player_' + Date.now(),
-        username: 'Локальный игрок',
-        firstName: 'Локальный игрок',
-        lastName: '',
-        telegramId: null,
-        coins: 1000,
-        rating: 0,
-        gamesPlayed: 0,
-        gamesWon: 0,
-        photoUrl: null
-      };
+      console.error('❌ ЛОКАЛЬНЫЕ ИГРОКИ ОТКЛЮЧЕНЫ! Используйте только авторизацию через БД.');
+      console.error('📱 Откройте игру в Telegram WebApp или авторизуйтесь через /auth/login');
       
-      console.log('✅ Создан локальный игрок:', localUser);
-      
-      localStorage.setItem('user', JSON.stringify(localUser));
-      localStorage.setItem('current_user', JSON.stringify(localUser));
-      
-      window.dispatchEvent(new CustomEvent('coinsUpdated', { 
-        detail: { coins: localUser.coins } 
-      }));
-      
-      setUser(localUser);
       setLoading(false);
       
-      console.log('🚀 ИГРА ГОТОВА К ЗАПУСКУ (локальный игрок)!');
+      // Показываем сообщение об ошибке
+      alert('Для игры требуется авторизация через Telegram WebApp или вход в систему. Локальные игроки отключены.');
     };
     
     initializePlayer();
