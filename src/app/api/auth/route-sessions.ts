@@ -1,10 +1,18 @@
-// ПРОСТОЙ API авторизации БЕЗ SessionManager (временно)
+// НОВЫЙ API авторизации - ТОЛЬКО БАЗА ДАННЫХ, НЕТ ЛОКАЛЬНЫХ ПОЛЬЗОВАТЕЛЕЙ
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '../../../lib/supabase';
-import jwt from 'jsonwebtoken';
+import { SessionManager } from '../../../lib/auth/session-manager';
+import { verifyTelegramInitData } from '../../../lib/telegram';
 import { z } from 'zod';
 
-const JWT_SECRET = process.env.JWT_SECRET;
+function getClientInfo(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for') || 
+             req.headers.get('x-real-ip') || 
+             'unknown';
+  const userAgent = req.headers.get('user-agent') || 'unknown';
+  
+  return { ip, userAgent, deviceInfo: { userAgent, timestamp: new Date().toISOString() } };
+}
 
 const LocalAuthSchema = z.object({
   type: z.literal('local'),
@@ -23,15 +31,7 @@ const TelegramAuthSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  console.log('🚀 SIMPLE Auth API вызван (без SessionManager)');
-
-  if (!JWT_SECRET) {
-    console.error('❌ JWT_SECRET не найден');
-    return NextResponse.json({ 
-      success: false, 
-      message: 'JWT_SECRET не настроен' 
-    }, { status: 500 });
-  }
+  console.log('🚀 DATABASE-ONLY Auth API вызван');
 
   // Проверяем обязательное наличие Supabase
   const supabaseUrl = process.env.SUPABASE_URL;
@@ -41,13 +41,14 @@ export async function POST(req: NextRequest) {
     console.error('❌ БАЗА ДАННЫХ НЕ НАСТРОЕНА!');
     return NextResponse.json({
       success: false,
-      message: 'База данных не настроена',
+      message: 'База данных не настроена. Локальные пользователи отключены.',
       error: 'DATABASE_NOT_CONFIGURED'
     }, { status: 500 });
   }
 
   try {
     const body = await req.json();
+    const clientInfo = getClientInfo(req);
 
     if (!body || typeof body.type !== 'string') {
       return NextResponse.json({ 
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    // 1. Локальная авторизация
+    // 1. Локальная авторизация (username/password) - ТОЛЬКО из БД
     if (body.type === 'local') {
       const parsed = LocalAuthSchema.safeParse(body);
       if (!parsed.success) {
@@ -70,6 +71,7 @@ export async function POST(req: NextRequest) {
 
       console.log('🔍 Поиск пользователя в БД:', username);
 
+      // Ищем пользователя ТОЛЬКО в БД
       const { data: users, error } = await supabase
         .from('_pidr_users')
         .select('*')
@@ -86,6 +88,17 @@ export async function POST(req: NextRequest) {
 
       if (!users || users.length === 0) {
         console.warn('⚠️ Пользователь не найден в БД:', username);
+        
+        await SessionManager.logAuthAction({
+          userId: 'unknown',
+          action: 'login',
+          authType: 'local',
+          ipAddress: clientInfo.ip,
+          userAgent: clientInfo.userAgent,
+          success: false,
+          errorMessage: 'Пользователь не найден в БД'
+        });
+
         return NextResponse.json({ 
           success: false, 
           message: 'Пользователь не найден. Зарегистрируйтесь сначала.' 
@@ -94,19 +107,23 @@ export async function POST(req: NextRequest) {
 
       const user = users[0];
 
-      // TODO: Добавить проверку пароля
+      // TODO: Добавить проверку пароля когда будет реализовано хеширование
       console.log('⚠️ Проверка пароля пропущена (в разработке)');
 
-      // Создаем ПРОСТОЙ JWT токен без сессий
-      const token = jwt.sign(
-        { 
-          userId: user.id, 
-          username: user.username,
-          type: 'local'
-        },
-        JWT_SECRET,
-        { expiresIn: '30d' }
+      // Создаем сессию через SessionManager
+      const sessionResult = await SessionManager.createSession(
+        user.id.toString(),
+        'local',
+        user,
+        clientInfo
       );
+
+      if (!sessionResult) {
+        return NextResponse.json({ 
+          success: false, 
+          message: 'Ошибка создания сессии' 
+        }, { status: 500 });
+      }
 
       // Обновляем статус пользователя
       await supabase
@@ -122,7 +139,8 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        token,
+        token: sessionResult.token,
+        sessionId: sessionResult.sessionId,
         user: {
           id: user.id,
           username: user.username,
@@ -139,7 +157,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 2. Telegram авторизация
+    // 2. Telegram авторизация - ТОЛЬКО в БД
     if (body.type === 'telegram') {
       const parsed = TelegramAuthSchema.safeParse(body);
       if (!parsed.success) {
@@ -154,6 +172,7 @@ export async function POST(req: NextRequest) {
 
       console.log('🔍 Поиск Telegram пользователя в БД:', telegramId);
 
+      // Ищем существующего пользователя в БД
       let { data: users, error: findError } = await supabase
         .from('_pidr_users')
         .select('*')
@@ -172,6 +191,7 @@ export async function POST(req: NextRequest) {
       if (!users || users.length === 0) {
         console.log('👤 Создаем нового Telegram пользователя в БД');
 
+        // Создаем нового пользователя в БД
         const newUserData = {
           telegram_id: telegramId,
           username: username || first_name || `user${telegramId}`,
@@ -194,6 +214,17 @@ export async function POST(req: NextRequest) {
 
         if (createError) {
           console.error('❌ Ошибка создания Telegram пользователя в БД:', createError);
+          
+          await SessionManager.logAuthAction({
+            userId: telegramId,
+            action: 'login',
+            authType: 'telegram',
+            ipAddress: clientInfo.ip,
+            userAgent: clientInfo.userAgent,
+            success: false,
+            errorMessage: createError.message
+          });
+
           return NextResponse.json({ 
             success: false, 
             message: 'Ошибка создания пользователя в базе данных' 
@@ -230,17 +261,20 @@ export async function POST(req: NextRequest) {
         console.log('✅ Найден существующий Telegram пользователь в БД:', user.username);
       }
 
-      // Создаем ПРОСТОЙ JWT токен без сессий
-      const token = jwt.sign(
-        { 
-          userId: user.id, 
-          telegramId: user.telegram_id,
-          username: user.username,
-          type: 'telegram'
-        },
-        JWT_SECRET,
-        { expiresIn: '30d' }
+      // Создаем сессию через SessionManager
+      const sessionResult = await SessionManager.createSession(
+        user.id.toString(),
+        'telegram',
+        user,
+        clientInfo
       );
+
+      if (!sessionResult) {
+        return NextResponse.json({ 
+          success: false, 
+          message: 'Ошибка создания сессии' 
+        }, { status: 500 });
+      }
 
       // Обновляем статус пользователя
       await supabase
@@ -256,7 +290,8 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        token,
+        token: sessionResult.token,
+        sessionId: sessionResult.sessionId,
         user: {
           id: user.id,
           telegramId: user.telegram_id,
@@ -284,6 +319,96 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ 
       success: false, 
       message: 'Ошибка сервера при авторизации' 
+    }, { status: 500 });
+  }
+}
+
+// GET - проверка текущей сессии
+export async function GET(req: NextRequest) {
+  const authHeader = req.headers.get('authorization');
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return NextResponse.json({ 
+      success: false, 
+      message: 'Токен не предоставлен' 
+    }, { status: 401 });
+  }
+
+  const token = authHeader.substring(7);
+  const validation = await SessionManager.validateSession(token);
+
+  if (!validation.valid) {
+    return NextResponse.json({ 
+      success: false, 
+      message: 'Недействительная сессия' 
+    }, { status: 401 });
+  }
+
+  // Получаем данные пользователя из БД
+  const { data: user, error } = await supabase
+    .from('_pidr_users')
+    .select('*')
+    .eq('id', validation.userId)
+    .single();
+
+  if (error || !user) {
+    console.error('❌ Пользователь не найден в БД:', validation.userId);
+    return NextResponse.json({ 
+      success: false, 
+      message: 'Пользователь не найден в базе данных' 
+    }, { status: 404 });
+  }
+
+  return NextResponse.json({
+    success: true,
+    user: {
+      id: user.id,
+      username: user.username,
+      firstName: user.first_name,
+      lastName: user.last_name,
+      avatar: user.avatar_url,
+      coins: user.coins,
+      rating: user.rating,
+      gamesPlayed: user.games_played,
+      gamesWon: user.games_won
+    },
+    sessionId: validation.sessionId,
+    message: 'Сессия действительна, данные из БД'
+  });
+}
+
+// DELETE - выход (отзыв сессии)
+export async function DELETE(req: NextRequest) {
+  const authHeader = req.headers.get('authorization');
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return NextResponse.json({ 
+      success: false, 
+      message: 'Токен не предоставлен' 
+    }, { status: 401 });
+  }
+
+  const token = authHeader.substring(7);
+  const validation = await SessionManager.validateSession(token);
+
+  if (!validation.valid || !validation.sessionId) {
+    return NextResponse.json({ 
+      success: false, 
+      message: 'Недействительная сессия' 
+    }, { status: 401 });
+  }
+
+  const success = await SessionManager.revokeSession(validation.sessionId, 'Пользователь вышел');
+
+  if (success) {
+    return NextResponse.json({
+      success: true,
+      message: 'Выход выполнен успешно'
+    });
+  } else {
+    return NextResponse.json({ 
+      success: false, 
+      message: 'Ошибка при выходе' 
     }, { status: 500 });
   }
 }
