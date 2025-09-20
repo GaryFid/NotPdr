@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
 
     // Проверяем не существует ли уже такой пользователь
     const { data: existingUsers, error: checkError } = await supabase
-      .from('users')
+      .from('_pidr_users')
       .select('id, username, email')
       .or(`username.eq.${username}${email ? `,email.eq.${email}` : ''}`)
       .limit(1);
@@ -115,9 +115,9 @@ export async function POST(req: NextRequest) {
     while (attempts < 5) {
       referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
       const { data: existingCode } = await supabase
-        .from('users')
+        .from('_pidr_users')
         .select('id')
-        .eq('referralCode', referralCode)
+        .eq('referral_code', referralCode)
         .limit(1);
       
       if (!existingCode || existingCode.length === 0) break;
@@ -129,22 +129,23 @@ export async function POST(req: NextRequest) {
     const newUserData = {
       username,
       email: email || null,
-      passwordHash,
-      firstName: firstName || username,
-      lastName: lastName || '',
-      avatar: null,
-      authType: 'local',
+      password_hash: passwordHash,
+      first_name: firstName || username,
+      last_name: lastName || '',
+      avatar_url: null,
+      auth_type: 'local',
       coins: 1000,
       rating: 1000,
-      gamesPlayed: 0,
-      gamesWon: 0,
-      referralCode: referralCode || 'REG' + Date.now().toString().slice(-4)
+      games_played: 0,
+      games_won: 0,
+      referral_code: referralCode || 'REG' + Date.now().toString().slice(-4),
+      created_at: new Date().toISOString()
     };
 
     const { data: newUser, error: createError } = await supabase
-      .from('users')
+      .from('_pidr_users')
       .insert([newUserData])
-      .select('id, username, email, firstName, lastName, avatar, coins, rating, gamesPlayed, gamesWon, referralCode')
+      .select('id, username, email, first_name, last_name, avatar_url, coins, rating, games_played, games_won, referral_code')
       .single();
 
     if (createError) {
@@ -161,7 +162,7 @@ export async function POST(req: NextRequest) {
     // Создание статуса пользователя
     try {
       await supabase
-        .from('user_status')
+        .from('_pidr_user_status')
         .insert({
           user_id: newUser.id,
           status: 'online',
@@ -192,14 +193,14 @@ export async function POST(req: NextRequest) {
         id: newUser.id,
         username: newUser.username,
         email: newUser.email,
-        firstName: newUser.firstName,
-        lastName: newUser.lastName,
-        avatar: newUser.avatar,
+        firstName: newUser.first_name,
+        lastName: newUser.last_name,
+        avatar: newUser.avatar_url,
         coins: newUser.coins,
         rating: newUser.rating,
-        gamesPlayed: newUser.gamesPlayed,
-        gamesWon: newUser.gamesWon,
-        referralCode: newUser.referralCode
+        gamesPlayed: newUser.games_played,
+        gamesWon: newUser.games_won,
+        referralCode: newUser.referral_code
       },
       message: 'Регистрация успешна!'
     });

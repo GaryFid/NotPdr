@@ -277,7 +277,34 @@ export class HDWalletService {
       console.log(`💾 HD адрес сохранен в БД: ${walletAddress.coin} - ${walletAddress.address}`);
     } catch (error) {
       console.error('❌ Ошибка сохранения HD адреса в БД:', error);
-      throw error;
+      
+      // FALLBACK: Прямое сохранение в БД если API не работает
+      try {
+        console.log('🔄 Пробуем прямое сохранение в Supabase...');
+        const { supabase } = await import('../supabase');
+        
+        const { data, error } = await supabase
+          .from('_pidr_hd_wallets')
+          .insert({
+            user_id: parseInt(walletAddress.userId),
+            coin: walletAddress.coin,
+            address: walletAddress.address,
+            derivation_path: walletAddress.derivationPath,
+            address_index: walletAddress.index,
+            created_at: walletAddress.created_at.toISOString()
+          })
+          .select()
+          .single();
+
+        if (error) {
+          throw new Error(`Supabase error: ${error.message}`);
+        }
+
+        console.log(`✅ HD адрес сохранен прямо в БД: ${walletAddress.coin} - ${walletAddress.address}`);
+      } catch (fallbackError) {
+        console.error('❌ Fallback сохранение тоже не работает:', fallbackError);
+        throw error; // Возвращаем оригинальную ошибку
+      }
     }
   }
 
